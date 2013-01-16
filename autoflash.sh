@@ -15,6 +15,7 @@
 #                            (Backup/Recover script from Timdream)
 #   2012/12/13 Askeing: v5.0 Added nightly user build site.
 #                            https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-beta-unagi/latest/unagi.zip
+#   2012/12/13 Askeing: v5.1 Added the build version information. (gecko, gaia)
 #==========================================================================
 
 
@@ -31,7 +32,7 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 5.0"
+		echo -e "v 5.1"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
 		echo -e "Usage: [Environment] {script_name} [-fFebh?]"
 		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
@@ -76,7 +77,6 @@ do
 		Backup_Flag=true
 
 	else
-		echo -e "v 5.0"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
 		echo -e "Usage: [Environment] {script_name} [-fFebh?]"
 		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
@@ -107,6 +107,7 @@ if [ $Download_Flag == true ]; then
 	echo -e "Clean..."
 	rm -f $Filename
 
+	# Prepare the authn of web site
 	HTTPUser="b2g"
 	HTTPPwd="6 Parakeets in three bushes"
 	if [ $Engineer_Flag != true ]; then
@@ -207,6 +208,19 @@ if [ $Flash_Flag == true ]; then
 		echo -e "Recover done."
 	fi
 fi
+
+####################
+# Retrieve Version info
+####################
+if [ $Engineer_Flag == true ]; then
+	grep '^.*path=\"gecko\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gecko\" remote=\"mozillaorg\" revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
+	grep '^.*path=\"gaia\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gaia\" remote=\"mozillaorg\" revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
+else
+	grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gecko\".*revision=/gecko revision: /g' | sed 's/\/> -->//g' > VERSION
+	grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gaia\".*revision=/gaia revision: /g' | sed 's/\/> -->//g' >> VERSION
+fi
+echo -e "===== VERSION ====="
+cat VERSION
 
 ####################
 # Done
