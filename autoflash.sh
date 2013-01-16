@@ -9,6 +9,7 @@
 # History:
 #   2012/11/30 Askeing: v1.0 First release (only for unagi).
 #   2012/12/03 Askeing: v2.0 Added -F flag for no-download-only-flash
+#   2012/12/03 Askeing: v3.0 Added -e flag for engineer build
 #
 #==========================================================================
 
@@ -17,7 +18,7 @@
 # Helper
 ####################
 if [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" == "-?" ]; then
-	echo -e "v 2.0"
+	echo -e "v 3.0"
 	echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
 	echo -e "Usage: [ADB_PATH=your adb path] {script_name} [-fF]\n"
 	# -f, --flash
@@ -26,6 +27,8 @@ if [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ "$1" == "-?" ]; then
 	echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
 	# -F, --flash-only
 	echo -e "-F, --flash-only\tFlash your device (unagi) from downloaded zipped build."
+	# -e, --eng
+	echo -e "-e, --eng\tchange the target build to engineer build."
 	# -h, --help
 	echo -e "-h, --help\tDisplay help."
 	echo -e "-?\t\tDisplay help."
@@ -38,24 +41,32 @@ fi
 # Default: download, no flash
 Download_Flag=true
 Flash_Flag=false
+Engineer_Flag=false
 # -f, --flash: download, flash
-if [ "$1" == "-f" ] || [ "$1" == "--flash" ]; then
+if [ "$1" == "-f" ] || [ "$1" == "--flash" ] || [ "$2" == "-f" ] || [ "$2" == "--flash" ]; then
 	Download_Flag=true
 	Flash_Flag=true
 # -F, --flash-only: no download, flash
-elif [ "$1" == "-F" ] || [ "$1" == "--flash-only" ]; then
+elif [ "$1" == "-F" ] || [ "$1" == "--flash-only" ] || [ "$2" == "-F" ] || [ "$2" == "--flash-only" ]; then
 	Download_Flag=false
 	Flash_Flag=true
 fi
-
+# -e, --eng: engineer build
+if [ "$1" == "-e" ] || [ "$1" == "--eng" ] || [ "$2" == "-e" ] || [ "$2" == "--eng" ]; then
+	Engineer_Flag=true
+fi
 
 ####################
 # Check date
 ####################
 Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
 Today=$(date +%Y-%m-%d)
-Filename=unagi_$Yesterday.zip
-URL=https://releases.mozilla.com/b2g/$Yesterday/$Filename
+if [ $Engineer_Flag == true ]; then
+	Filename=unagi_${Yesterday}_eng.zip
+else
+	Filename=unagi_${Yesterday}.zip
+fi
+URL=https://releases.mozilla.com/b2g/${Yesterday}/${Filename}
 
 
 ####################
@@ -64,7 +75,7 @@ URL=https://releases.mozilla.com/b2g/$Yesterday/$Filename
 if [ $Download_Flag == true ]; then
 	# Clean file
 	echo -e "Clean..."
-	rm -f unagi_$Yesterday.zip
+	rm -f $Filename
 	
 	# Download file
 	echo -e "Download latest build..."
