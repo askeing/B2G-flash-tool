@@ -13,7 +13,8 @@
 #   2012/12/03 Al:      V3.1 Change flag checker
 #   2012/12/05 Askeing: v4.0 Added -b flag for backup the old profile
 #                            (Backup/Recover script from Timdream)
-#
+#   2012/12/13 Askeing: v5.0 Added nightly user build site.
+#                            https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-beta-unagi/latest/unagi.zip
 #==========================================================================
 
 
@@ -30,9 +31,10 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 4.0"
+		echo -e "v 5.0"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
-		echo -e "Usage: [ADB_PATH=your adb path] {script_name} [-fFebh?]\n"
+		echo -e "Usage: [Environment] {script_name} [-fFebh?]"
+		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
 		# -f, --flash
 		echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
 		echo -e "\t\tYou may have to input root password when you add this argument."
@@ -48,9 +50,10 @@ do
 		echo -e "-h, --help\tDisplay help."
 		echo -e "-?\t\tDisplay help."
 		echo -e "Example:"
-		echo -e "Download build.\t\t\t\t{script_name}"
-		echo -e "Download and flash build.\t\t{script_name} -f"
-		echo -e "Flash engineer build.\t\t\t{script_name} -e -F"
+		echo -e "Download build.\t\t{script_name}"
+		echo -e "Download build.\t\tHTTP_USER=dog@foo.foo HTTP_PWD=pwd {script_name}"
+		echo -e "Download and flash build.\t{script_name} -f"
+		echo -e "Flash engineer build.\t\t{script_name} -e -F"
 		echo -e "Flash engineer build, backup profile.\t{script_name} -e -F -b"
 		exit 0
 
@@ -73,8 +76,10 @@ do
 		Backup_Flag=true
 
 	else
-		echo -e "Usage: [ADB_PATH=your adb path] {script_name} [-fF]\n"
-		echo -e "Use --help for help"
+		echo -e "v 5.0"
+		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
+		echo -e "Usage: [Environment] {script_name} [-fFebh?]"
+		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
 		exit 0
 	fi
 done
@@ -86,10 +91,12 @@ Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
 Today=$(date +%Y-%m-%d)
 if [ $Engineer_Flag == true ]; then
 	Filename=unagi_${Yesterday}_eng.zip
+	URL=https://releases.mozilla.com/b2g/${Yesterday}/${Filename}
 else
-	Filename=unagi_${Yesterday}.zip
+	Filename=unagi.zip
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-beta-unagi/latest/${Filename}
 fi
-URL=https://releases.mozilla.com/b2g/${Yesterday}/${Filename}
+
 
 
 ####################
@@ -99,11 +106,27 @@ if [ $Download_Flag == true ]; then
 	# Clean file
 	echo -e "Clean..."
 	rm -f $Filename
+
+	HTTPUser="b2g"
+	HTTPPwd="6 Parakeets in three bushes"
+	if [ $Engineer_Flag != true ]; then
+		if [ "$HTTP_USER" != "" ]; then
+			HTTPUser=$HTTP_USER
+		else
+			read -p "Enter your HTTP Username: " HTTPUser
+		fi
+
+		if [ "$HTTP_PWD" != "" ]; then
+			HTTPPwd=$HTTP_PWD
+		else
+			read -s -p "Enter your HTTP Password: " HTTPPwd
+		fi
+	fi
 	
 	# Download file
 	echo -e "Download latest build..."
-	wget --http-user=b2g --http-passwd="6 Parakeets in three bushes" $URL
-	
+	wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL
+
 	# Check the download is okay
 	if [ $? -ne 0 ]; then
 		echo -e "Download $URL failed."
@@ -179,7 +202,7 @@ if [ $Flash_Flag == true ]; then
 		adb push ./mozilla-profile/profile /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
 		adb push ./mozilla-profile/data-local /data/local 2> ./mozilla-profile/recover.log &&\
 		adb reboot
-		sleep 50
+		sleep 20
 		adb wait-for-device
 		echo -e "Recover done."
 	fi
