@@ -1,9 +1,10 @@
 #!/bin/bash
 #==========================================================================
+# 
+# IMPORTANT: only for internal use!
+# 
 # Description:
-#   This script was written for download latest build from
-#   https://releases.mozilla.com/b2g/
-#   acct/pw: b2g/6 Parakeets in three bushes
+#   This script was written for download latest build from pvt server.
 #
 # Author: Askeing fyen@mozilla.com
 # History:
@@ -21,6 +22,7 @@
 #			     due to the kernel is unagi-kernelupdate3 not 4.
 #   2012/12/21 Askeing: v6.0 Modified the download URL and automatically change the filename by mtime. 
 #   2012/12/27 Askeing: v7.0 Added the date build (B2G v1.1).
+#   2013/01/16 Askeing: v8.0 Removed the no-kernel option.
 #==========================================================================
 
 
@@ -33,13 +35,12 @@ Download_Flag=true
 Flash_Flag=false
 Backup_Flag=false
 RecoverOnly_Flag=false
-NoKernelUpdate_Flag=false
 
 for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 7.0"
+		echo -e "v 8.0"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
 		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 		echo -e "Environment: HTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n\n"
@@ -58,8 +59,6 @@ do
 		echo -e "\t\t(it will work with -f anf -F)"
 		# -r, --recover-only
 		echo -e "-r, --recover-only:\trecover the phone from local machine"
-		#     --no-kernel
-		echo -e "--no-kernel:\tdo not update kernel, should have flash-nokernel.sh file"
 		# -h, --help
 		echo -e "-h, --help\tDisplay help."
 		echo -e "-?\t\tDisplay help.\n"
@@ -96,9 +95,6 @@ do
 	# -r, --recover-only: recover the phone from local machine
 	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
 		RecoverOnly_Flag=true	
-	#     --no-kernel: do not update kernel, should have flash-nokernel.sh file
-	elif [ "$x" = "--no-kernel" ]; then
-		NoKernelUpdate_Flag=true
 	else
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
 		echo -e "Usage: [Environment] {script_name} [parameters]"
@@ -149,12 +145,12 @@ if [ $Download_Flag == true ]; then
 	if [ "$HTTP_USER" != "" ]; then
 		HTTPUser=$HTTP_USER
 	else
-		read -p "Enter your HTTP Username: " HTTPUser
+		read -p "Enter HTTP Username (LDAP): " HTTPUser
 	fi
 	if [ "$HTTP_PWD" != "" ]; then
 		HTTPPwd=$HTTP_PWD
 	else
-		read -s -p "Enter your HTTP Password: " HTTPPwd
+		read -s -p "Enter HTTP Password (LDAP): " HTTPPwd
 	fi
 	
 	# Download file
@@ -241,16 +237,9 @@ if [ $Flash_Flag == true ]; then
 	fi
 
 	echo -e "flash your device..."
-	if [ -f flash-nokernel.sh ] && [ $NoKernelUpdate_Flag == true ]; then
-		echo -e "without kernel..."
-		cp ./flash-nokernel.sh ./b2g-distro/flash-nokernel.sh	
-		cd ./b2g-distro
-		sudo env PATH=$PATH ./flash-nokernel.sh	
-	else
-		echo -e "with kernel..."
-		cd ./b2g-distro
-		sudo env PATH=$PATH ./flash.sh
-	fi
+	echo -e "with kernel..."
+	cd ./b2g-distro
+	sudo env PATH=$PATH ./flash.sh
 	cd ..
 
 	####################
