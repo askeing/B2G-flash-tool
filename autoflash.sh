@@ -14,8 +14,11 @@
 #   2012/12/05 Askeing: v4.0 Added -b flag for backup the old profile
 #                            (Backup/Recover script from Timdream)
 #   2012/12/13 Askeing: v5.0 Added nightly user build site.
-#                            https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-beta-unagi/latest/unagi.zip
+#			     https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-beta-unagi/latest/unagi.zip
 #   2012/12/13 Askeing: v5.1 Added the build version information. (gecko, gaia)
+#   2012/12/19 Askeing: v5.2 Added the -r flag for recover only.
+#   2012/12/21 Askeing: v5.3 Added no kernel script "flash-nokernel.sh", 
+#			     due to the kernel is unagi-kernelupdate3 not 4.
 #==========================================================================
 
 
@@ -27,14 +30,16 @@ Download_Flag=true
 Flash_Flag=false
 Engineer_Flag=false
 Backup_Flag=false
+RecoverOnly_Flag=false
+NoKernelUpdate_Flag=false
 
 for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 5.1"
+		echo -e "v 5.3"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
-		echo -e "Usage: [Environment] {script_name} [-fFebh?]"
+		echo -e "Usage: [Environment] {script_name} [parameters]"
 		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
 		# -f, --flash
 		echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
@@ -47,6 +52,10 @@ do
 		# -b, --backup
 		echo -e "-b, --backup\tbackup and recover the origin profile."
 		echo -e "\t\t(it will work with -f anf -F)"
+		# -r, --recover-only
+		echo -e "-r, --recover-only:\trecover the phone from local machine"
+		#     --no-kernel
+		echo -e "    --no-kernel:\tdo not update kernel, should have flash-nokernel.sh file"
 		# -h, --help
 		echo -e "-h, --help\tDisplay help."
 		echo -e "-?\t\tDisplay help."
@@ -72,20 +81,40 @@ do
 	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
 		Engineer_Flag=true
 
-	# -b, --backup: engineer build
+	# -b, --backup: backup and recover the phone
 	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
 		Backup_Flag=true
-
+	# -r, --recover-only: recover the phone from local machine
+	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
+		RecoverOnly_Flag=true	
+	#     --no-kernel: do not update kernel, should have flash-nokernel.sh file
+	elif [ "$x" = "--no-kernel" ]; then
+		NoKernelUpdate_Flag=true
 	else
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
-		echo -e "Usage: [Environment] {script_name} [-fFebh?]"
+		echo -e "Usage: [Environment] {script_name} [parameters]"
 		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
 		exit 0
 	fi
 done
 
 ####################
-# Check date
+# Recover Only task
+####################
+if [ $RecoverOnly_Flag == true ]; then
+	echo -e "Recover your profiles..."
+	adb shell stop b2g 2> ./mozilla-profile/recover.log &&\
+	adb shell rm -r /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
+	adb push ./mozilla-profile/profile /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
+	adb push ./mozilla-profile/data-local /data/local 2> ./mozilla-profile/recover.log &&\
+	adb reboot
+	sleep 30
+	echo -e "Recover done."
+	exit 0
+fi
+
+####################
+# Check date and Files
 ####################
 Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
 Today=$(date +%Y-%m-%d)
@@ -187,9 +216,16 @@ if [ $Flash_Flag == true ]; then
 	fi
 
 	echo -e "flash your device..."
-	cd ./b2g-distro
-	pwd
-	sudo env PATH=$PATH ./flash.sh
+	if [ -f flash-nokernel.sh ] && [ $NoKernelUpdate_Flag == true ]; then
+		echo -e "without kernel..."
+		cp ./flash-nokernel.sh ./b2g-distro/flash-nokernel.sh	
+		cd ./b2g-distro
+		sudo env PATH=$PATH ./flash-nokernel.sh	
+	else
+		echo -e "with kernel..."
+		cd ./b2g-distro
+		sudo env PATH=$PATH ./flash.sh
+	fi
 	cd ..
 
 	####################
