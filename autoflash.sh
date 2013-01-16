@@ -23,6 +23,7 @@
 #   2012/12/21 Askeing: v6.0 Modified the download URL and automatically change the filename by mtime. 
 #   2012/12/27 Askeing: v7.0 Added the date build (B2G v1.1).
 #   2013/01/16 Askeing: v8.0 Removed the no-kernel option.
+#   2013/01/16 Askeing: v8.1 Updated the description.
 #==========================================================================
 
 
@@ -40,10 +41,10 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 8.0"
-		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
+		echo -e "v 8.1"
+		echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
-		echo -e "Environment: HTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n\n"
+		echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
 		# -f, --flash
 		echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
 		echo -e "\t\tYou may have to input root password when you add this argument."
@@ -63,12 +64,12 @@ do
 		echo -e "-h, --help\tDisplay help."
 		echo -e "-?\t\tDisplay help.\n"
 		echo -e "Example:"
-		echo -e "Download build.\t\t\t./autoflash.sh"
-		echo -e "Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
-		echo -e "Download and flash build.\t./autoflash.sh -f"
-		echo -e "Flash engineer build.\t\t./autoflash.sh -e -F"
-		echo -e "Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
-		echo -e "Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
+		echo -e "  Download build.\t\t./autoflash.sh"
+		echo -e "  Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
+		echo -e "  Download and flash build.\t./autoflash.sh -f"
+		echo -e "  Flash engineer build.\t\t./autoflash.sh -e -F"
+		echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
+		echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
 		exit 0
 
 	# -f, --flash: download, flash
@@ -96,9 +97,7 @@ do
 	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
 		RecoverOnly_Flag=true	
 	else
-		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
-		echo -e "Usage: [Environment] {script_name} [parameters]"
-		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
+		echo -e "'$x' is an invalid command. See '--help'."
 		exit 0
 	fi
 done
