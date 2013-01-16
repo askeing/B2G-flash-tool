@@ -21,7 +21,7 @@
 #   2012/12/21 Askeing: v5.3 Added no kernel script "flash-nokernel.sh", 
 #			     due to the kernel is unagi-kernelupdate3 not 4.
 #   2012/12/21 Askeing: v6.0 Modified the download URL and automatically change the filename by mtime. 
-#   2012/12/27 Askeing: v7.0 Added the date build (B2G v1.1).
+#   2012/12/27 Askeing: v7.0 Added the date build (B2G shira v1.01).
 #   2013/01/16 Askeing: v8.0 Removed the no-kernel option.
 #   2013/01/16 Askeing: v8.1 Updated the description.
 #==========================================================================
@@ -53,8 +53,8 @@ do
 		echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
 		# -e, --eng
 		echo -e "-e, --eng\tchange the target build to engineer build."
-		# -11, --date: date build (B2G v1.1)
-		echo -e "-11, --date\tchange the target build to date build (B2G v1.1)."
+		# -11, --date: date build (B2G shira v1.01)
+		echo -e "-11, --date\tchange the target build to date build (B2G shira v1.01)."
 		# -b, --backup
 		echo -e "-b, --backup\tbackup and recover the origin profile."
 		echo -e "\t\t(it will work with -f anf -F)"
@@ -86,7 +86,7 @@ do
 	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
 		Engineer_Flag=1
 
-	# -11, --date: date build (B2G v1.1)
+	# -11, --date: date build (B2G shira v1.01)
 	elif [ "$x" = "-11" ] || [ "$x" = "--date" ]; then
 		Engineer_Flag=2
 
