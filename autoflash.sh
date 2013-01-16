@@ -19,6 +19,7 @@
 #   2012/12/19 Askeing: v5.2 Added the -r flag for recover only.
 #   2012/12/21 Askeing: v5.3 Added no kernel script "flash-nokernel.sh", 
 #			     due to the kernel is unagi-kernelupdate3 not 4.
+#   2012/12/21 Askeing: v6.0 Modified the download URL and automatically change the filename by mtime. 
 #==========================================================================
 
 
@@ -37,16 +38,16 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 5.3"
+		echo -e "v 6.0"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
-		echo -e "Usage: [Environment] {script_name} [parameters]"
-		echo -e "Environment: HTTP_USER=username HTTP_PWD=passwd ADB_PATH=adb_path\n"
+		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
+		echo -e "Environment: HTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n\n"
 		# -f, --flash
 		echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
 		echo -e "\t\tYou may have to input root password when you add this argument."
 		echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
 		# -F, --flash-only
-		echo -e "-F, --flash-only\tFlash your device (unagi) from downloaded zipped build."
+		echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
 		# -e, --eng
 		echo -e "-e, --eng\tchange the target build to engineer build."
 		# -b, --backup
@@ -55,16 +56,17 @@ do
 		# -r, --recover-only
 		echo -e "-r, --recover-only:\trecover the phone from local machine"
 		#     --no-kernel
-		echo -e "    --no-kernel:\tdo not update kernel, should have flash-nokernel.sh file"
+		echo -e "--no-kernel:\tdo not update kernel, should have flash-nokernel.sh file"
 		# -h, --help
 		echo -e "-h, --help\tDisplay help."
-		echo -e "-?\t\tDisplay help."
+		echo -e "-?\t\tDisplay help.\n"
 		echo -e "Example:"
-		echo -e "Download build.\t\t{script_name}"
-		echo -e "Download build.\t\tHTTP_USER=dog@foo.foo HTTP_PWD=pwd {script_name}"
-		echo -e "Download and flash build.\t{script_name} -f"
-		echo -e "Flash engineer build.\t\t{script_name} -e -F"
-		echo -e "Flash engineer build, backup profile.\t{script_name} -e -F -b"
+		echo -e "Download build.\t\t\t./autoflash.sh"
+		echo -e "Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
+		echo -e "Download and flash build.\t./autoflash.sh -f"
+		echo -e "Flash engineer build.\t\t./autoflash.sh -e -F"
+		echo -e "Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
+		echo -e "Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
 		exit 0
 
 	# -f, --flash: download, flash
@@ -118,15 +120,13 @@ fi
 ####################
 Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
 Today=$(date +%Y-%m-%d)
+
+DownloadFilename=unagi.zip
 if [ $Engineer_Flag == true ]; then
-	Filename=unagi_${Yesterday}_eng.zip
-	URL=https://releases.mozilla.com/b2g/${Yesterday}/${Filename}
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
 else
-	Filename=unagi.zip
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-beta-unagi/latest/${Filename}
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
 fi
-
-
 
 ####################
 # Download task
@@ -134,23 +134,18 @@ fi
 if [ $Download_Flag == true ]; then
 	# Clean file
 	echo -e "Clean..."
-	rm -f $Filename
+	rm -f $DownloadFilename
 
 	# Prepare the authn of web site
-	HTTPUser="b2g"
-	HTTPPwd="6 Parakeets in three bushes"
-	if [ $Engineer_Flag != true ]; then
-		if [ "$HTTP_USER" != "" ]; then
-			HTTPUser=$HTTP_USER
-		else
-			read -p "Enter your HTTP Username: " HTTPUser
-		fi
-
-		if [ "$HTTP_PWD" != "" ]; then
-			HTTPPwd=$HTTP_PWD
-		else
-			read -s -p "Enter your HTTP Password: " HTTPPwd
-		fi
+	if [ "$HTTP_USER" != "" ]; then
+		HTTPUser=$HTTP_USER
+	else
+		read -p "Enter your HTTP Username: " HTTPUser
+	fi
+	if [ "$HTTP_PWD" != "" ]; then
+		HTTPPwd=$HTTP_PWD
+	else
+		read -s -p "Enter your HTTP Password: " HTTPPwd
 	fi
 	
 	# Download file
@@ -161,6 +156,23 @@ if [ $Download_Flag == true ]; then
 	if [ $? -ne 0 ]; then
 		echo -e "Download $URL failed."
 		exit 1
+	fi
+
+	# Modify the downloaded filename
+	filetime=`stat -c %y unagi.zip | sed 's/\s.*$//g'`
+	if [ $Engineer_Flag == true ]; then
+		Filename=unagi_${filetime}_eng.zip
+	else
+		Filename=unagi_${filetime}.zip
+	fi
+	rm -f $Filename
+	mv $DownloadFilename $Filename
+else
+	# Setup the filename for -F
+	if [ $Engineer_Flag == true ]; then
+		Filename=`ls -tm unagi_*_eng.zip | sed 's/,.*$//g'`
+	else
+		Filename=`ls -tm unagi_*.zip | sed 's/,.*$//g'`
 	fi
 fi
 
@@ -239,7 +251,6 @@ if [ $Flash_Flag == true ]; then
 		adb push ./mozilla-profile/profile /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
 		adb push ./mozilla-profile/data-local /data/local 2> ./mozilla-profile/recover.log &&\
 		adb reboot
-		sleep 20
 		adb wait-for-device
 		echo -e "Recover done."
 	fi
@@ -248,13 +259,17 @@ fi
 ####################
 # Retrieve Version info
 ####################
-if [ $Engineer_Flag == true ]; then
-	grep '^.*path=\"gecko\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gecko\" remote=\"mozillaorg\" revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
-	grep '^.*path=\"gaia\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gaia\" remote=\"mozillaorg\" revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
-else
-	grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gecko\".*revision=/gecko revision: /g' | sed 's/\/> -->//g' > VERSION
-	grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gaia\".*revision=/gaia revision: /g' | sed 's/\/> -->//g' >> VERSION
-fi
+#if [ $Engineer_Flag == true ]; then
+#	grep '^.*path=\"gecko\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gecko\" remote=\"mozillaorg\" revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
+#	grep '^.*path=\"gaia\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gaia\" remote=\"mozillaorg\" revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
+#else
+#	grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gecko\".*revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
+#	grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gaia\".*revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
+#fi
+
+grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml > VERSION
+grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml >> VERSION
+
 echo -e "===== VERSION ====="
 cat VERSION
 
