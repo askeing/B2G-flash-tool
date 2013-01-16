@@ -20,6 +20,7 @@
 #   2012/12/21 Askeing: v5.3 Added no kernel script "flash-nokernel.sh", 
 #			     due to the kernel is unagi-kernelupdate3 not 4.
 #   2012/12/21 Askeing: v6.0 Modified the download URL and automatically change the filename by mtime. 
+#   2012/12/27 Askeing: v7.0 Added the date build (B2G v1.1).
 #==========================================================================
 
 
@@ -27,9 +28,9 @@
 # Parameter Flags
 ####################
 # Default: download, no flash, nightly build, no backup
+Engineer_Flag=0
 Download_Flag=true
 Flash_Flag=false
-Engineer_Flag=false
 Backup_Flag=false
 RecoverOnly_Flag=false
 NoKernelUpdate_Flag=false
@@ -38,7 +39,7 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 6.0"
+		echo -e "v 7.0"
 		echo -e "This script will download latest release nightly build.\n(only for unagi now)\n"
 		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 		echo -e "Environment: HTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n\n"
@@ -50,6 +51,8 @@ do
 		echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
 		# -e, --eng
 		echo -e "-e, --eng\tchange the target build to engineer build."
+		# -11, --date: date build (B2G v1.1)
+		echo -e "-11, --date\tchange the target build to date build (B2G v1.1)."
 		# -b, --backup
 		echo -e "-b, --backup\tbackup and recover the origin profile."
 		echo -e "\t\t(it will work with -f anf -F)"
@@ -81,7 +84,11 @@ do
 
 	# -e, --eng: engineer build
 	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
-		Engineer_Flag=true
+		Engineer_Flag=1
+
+	# -11, --date: date build (B2G v1.1)
+	elif [ "$x" = "-11" ] || [ "$x" = "--date" ]; then
+		Engineer_Flag=2
 
 	# -b, --backup: backup and recover the phone
 	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
@@ -122,8 +129,10 @@ Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
 Today=$(date +%Y-%m-%d)
 
 DownloadFilename=unagi.zip
-if [ $Engineer_Flag == true ]; then
+if [ $Engineer_Flag == 1 ]; then
 	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
+elif [ $Engineer_Flag == 2 ]; then
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/date-unagi/latest/${DownloadFilename}
 else
 	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
 fi
@@ -160,19 +169,23 @@ if [ $Download_Flag == true ]; then
 
 	# Modify the downloaded filename
 	filetime=`stat -c %y unagi.zip | sed 's/\s.*$//g'`
-	if [ $Engineer_Flag == true ]; then
+	if [ $Engineer_Flag == 1 ]; then
 		Filename=unagi_${filetime}_eng.zip
+	elif [ $Engineer_Flag == 2 ]; then
+		Filename=unagi_${filetime}_date.zip
 	else
-		Filename=unagi_${filetime}.zip
+		Filename=unagi_${filetime}_usr.zip
 	fi
 	rm -f $Filename
 	mv $DownloadFilename $Filename
 else
 	# Setup the filename for -F
-	if [ $Engineer_Flag == true ]; then
-		Filename=`ls -tm unagi_*_eng.zip | sed 's/,.*$//g'`
+	if [ $Engineer_Flag == 1 ]; then
+		Filename=`ls -tm unagi_*_eng.zip | sed 's/,.*$//g' | head -1`
+	elif [ $Engineer_Flag == 2 ]; then
+		Filename=`ls -tm unagi_*_date.zip | sed 's/,.*$//g' | head -1`
 	else
-		Filename=`ls -tm unagi_*.zip | sed 's/,.*$//g'`
+		Filename=`ls -tm unagi_*_usr.zip | sed 's/,.*$//g' | head -1`
 	fi
 fi
 
@@ -188,7 +201,7 @@ echo -e "Delete old build folder: b2g-distro"
 rm -rf b2g-distro/
 
 # Unzip file
-echo -e "Unzip..."
+echo -e "Unzip $Filename ..."
 unzip $Filename
 
 
@@ -259,7 +272,7 @@ fi
 ####################
 # Retrieve Version info
 ####################
-#if [ $Engineer_Flag == true ]; then
+#if [ $Engineer_Flag == 1 ]; then
 #	grep '^.*path=\"gecko\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gecko\" remote=\"mozillaorg\" revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
 #	grep '^.*path=\"gaia\" remote=\"mozillaorg\" revision=' ./b2g-distro/default.xml | sed 's/^.*path=\"gaia\" remote=\"mozillaorg\" revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
 #else
