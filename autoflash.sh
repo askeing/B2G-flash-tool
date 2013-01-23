@@ -24,6 +24,7 @@
 #   2012/12/27 Askeing: v7.0 Added the date build (B2G shira v1.01).
 #   2013/01/16 Askeing: v8.0 Removed the no-kernel option.
 #   2013/01/16 Askeing: v8.1 Updated the description.
+#   2013/01/23 Askeing: v8.2 Removed sudo command.
 #==========================================================================
 
 
@@ -41,7 +42,7 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 8.1"
+		echo -e "v 8.2"
 		echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 		echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -238,7 +239,8 @@ if [ $Flash_Flag == true ]; then
 	echo -e "flash your device..."
 	echo -e "with kernel..."
 	cd ./b2g-distro
-	sudo env PATH=$PATH ./flash.sh
+	#sudo env PATH=$PATH ./flash.sh
+	./flash.sh
 	cd ..
 
 	####################
