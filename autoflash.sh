@@ -237,7 +237,6 @@ if [ $Flash_Flag == true ]; then
 	fi
 
 	echo -e "flash your device..."
-	echo -e "with kernel..."
 	cd ./b2g-distro
 	#sudo env PATH=$PATH ./flash.sh
 	./flash.sh
