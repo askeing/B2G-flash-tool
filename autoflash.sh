@@ -107,8 +107,12 @@ done
 ####################
 # Recover Only task
 ####################
-if [ $RecoverOnly_Flag == true ] && [ -d mozilla-profile/profile ] && [ -d mozilla-profile/data-local ]; then
+if [ $RecoverOnly_Flag == true ]; then
 	echo -e "Recover your profiles..."
+	if [ ! -d mozilla-profile/profile ] || [ ! -d mozilla-profile/data-local ]; then
+		echo "no recover files."
+		exit -1
+	fi
 	adb shell stop b2g 2> ./mozilla-profile/recover.log &&\
 	adb shell rm -r /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
 	adb push ./mozilla-profile/profile /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
@@ -227,6 +231,7 @@ if [ $Flash_Flag == true ]; then
 	####################
 	if [ $Backup_Flag == true ]; then
 		if [ ! -d mozilla-profile ]; then
+			echo "no backup folder, creating..."
 			mkdir mozilla-profile
 		fi
 		echo -e "Backup your profiles..."
