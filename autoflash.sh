@@ -25,6 +25,7 @@
 #   2013/01/16 Askeing: v8.0 Removed the no-kernel option.
 #   2013/01/16 Askeing: v8.1 Updated the description.
 #   2013/01/23 Askeing: v8.2 Removed sudo command.
+#   2013/01/23 Askeing: v8.3 Fixed backup/recover bug.
 #==========================================================================
 
 
@@ -42,7 +43,7 @@ for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 8.2"
+		echo -e "v 8.3"
 		echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 		echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -106,7 +107,7 @@ done
 ####################
 # Recover Only task
 ####################
-if [ $RecoverOnly_Flag == true ]; then
+if [ $RecoverOnly_Flag == true ] && [ -d mozilla-profile/profile ] && [ -d mozilla-profile/data-local ]; then
 	echo -e "Recover your profiles..."
 	adb shell stop b2g 2> ./mozilla-profile/recover.log &&\
 	adb shell rm -r /data/b2g/mozilla 2> ./mozilla-profile/recover.log &&\
@@ -225,6 +226,9 @@ if [ $Flash_Flag == true ]; then
 	# Backup task
 	####################
 	if [ $Backup_Flag == true ]; then
+		if [ ! -d mozilla-profile ]; then
+			mkdir mozilla-profile
+		fi
 		echo -e "Backup your profiles..."
 		adb shell stop b2g 2> ./mozilla-profile/backup.log &&\
 		rm -rf ./mozilla-profile/* &&\
@@ -245,7 +249,7 @@ if [ $Flash_Flag == true ]; then
 	####################
 	# Recover task
 	####################
-	if [ $Backup_Flag == true ]; then
+	if [ $Backup_Flag == true ] && [ -d mozilla-profile/profile ] && [ -d mozilla-profile/data-local ];  then
 		sleep 5
 		echo -e "Recover your profiles..."
 		adb shell stop b2g 2> ./mozilla-profile/recover.log &&\
