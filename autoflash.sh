@@ -26,6 +26,7 @@
 #   2013/01/16 Askeing: v8.1 Updated the description.
 #   2013/01/23 Askeing: v8.2 Removed sudo command.
 #   2013/01/23 Askeing: v8.3 Fixed backup/recover bug.
+#   2013/02/27 Askeing: v9.0 Modified the code for version changed.
 #==========================================================================
 
 
@@ -33,6 +34,7 @@
 # Parameter Flags
 ####################
 # Default: download, no flash, nightly build, no backup
+Version_Flag="shira"
 Engineer_Flag=0
 Download_Flag=true
 Flash_Flag=false
@@ -55,8 +57,12 @@ do
 		echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
 		# -e, --eng
 		echo -e "-e, --eng\tchange the target build to engineer build."
-		# -11, --date: date build (B2G shira v1.01)
-		echo -e "-11, --date\tchange the target build to date build (B2G shira v1.01)."
+		# -100, --tef: shira build v1.0.0
+		echo -e "-100, --tef\tchange the target build to tef build v1.0.0."
+		# -101, --shira: shira build v1.0.1
+		echo -e "-101, --shira\tchange the target build to shira build v1.0.1."
+		# -110, --v1train: v1-train build
+		echo -e "-110, --v1train\tchange the target build to v1train build."
 		# -b, --backup
 		echo -e "-b, --backup\tbackup and recover the origin profile."
 		echo -e "\t\t(it will work with -f anf -F)"
@@ -88,9 +94,17 @@ do
 	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
 		Engineer_Flag=1
 
-	# -11, --date: date build (B2G shira v1.01)
-	elif [ "$x" = "-11" ] || [ "$x" = "--date" ]; then
-		Engineer_Flag=2
+	# -100, --tef: tef build v1.0.0
+	elif [ "$x" = "-100" ] || [ "$x" = "--tef" ]; then
+		Version_Flag="tef"
+
+	# -101, --shira: shira build v1.0.1
+	elif [ "$x" = "-101" ] || [ "$x" = "--shira" ]; then
+		Version_Flag="shira"
+
+	# -110, --v1train: v1-train build
+	elif [ "$x" = "-110" ] || [ "$x" = "--v1train" ]; then
+		Version_Flag="v1train"
 
 	# -b, --backup: backup and recover the phone
 	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
@@ -130,12 +144,22 @@ Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
 Today=$(date +%Y-%m-%d)
 
 DownloadFilename=unagi.zip
-if [ $Engineer_Flag == 1 ]; then
+# tef v1.0.0: only user build
+if [ $Version_Flag == "tef" ]; then
+	Engineer_Flag=0
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_0-unagi/latest/${DownloadFilename}
+# shira v1.0.1: eng/user build
+elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi-eng/latest/${DownloadFilename}
+elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+# v1-train: eng/user build
+elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
 	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
-elif [ $Engineer_Flag == 2 ]; then
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/date-unagi/latest/${DownloadFilename}
-else
+elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
 	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
+else
+	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
 fi
 
 ####################
@@ -159,7 +183,8 @@ if [ $Download_Flag == true ]; then
 	fi
 	
 	# Download file
-	echo -e "Download latest build..."
+	[ $Engineer_Flag == 0 ] && Build_SRT="User" || Build_SRT="Engineer"
+	echo -e "\n\nDownload latest ${Version_Flag} ${Build_SRT} build..."
 	wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL
 
 	# Check the download is okay
@@ -170,23 +195,39 @@ if [ $Download_Flag == true ]; then
 
 	# Modify the downloaded filename
 	filetime=`stat -c %y unagi.zip | sed 's/\s.*$//g'`
-	if [ $Engineer_Flag == 1 ]; then
-		Filename=unagi_${filetime}_eng.zip
-	elif [ $Engineer_Flag == 2 ]; then
-		Filename=unagi_${filetime}_date.zip
-	else
-		Filename=unagi_${filetime}_usr.zip
+	# tef v1.0.0: only user build
+	if [ $Version_Flag == "tef" ]; then
+		Filename=unagi_${filetime}_tef_usr.zip
+	# shira v1.0.1: eng/user build
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
+		Filename=unagi_${filetime}_shira_eng.zip
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
+		Filename=unagi_${filetime}_shira_usr.zip
+	# v1-train: eng/user build
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
+		Filename=unagi_${filetime}_v1train_eng.zip
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
+		Filename=unagi_${filetime}_v1train_usr.zip
 	fi
+
 	rm -f $Filename
 	mv $DownloadFilename $Filename
+
 else
 	# Setup the filename for -F
-	if [ $Engineer_Flag == 1 ]; then
-		Filename=`ls -tm unagi_*_eng.zip | sed 's/,.*$//g' | head -1`
-	elif [ $Engineer_Flag == 2 ]; then
-		Filename=`ls -tm unagi_*_date.zip | sed 's/,.*$//g' | head -1`
-	else
-		Filename=`ls -tm unagi_*_usr.zip | sed 's/,.*$//g' | head -1`
+	# tef v1.0.0: only user build
+	if [ $Version_Flag == "tef" ]; then
+		Filename=`ls -tm unagi_*_tef_usr.zip | sed 's/,.*$//g' | head -1`
+	# shira v1.0.1: eng/user build
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
+		Filename=`ls -tm unagi_*_shira_eng.zip | sed 's/,.*$//g' | head -1`
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
+		Filename=`ls -tm unagi_*_shira_usr.zip | sed 's/,.*$//g' | head -1`
+	# v1-train: eng/user build
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
+		Filename=`ls -tm unagi_*_v1train_eng.zip | sed 's/,.*$//g' | head -1`
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
+		Filename=`ls -tm unagi_*_v1train_usr.zip | sed 's/,.*$//g' | head -1`
 	fi
 fi
 
@@ -203,7 +244,7 @@ rm -rf b2g-distro/
 
 # Unzip file
 echo -e "Unzip $Filename ..."
-unzip $Filename
+unzip $Filename || exit -1
 
 
 ####################
