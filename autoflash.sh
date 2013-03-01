@@ -27,6 +27,7 @@
 #   2013/01/23 Askeing: v8.2 Removed sudo command.
 #   2013/01/23 Askeing: v8.3 Fixed backup/recover bug.
 #   2013/02/27 Askeing: v9.0 Modified the code for version changed.
+#   2013/03/01 Askeing: v9.1 Added backup-only.
 #==========================================================================
 
 
@@ -39,13 +40,14 @@ Engineer_Flag=0
 Download_Flag=true
 Flash_Flag=false
 Backup_Flag=false
+BackupOnly_Flag=false
 RecoverOnly_Flag=false
 
 for x
 do
 	# -h, --help, -?: help
 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 8.3"
+		echo -e "v 9.1"
 		echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 		echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -66,8 +68,10 @@ do
 		# -b, --backup
 		echo -e "-b, --backup\tbackup and recover the origin profile."
 		echo -e "\t\t(it will work with -f anf -F)"
-		# -r, --recover-only
-		echo -e "-r, --recover-only:\trecover the phone from local machine"
+		# -bo, --backup-only
+		echo -e "-bo, --backup-only:\tbackup the phone to local machine"
+		# -ro, --recover-only
+		echo -e "-ro, --recover-only:\trecover the phone from local machine"
 		# -h, --help
 		echo -e "-h, --help\tDisplay help."
 		echo -e "-?\t\tDisplay help.\n"
@@ -106,17 +110,42 @@ do
 	elif [ "$x" = "-110" ] || [ "$x" = "--v1train" ]; then
 		Version_Flag="v1train"
 
-	# -b, --backup: backup and recover the phone
+	# -b, --backup: backup and recover when flash the phone
 	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
 		Backup_Flag=true
-	# -r, --recover-only: recover the phone from local machine
-	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
+
+	# -bo, --backup-only: backup the phone to local machine
+	elif [ "$x" = "-bo" ] || [ "$x" = "--backup-only" ]; then
+		BackupOnly_Flag=true
+	# -ro, --recover-only: recover the phone from local machine
+	elif [ "$x" = "-ro" ] || [ "$x" = "--recover-only" ]; then
 		RecoverOnly_Flag=true	
 	else
 		echo -e "'$x' is an invalid command. See '--help'."
 		exit 0
 	fi
 done
+
+
+####################
+# Backup Only task
+####################
+if [ $BackupOnly_Flag == true ]; then
+	if [ ! -d mozilla-profile ]; then
+		echo "no backup folder, creating..."
+		mkdir mozilla-profile
+	fi
+	echo -e "Backup your profiles..."
+	adb shell stop b2g 2> ./mozilla-profile/backup.log &&\
+	rm -rf ./mozilla-profile/* &&\
+	mkdir -p mozilla-profile/profile &&\
+	adb pull /data/b2g/mozilla ./mozilla-profile/profile 2> ./mozilla-profile/backup.log &&\
+	mkdir -p mozilla-profile/data-local &&\
+	adb pull /data/local ./mozilla-profile/data-local 2> ./mozilla-profile/backup.log &&\
+	rm -rf mozilla-profile/data-local/webapps
+	echo -e "Backup done."
+	exit 0
+fi
 
 ####################
 # Recover Only task
