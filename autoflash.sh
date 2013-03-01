@@ -143,6 +143,7 @@ if [ $BackupOnly_Flag == true ]; then
 	mkdir -p mozilla-profile/data-local &&\
 	adb pull /data/local ./mozilla-profile/data-local 2> ./mozilla-profile/backup.log &&\
 	rm -rf mozilla-profile/data-local/webapps
+	adb shell start b2g 2> ./mozilla-profile/backup.log
 	echo -e "Backup done."
 	exit 0
 fi
