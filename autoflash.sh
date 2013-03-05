@@ -28,6 +28,7 @@
 #   2013/01/23 Askeing: v8.3 Fixed backup/recover bug.
 #   2013/02/27 Askeing: v9.0 Modified the code for version changed.
 #   2013/03/01 Askeing: v9.1 Added backup-only.
+#   2013/03/05 Paul:    v10.0 refactor arg pasring, refine argument
 #==========================================================================
 
 
@@ -46,20 +47,20 @@ RecoverOnly_Flag=false
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-	echo -e "v 9.1"
+	echo -e "v 10.0"
 	echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 	echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 	echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
 	# -f, --flash
-	echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
+	echo -e "-f|--flash\tFlash your device (unagi) after downlaod finish."
 	echo -e "\t\tYou may have to input root password when you add this argument."
 	echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
 	# -F, --flash-only
-	echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
+    echo -e "-F|--flash-only\tFlash your device from local zipped build(ex: -F{file name}); default: use latest downloaded"
 	# -e, --eng
-	echo -e "-e, --eng\tchange the target build to engineer build."
-    # -v
-    echo -e "-v, \t give the target build version, ex: -vtef == -v100"
+	echo -e "-e|--eng\tchange the target build to engineer build."
+    # -v, --version
+    echo -e "-v|--version, \t give the target build version, ex: -vtef == -v100; show available version if nothing specified."
 	# --tef: tef build v1.0.0
 	echo -e "--tef\tchange the target build to tef build v1.0.0."
 	# --shira: shira build v1.0.1
@@ -67,15 +68,14 @@ function helper(){
 	# --v1train: v1-train build
 	echo -e "--v1train\tchange the target build to v1train build."
 	# -b, --backup
-	echo -e "-b, --backup\tbackup and recover the origin profile."
+	echo -e "-b|--backup\tbackup and recover the origin profile."
 	echo -e "\t\t(it will work with -f anf -F)"
 	# -B, --backup-only
-	echo -e "-B, --backup-only:\tbackup the phone to local machine"
+	echo -e "-B|--backup-only:\tbackup the phone to local machine"
 	# -R, --recover-only
-	echo -e "-r, --recover-only:\trecover the phone from local machine"
+	echo -e "-R|--recover-only:\trecover the phone from local machine"
 	# -h, --help
-	echo -e "-h, --help\tDisplay help."
-	echo -e "-?\t\tDisplay help.\n"
+	echo -e "-h|--help\tDisplay help."
 	echo -e "Example:"
 	echo -e "  Download build.\t\t./autoflash.sh"
 	echo -e "  Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
@@ -98,11 +98,18 @@ function version(){
     esac
 }
 
+function version_info(){
+    echo -e "Available version:"
+    echo -e "\t100|tef"
+    echo -e "\t101|shira"
+    echo -e "\t110|v1train"
+}
+
 ## show helper if nothing specified
 if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 
 ## add getopt argument parsing
-TEMP=`getopt -o f::F::ebrhv? --long flash,flash-only,eng,tef,shira,v1train,backup,recover-only,help \
+TEMP=`getopt -o f::F::ebrhv? --long flash,flash-only,eng,version,tef,shira,v1train,backup,recover-only,help \
     -n 'error occured' -- "$@"`
 
 if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
@@ -110,7 +117,6 @@ if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
 eval set -- "$TEMP"
 
 ### TODO: -f can get an optional argument and download with build number or something
-### TODO: -F can flash with a local zip file which is already downloaded
 ### write Filename and prevent for future modification
 
 while true
@@ -118,10 +124,9 @@ do
     case "$1" in
         -f|--flash) Download_Flag=true; Flash_Flag=true; shift;;
         -F|--flash-only) Download_Flag=false; Flash_Flag=true;
-           if [ -n $2 ]; then Filename=$2;shift 2; else shift; fi;;
+           if [ -n $2 ]; then Filename=$2; shift 2; else shift; fi;;
         -e|--eng) Engineer_Flag=1; shift;;
-        -v) version $2;
-            shift 2;;
+        -v|--version) if [ -n $2 ]; then version $2; shift 2; else version_info; shift; fi;;
         --tef) version "tef"; shift;;
         --shira) version "shira"; shift;;
         --v1train) version "v1train"; shift;;
