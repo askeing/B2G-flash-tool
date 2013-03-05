@@ -41,82 +41,135 @@ Flash_Flag=false
 Backup_Flag=false
 RecoverOnly_Flag=false
 
-for x
-do
-	# -h, --help, -?: help
-	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-		echo -e "v 8.3"
-		echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
-		echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
-		echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
-		# -f, --flash
-		echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
-		echo -e "\t\tYou may have to input root password when you add this argument."
-		echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
-		# -F, --flash-only
-		echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
-		# -e, --eng
-		echo -e "-e, --eng\tchange the target build to engineer build."
-		# -100, --tef: shira build v1.0.0
-		echo -e "-100, --tef\tchange the target build to tef build v1.0.0."
-		# -101, --shira: shira build v1.0.1
-		echo -e "-101, --shira\tchange the target build to shira build v1.0.1."
-		# -110, --v1train: v1-train build
-		echo -e "-110, --v1train\tchange the target build to v1train build."
-		# -b, --backup
-		echo -e "-b, --backup\tbackup and recover the origin profile."
-		echo -e "\t\t(it will work with -f anf -F)"
-		# -r, --recover-only
-		echo -e "-r, --recover-only:\trecover the phone from local machine"
-		# -h, --help
-		echo -e "-h, --help\tDisplay help."
-		echo -e "-?\t\tDisplay help.\n"
-		echo -e "Example:"
-		echo -e "  Download build.\t\t./autoflash.sh"
-		echo -e "  Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
-		echo -e "  Download and flash build.\t./autoflash.sh -f"
-		echo -e "  Flash engineer build.\t\t./autoflash.sh -e -F"
-		echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
-		echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
-		exit 0
-
-	# -f, --flash: download, flash
-	elif [ "$x" = "-f" ] || [ "$x" = "--flash" ]; then
-		Download_Flag=true
-		Flash_Flag=true
-
-	# -F, --flash-only: no download, flash
-	elif [ "$x" = "-F" ] || [ "$x" = "--flash-only" ]; then
-		Download_Flag=false
-		Flash_Flag=true
-
-	# -e, --eng: engineer build
-	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
-		Engineer_Flag=1
-
-	# -100, --tef: tef build v1.0.0
-	elif [ "$x" = "-100" ] || [ "$x" = "--tef" ]; then
-		Version_Flag="tef"
-
+## helper function
+## no input arguments, simply print helper descirption to std out
+function helper(){
+	echo -e "v 8.3"
+	echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
+	echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
+	echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
+	# -f, --flash
+	echo -e "-f, --flash\tFlash your device (unagi) after downlaod finish."
+	echo -e "\t\tYou may have to input root password when you add this argument."
+	echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
+	# -F, --flash-only
+	echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
+	# -e, --eng
+	echo -e "-e, --eng\tchange the target build to engineer build."
+	# -100, --tef: shira build v1.0.0
+	echo -e "-100, --tef\tchange the target build to tef build v1.0.0."
 	# -101, --shira: shira build v1.0.1
-	elif [ "$x" = "-101" ] || [ "$x" = "--shira" ]; then
-		Version_Flag="shira"
-
+	echo -e "-101, --shira\tchange the target build to shira build v1.0.1."
 	# -110, --v1train: v1-train build
-	elif [ "$x" = "-110" ] || [ "$x" = "--v1train" ]; then
-		Version_Flag="v1train"
+	echo -e "-110, --v1train\tchange the target build to v1train build."
+	# -b, --backup
+	echo -e "-b, --backup\tbackup and recover the origin profile."
+	echo -e "\t\t(it will work with -f anf -F)"
+	# -r, --recover-only
+	echo -e "-r, --recover-only:\trecover the phone from local machine"
+	# -h, --help
+	echo -e "-h, --help\tDisplay help."
+	echo -e "-?\t\tDisplay help.\n"
+	echo -e "Example:"
+	echo -e "  Download build.\t\t./autoflash.sh"
+	echo -e "  Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
+	echo -e "  Download and flash build.\t./autoflash.sh -f"
+	echo -e "  Flash engineer build.\t\t./autoflash.sh -e -F"
+	echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
+	echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
+}
 
-	# -b, --backup: backup and recover the phone
-	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
-		Backup_Flag=true
-	# -r, --recover-only: recover the phone from local machine
-	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
-		RecoverOnly_Flag=true	
-	else
-		echo -e "'$x' is an invalid command. See '--help'."
-		exit 0
-	fi
+## version parsing
+## arg1: version for flash, if the version is not specified then default option will be taken
+## output: set version to global $Version_Flag
+function version(){
+    local_ver=$1
+    case "$local_ver" in
+        100|tef) Version_Flag="tef";;
+        101|shira) Version_Flag="shira";;
+        110|v1train) Version_Flag="v1train";;
+    esac
+}
+
+## show helper if nothing specified
+if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
+
+## add getopt argument parsing
+TEMP=`getopt -o f::F::ebrhv? --long flash,flash-only,eng,tef,shira,v1train,backup,recover-only,help \
+    -n 'error occured' -- "$@"`
+
+if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
+
+eval set -- "$TEMP"
+
+### TODO: -f can get an optional argument and download with build number or something
+### TODO: -F can flash with a local zip file which is already downloaded
+### write Filename and prevent for future modification
+
+while true
+do
+    case "$1" in
+        -f|--flash) Download_Flag=true; Flash_Flag=true; shift;;
+        -F|--flash-only) Download_Flag=false; Flash_Flag=true;
+           if [ -n $2 ]; then Filename=$2;shift 2; else shift; fi;;
+        -e|--eng) Engineer_Flag=1; shift;;
+        -v) version $2;
+            shift 2;;
+        --tef) version "tef"; shift;;
+        --shira) version "shira"; shift;;
+        --v1train) version "v1train"; shift;;
+        -b|--backup) Backup_Flag=true; shift;;
+        -r|--recover-only) RecoverOnly_Flag=true; shift;;
+        -h|--help) helper; exit 0;;
+        --) shift;break;;
+        *) echo error occured; exit 1;;
+    esac
 done
+
+
+## for x
+## do
+## 	# -h, --help, -?: help
+## 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
+## 		exit 0
+## 
+## 	# -f, --flash: download, flash
+## 	elif [ "$x" = "-f" ] || [ "$x" = "--flash" ]; then
+## 		Download_Flag=true
+## 		Flash_Flag=true
+## 
+## 	# -F, --flash-only: no download, flash
+## 	elif [ "$x" = "-F" ] || [ "$x" = "--flash-only" ]; then
+## 		Download_Flag=false
+## 		Flash_Flag=true
+## 
+## 	# -e, --eng: engineer build
+## 	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
+## 		Engineer_Flag=1
+## 
+## 	# -100, --tef: tef build v1.0.0
+## 	elif [ "$x" = "-100" ] || [ "$x" = "--tef" ]; then
+## 		Version_Flag="tef"
+## 
+## 	# -101, --shira: shira build v1.0.1
+## 	elif [ "$x" = "-101" ] || [ "$x" = "--shira" ]; then
+## 		Version_Flag="shira"
+## 
+## 	# -110, --v1train: v1-train build
+## 	elif [ "$x" = "-110" ] || [ "$x" = "--v1train" ]; then
+## 		Version_Flag="v1train"
+## 
+## 	# -b, --backup: backup and recover the phone
+## 	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
+## 		Backup_Flag=true
+## 	# -r, --recover-only: recover the phone from local machine
+## 	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
+## 		RecoverOnly_Flag=true	
+## 	else
+## 		echo -e "'$x' is an invalid command. See '--help'."
+## 		exit 0
+## 	fi
+## done
 
 ####################
 # Recover Only task
@@ -216,7 +269,11 @@ if [ $Download_Flag == true ]; then
 else
 	# Setup the filename for -F
 	# tef v1.0.0: only user build
-	if [ $Version_Flag == "tef" ]; then
+    if [ -n $Filename ]; then
+        if [ ! -f $Filename ]; then
+            echo "file $Filename doesn't exist"; exit 1;
+        fi
+	elif [ $Version_Flag == "tef" ]; then
 		Filename=`ls -tm unagi_*_tef_usr.zip | sed 's/,.*$//g' | head -1`
 	# shira v1.0.1: eng/user build
 	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
