@@ -27,6 +27,7 @@
 #   2013/01/23 Askeing: v8.2 Removed sudo command.
 #   2013/01/23 Askeing: v8.3 Fixed backup/recover bug.
 #   2013/02/27 Askeing: v9.0 Modified the code for version changed.
+#   2013/03/01 Askeing: v9.1 Added backup-only.
 #==========================================================================
 
 
@@ -39,12 +40,13 @@ Engineer_Flag=0
 Download_Flag=true
 Flash_Flag=false
 Backup_Flag=false
+BackupOnly_Flag=false
 RecoverOnly_Flag=false
 
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-	echo -e "v 8.3"
+	echo -e "v 9.1"
 	echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 	echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 	echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -56,16 +58,20 @@ function helper(){
 	echo -e "-F, --flash-only\tFlash your device (unagi) from latest downloaded zipped build."
 	# -e, --eng
 	echo -e "-e, --eng\tchange the target build to engineer build."
-	# -100, --tef: shira build v1.0.0
-	echo -e "-100, --tef\tchange the target build to tef build v1.0.0."
-	# -101, --shira: shira build v1.0.1
-	echo -e "-101, --shira\tchange the target build to shira build v1.0.1."
-	# -110, --v1train: v1-train build
-	echo -e "-110, --v1train\tchange the target build to v1train build."
+    # -v
+    echo -e "-v, \t give the target build version, ex: -vtef == -v100"
+	# --tef: tef build v1.0.0
+	echo -e "--tef\tchange the target build to tef build v1.0.0."
+	# --shira: shira build v1.0.1
+	echo -e "--shira\tchange the target build to shira build v1.0.1."
+	# --v1train: v1-train build
+	echo -e "--v1train\tchange the target build to v1train build."
 	# -b, --backup
 	echo -e "-b, --backup\tbackup and recover the origin profile."
 	echo -e "\t\t(it will work with -f anf -F)"
-	# -r, --recover-only
+	# -B, --backup-only
+	echo -e "-B, --backup-only:\tbackup the phone to local machine"
+	# -R, --recover-only
 	echo -e "-r, --recover-only:\trecover the phone from local machine"
 	# -h, --help
 	echo -e "-h, --help\tDisplay help."
@@ -77,6 +83,7 @@ function helper(){
 	echo -e "  Flash engineer build.\t\t./autoflash.sh -e -F"
 	echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
 	echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
+	exit 0
 }
 
 ## version parsing
@@ -119,6 +126,7 @@ do
         --shira) version "shira"; shift;;
         --v1train) version "v1train"; shift;;
         -b|--backup) Backup_Flag=true; shift;;
+        -B|--backup-only) BackupOnly_Flag=true; shift;;
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
@@ -127,49 +135,27 @@ do
 done
 
 
-## for x
-## do
-## 	# -h, --help, -?: help
-## 	if [ "$x" = "--help" ] || [ "$x" = "-h" ] || [ "$x" = "-?" ]; then
-## 		exit 0
-## 
-## 	# -f, --flash: download, flash
-## 	elif [ "$x" = "-f" ] || [ "$x" = "--flash" ]; then
-## 		Download_Flag=true
-## 		Flash_Flag=true
-## 
-## 	# -F, --flash-only: no download, flash
-## 	elif [ "$x" = "-F" ] || [ "$x" = "--flash-only" ]; then
-## 		Download_Flag=false
-## 		Flash_Flag=true
-## 
-## 	# -e, --eng: engineer build
-## 	elif [ "$x" = "-e" ] || [ "$x" = "--eng" ]; then
-## 		Engineer_Flag=1
-## 
-## 	# -100, --tef: tef build v1.0.0
-## 	elif [ "$x" = "-100" ] || [ "$x" = "--tef" ]; then
-## 		Version_Flag="tef"
-## 
-## 	# -101, --shira: shira build v1.0.1
-## 	elif [ "$x" = "-101" ] || [ "$x" = "--shira" ]; then
-## 		Version_Flag="shira"
-## 
-## 	# -110, --v1train: v1-train build
-## 	elif [ "$x" = "-110" ] || [ "$x" = "--v1train" ]; then
-## 		Version_Flag="v1train"
-## 
-## 	# -b, --backup: backup and recover the phone
-## 	elif [ "$x" = "-b" ] || [ "$x" = "--backup" ]; then
-## 		Backup_Flag=true
-## 	# -r, --recover-only: recover the phone from local machine
-## 	elif [ "$x" = "-r" ] || [ "$x" = "--recover-only" ]; then
-## 		RecoverOnly_Flag=true	
-## 	else
-## 		echo -e "'$x' is an invalid command. See '--help'."
-## 		exit 0
-## 	fi
-## done
+
+####################
+# Backup Only task
+####################
+if [ $BackupOnly_Flag == true ]; then
+	if [ ! -d mozilla-profile ]; then
+		echo "no backup folder, creating..."
+		mkdir mozilla-profile
+	fi
+	echo -e "Backup your profiles..."
+	adb shell stop b2g 2> ./mozilla-profile/backup.log &&\
+	rm -rf ./mozilla-profile/* &&\
+	mkdir -p mozilla-profile/profile &&\
+	adb pull /data/b2g/mozilla ./mozilla-profile/profile 2> ./mozilla-profile/backup.log &&\
+	mkdir -p mozilla-profile/data-local &&\
+	adb pull /data/local ./mozilla-profile/data-local 2> ./mozilla-profile/backup.log &&\
+	rm -rf mozilla-profile/data-local/webapps
+	adb shell start b2g 2> ./mozilla-profile/backup.log
+	echo -e "Backup done."
+	exit 0
+fi
 
 ####################
 # Recover Only task
