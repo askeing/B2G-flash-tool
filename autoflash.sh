@@ -267,7 +267,7 @@ if [ $Download_Flag == true ]; then
 else
 	# Setup the filename for -F
 	# tef v1.0.0: only user build
-    if ! [[ -z $Filename ]]; then
+    if ! [ -z $Filename ]; then
         echo "File name is $Filename"
     elif [ $Version_Flag == "tef" ]; then
 		Filename=`ls -tm unagi_*_tef_usr.zip | sed 's/,.*$//g' | head -1`
@@ -284,15 +284,14 @@ else
 	fi
 fi
 
-
 ####################
 # Decompress task
 ####################
 # Check the file is exist
-if ! [[ -z $Filename ]]; then
+if ! [ -z $Filename ]; then
     test ! -f $Filename && echo -e "The file $Filename DO NOT exist." && exit 1
 else
-    echo -e "The file $Filename DO NOT exist." && exit 1
+    echo -e "The file DO NOT exist." && exit 1
 fi
 
 # Delete folder
