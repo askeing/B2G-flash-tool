@@ -109,7 +109,7 @@ function version_info(){
 if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 
 ## add getopt argument parsing
-TEMP=`getopt -o fF::ebrhv:: --long flash,flash-only::,eng,version::,tef,shira,v1train,backup,recover-only,help \
+TEMP=`getopt -o fF::ebrhv: --long flash,flash-only:,eng,version:,tef,shira,v1train,backup,recover-only,help \
     -n 'error occured' -- "$@"`
 
 if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
@@ -124,9 +124,16 @@ do
     case "$1" in
         -f|--flash) Download_Flag=true; Flash_Flag=true; shift;;
         -F|--flash-only) Download_Flag=false; Flash_Flag=true;
-           if [ -n $2 ]; then Filename=$2; shift 2; else shift; fi;;
+           case "$2" in
+            "") shift 2;;
+             *) Filename=$2; shift 2;;
+           esac ;;
         -e|--eng) Engineer_Flag=1; shift;;
-        -v|--version) if [ -n $2 ]; then version $2; shift 2; else version_info; shift; fi;;
+        -v|--version) 
+           case "$2" in
+            "") version_info; exit 0; shift 2;;
+             *) version $2; shift 2;;
+           esac;;
         --tef) version "tef"; shift;;
         --shira) version "shira"; shift;;
         --v1train) version "v1train"; shift;;
@@ -260,6 +267,7 @@ if [ $Download_Flag == true ]; then
 else
 	# Setup the filename for -F
 	# tef v1.0.0: only user build
+    echo "File name is $Filename"
     if [ -n $Filename ]; then
         if [ ! -f $Filename ]; then
             echo "file $Filename doesn't exist"; exit 1;
