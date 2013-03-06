@@ -267,12 +267,9 @@ if [ $Download_Flag == true ]; then
 else
 	# Setup the filename for -F
 	# tef v1.0.0: only user build
-    echo "File name is $Filename"
-    if [ -n $Filename ]; then
-        if [ ! -f $Filename ]; then
-            echo "file $Filename doesn't exist"; exit 1;
-        fi
-	elif [ $Version_Flag == "tef" ]; then
+    if ! [[ -z $Filename ]]; then
+        echo "File name is $Filename"
+    elif [ $Version_Flag == "tef" ]; then
 		Filename=`ls -tm unagi_*_tef_usr.zip | sed 's/,.*$//g' | head -1`
 	# shira v1.0.1: eng/user build
 	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
@@ -292,7 +289,11 @@ fi
 # Decompress task
 ####################
 # Check the file is exist
-test ! -f $Filename && echo -e "The file $Filename DO NOT exist." && exit 1
+if ! [[ -z $Filename ]]; then
+    test ! -f $Filename && echo -e "The file $Filename DO NOT exist." && exit 1
+else
+    echo -e "The file $Filename DO NOT exist." && exit 1
+fi
 
 # Delete folder
 echo -e "Delete old build folder: b2g-distro"
