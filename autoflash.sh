@@ -29,6 +29,7 @@
 #   2013/02/27 Askeing: v9.0 Modified the code for version changed.
 #   2013/03/01 Askeing: v9.1 Added backup-only.
 #   2013/03/05 Paul:    v10.0 refactor arg pasring, refine argument
+#   2013/03/08 Al:      v10.1 Remove unnecessary date command.
 #==========================================================================
 
 
@@ -191,9 +192,6 @@ fi
 ####################
 # Check date and Files
 ####################
-Yesterday=$(date --date='1 days ago' +%Y-%m-%d)
-Today=$(date +%Y-%m-%d)
-
 DownloadFilename=unagi.zip
 # tef v1.0.0: only user build
 if [ $Version_Flag == "tef" ]; then
