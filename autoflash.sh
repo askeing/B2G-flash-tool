@@ -30,6 +30,7 @@
 #   2013/03/01 Askeing: v9.1 Added backup-only.
 #   2013/03/05 Paul:    v10.0 refactor arg pasring, refine argument
 #   2013/03/08 Al:      v10.1 Remove unnecessary date command.
+#   2013/03/08 Al:      v10.2 Add support of Mac OS X
 #==========================================================================
 
 
@@ -37,7 +38,7 @@
 # Parameter Flags
 ####################
 # Default: download, no flash, nightly build, no backup
-Version_Flag="shira"
+Version_Flag="v1train"
 Engineer_Flag=0
 Download_Flag=true
 Flash_Flag=false
@@ -109,13 +110,18 @@ function version_info(){
 ## show helper if nothing specified
 if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 
-## add getopt argument parsing
-TEMP=`getopt -o fF::ebrhv:: --long flash,flash-only::,eng,version::,tef,shira,v1train,backup,recover-only,help \
-    -n 'error occured' -- "$@"`
+## distinguish platform
+case `uname` in
+	"Linux")
+		## add getopt argument parsing
+		TEMP=`getopt -o fF::ebrhv:: --long flash,flash-only::,eng,version::,tef,shira,v1train,backup,recover-only,help \
+	    -n 'error occured' -- "$@"`
 
-if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
+		if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
 
-eval set -- "$TEMP"
+		eval set -- "$TEMP";;
+	"Darwin");;
+esac
 
 ### TODO: -f can get an optional argument and download with build number or something
 ### write Filename and prevent for future modification
@@ -143,11 +149,10 @@ do
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
+		"") shift;break;;
         *) echo error occured; exit 1;;
     esac
 done
-
-
 
 ####################
 # Backup Only task
