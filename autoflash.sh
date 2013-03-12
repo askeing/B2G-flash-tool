@@ -31,6 +31,7 @@
 #   2013/03/05 Paul:    v10.0 refactor arg pasring, refine argument
 #   2013/03/08 Al:      v10.1 Remove unnecessary date command.
 #   2013/03/08 Al:      v10.2 Add support of Mac OS X
+#   2013/03/11 Al:      v10.3 Add auto prompt
 #==========================================================================
 
 
@@ -76,6 +77,8 @@ function helper(){
 	echo -e "-B|--backup-only:\tbackup the phone to local machine"
 	# -R, --recover-only
 	echo -e "-R|--recover-only:\trecover the phone from local machine"
+	# -y,
+	echo -e "-y\tauto flash the image without asking"
 	# -h, --help
 	echo -e "-h|--help\tDisplay help."
 	echo -e "Example:"
@@ -147,6 +150,7 @@ do
         -b|--backup) Backup_Flag=true; shift;;
         -B|--backup-only) BackupOnly_Flag=true; shift;;
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
+		-y) AgreeFlash_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
 		"") shift;break;;
@@ -310,11 +314,13 @@ unzip $Filename || exit -1
 # Flash device task
 ####################
 if [ $Flash_Flag == true ]; then
-	# make sure
-	read -p "Are you sure you want to flash your device? [y/N]" isFlash
-	if [ "$isFlash" != "y" ] && [ "$isFlash" != "Y" ]; then
-		echo -e "byebye."
-		exit 0
+	if [ $AgreeFlash_Flag != true ]; then
+		# make sure
+		read -p "Are you sure you want to flash your device? [y/N]" isFlash
+		if [ "$isFlash" != "y" ] && [ "$isFlash" != "Y" ]; then
+			echo -e "byebye."
+			exit 0
+		fi
 	fi
 
 	# ADB PATH
