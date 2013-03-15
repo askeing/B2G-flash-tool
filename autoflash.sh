@@ -199,7 +199,7 @@ if [ $RecoverOnly_Flag == true ]; then
 fi
 
 ####################
-# Check date and Files
+# Check Files
 ####################
 DownloadFilename=unagi.zip
 # tef v1.0.0: only user build
