@@ -117,7 +117,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
 	"Linux")
 		## add getopt argument parsing
-		TEMP=`getopt -o fF::ebrhv:: --long flash,flash-only::,eng,version::,tef,shira,v1train,backup,recover-only,help \
+		TEMP=`getopt -o fF::ebryhv:: --long flash,flash-only::,eng,version::,tef,shira,v1train,backup,recover-only,help \
 	    -n 'error occured' -- "$@"`
 
 		if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
