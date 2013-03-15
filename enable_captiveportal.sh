@@ -21,7 +21,9 @@ echo -e "user_pref(\"captivedetect.canonicalURL\", \"http://people.mozilla.org/~
 echo -e "user_pref(\"captivedetect.canonicalContent\", \"true\\\n\");" >> prefs.js
 
 adb push prefs.js ${prefs_path}
-adb reboot
+adb shell stop b2g
+sleep 5
+adb shell start b2g
 
 cd ${cur_dir}
 rm -rf ${dir}
