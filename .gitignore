@@ -11,3 +11,12 @@ Makefile.in
 /depcomp
 /install-sh
 /missing
+
+# Default
+
+*~
+*.zip
+VERSION
+b2g-distro/*
+mozilla-profile/*
+crashreport.txt
