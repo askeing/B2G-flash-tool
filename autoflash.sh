@@ -32,6 +32,10 @@
 #   2013/03/08 Al:      v10.1 Remove unnecessary date command.
 #   2013/03/08 Al:      v10.2 Add support of Mac OS X
 #   2013/03/11 Al:      v10.3 Add auto prompt
+#   2013/04/09 Al:      v11.0 Add new devices leo, inari
+#
+# = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
+#   2013/04/09 Al:      Need to refactor "Check File" section
 #==========================================================================
 
 
@@ -40,6 +44,7 @@
 ####################
 # Default: download, no flash, nightly build, no backup
 Version_Flag="v1train"
+Device_Flag="unagi"
 Engineer_Flag=0
 Download_Flag=true
 Flash_Flag=false
@@ -50,7 +55,7 @@ RecoverOnly_Flag=false
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-	echo -e "v 10.0"
+	echo -e "v 11.0"
 	echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
 	echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
 	echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -77,8 +82,10 @@ function helper(){
 	echo -e "-B|--backup-only:\tbackup the phone to local machine"
 	# -R, --recover-only
 	echo -e "-R|--recover-only:\trecover the phone from local machine"
+	# -d, --choose device
+	echo -e "-d|--device:\tchoose device, default for unagi"
 	# -y,
-	echo -e "-y\tauto flash the image without asking"
+	echo -e "-y\tauto flash the image without asking askeing (it's a joke)"
 	# -h, --help
 	echo -e "-h|--help\tDisplay help."
 	echo -e "Example:"
@@ -88,6 +95,7 @@ function helper(){
 	echo -e "  Flash engineer build.\t\t./autoflash.sh -e -F"
 	echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
 	echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
+	echo -e "  Flash build on leo devices.\t\t ./autoflash.sh -d=leo"
 	exit 0
 }
 
@@ -109,6 +117,23 @@ function version_info(){
     echo -e "\t101|shira"
     echo -e "\t110|v1train"
 }
+function device(){
+	local_dev=$1
+	case "$local_dev" in
+		unagi) Device_Flag="unagi";;
+		otoro) Device_Flag="otoro";;
+		inari) Device_Flag="inari";;
+		leo) Device_Flag="leo";;
+	esac
+}
+
+function device_info(){
+	echo -e "Available device:"
+	echo -e "\tunagi (default)"
+	echo -e "\totoro"
+	echo -e "\tinari"
+	echo -e "\tleo"
+}
 
 ## show helper if nothing specified
 if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
@@ -117,7 +142,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
 	"Linux")
 		## add getopt argument parsing
-		TEMP=`getopt -o fF::ebryhv:: --long flash,flash-only::,eng,version::,tef,shira,v1train,backup,recover-only,help \
+		TEMP=`getopt -o fF::ebryhv::d:: --long flash,flash-only::,eng,version::,device::,tef,shira,v1train,backup,recover-only,help \
 	    -n 'error occured' -- "$@"`
 
 		if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
@@ -150,6 +175,11 @@ do
         -b|--backup) Backup_Flag=true; shift;;
         -B|--backup-only) BackupOnly_Flag=true; shift;;
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
+		-d|--device)
+			case "$2" in
+			 "") device_info; exit 0; shift2;;
+			 *) device $2; shift 2;;
+			esac;;
 		-y) AgreeFlash_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
@@ -201,23 +231,58 @@ fi
 ####################
 # Check Files
 ####################
-DownloadFilename=unagi.zip
-# tef v1.0.0: only user build
-if [ $Version_Flag == "tef" ]; then
+if [ $Device_Flag == "unagi" ]; then
+	DownloadFilename=unagi.zip
+	# tef v1.0.0: only user build
+	if [ $Version_Flag == "tef" ]; then
+		Engineer_Flag=0
+		URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_0-unagi/latest/${DownloadFilename}
+	# shira v1.0.1: eng/user build
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
+		URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi-eng/latest/${DownloadFilename}
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
+		URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+	# v1-train: eng/user build
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
+		URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
+		URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
+	else
+		URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+	fi
+elif [ $Device_Flag == "leo" ]; then
+	DownloadFilename=leo.zip
 	Engineer_Flag=0
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_0-unagi/latest/${DownloadFilename}
-# shira v1.0.1: eng/user build
-elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi-eng/latest/${DownloadFilename}
-elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
-# v1-train: eng/user build
-elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
-elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
-else
-	URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+	# there is v1-train for leo device only
+	if [ $Version_Flag == "v1train" ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
+	else
+		echo -e "There is v1-train (v1.1.0) for leo device only"
+		exit 0
+	fi
+elif [ $Device_Flag == "inari" ]; then
+	DownloadFilename=inari.zip
+	Engineer_Flag=0
+	# there are shira and v1-train available for inari device
+	if [ $Version_Flag == "shira" ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari/latest/${DownloadFilename}
+	elif [ $Version_Flag == "v1train" ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-inari/latest/${DownloadFilename}
+	else
+		echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for inari device"
+	fi
+elif [ $Device_Flag == "otoro" ]; then
+	DownloadFilename=otoro.zip
+	Engineer_Flag=0
+	# shira v1.0.1: eng/user build
+	if [ $Version_Flag == "shira" ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-otoro/latest/${DownloadFilename}
+	# v1-train: eng/user build
+	elif [ $Version_Flag == "v1train" ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-otoro/latest/${DownloadFilename}
+	else
+		echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for otoro device"
+	fi
 fi
 
 ####################
@@ -252,20 +317,11 @@ if [ $Download_Flag == true ]; then
 	fi
 
 	# Modify the downloaded filename
-	filetime=`stat -c %y unagi.zip | sed 's/\s.*$//g'`
-	# tef v1.0.0: only user build
-	if [ $Version_Flag == "tef" ]; then
-		Filename=unagi_${filetime}_tef_usr.zip
-	# shira v1.0.1: eng/user build
-	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
-		Filename=unagi_${filetime}_shira_eng.zip
-	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
-		Filename=unagi_${filetime}_shira_usr.zip
-	# v1-train: eng/user build
-	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
-		Filename=unagi_${filetime}_v1train_eng.zip
-	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
-		Filename=unagi_${filetime}_v1train_usr.zip
+	filetime=`stat -c %y `+${DownloadFilename}+` | sed 's/\s.*$//g'`
+	if [ $Engineer_Flag == 1 ]; then
+		Filename=${Device_Flag}_${filetime}_${Version_Flag}_eng.zip
+	elif [ $Engineer_Flag == 0 ]; then
+		Filename=${Device_Flag}_${filetime}_${Version_Flag}_usr.zip
 	fi
 
 	rm -f $Filename
@@ -273,21 +329,12 @@ if [ $Download_Flag == true ]; then
 
 else
 	# Setup the filename for -F
-	# tef v1.0.0: only user build
     if ! [ -z $Filename ]; then
         echo "File name is $Filename"
-    elif [ $Version_Flag == "tef" ]; then
-		Filename=`ls -tm unagi_*_tef_usr.zip | sed 's/,.*$//g' | head -1`
-	# shira v1.0.1: eng/user build
-	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
-		Filename=`ls -tm unagi_*_shira_eng.zip | sed 's/,.*$//g' | head -1`
-	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
-		Filename=`ls -tm unagi_*_shira_usr.zip | sed 's/,.*$//g' | head -1`
-	# v1-train: eng/user build
-	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
-		Filename=`ls -tm unagi_*_v1train_eng.zip | sed 's/,.*$//g' | head -1`
-	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
-		Filename=`ls -tm unagi_*_v1train_usr.zip | sed 's/,.*$//g' | head -1`
+    elif [ $Engineer_Flag == 1 ]; then
+		Filename=`ls -tm `+${Device_Flag}+`_*_`+${Version_Flag}+`_eng.zip | sed 's/,.*$//g' | head -1`
+	elif [ $Engineer_Flag == 0 ]; then
+		Filename=`ls -tm `+${Device_Flag}+`_*_`+${Version_Flag}+`_usr.zip | sed 's/,.*$//g' | head -1`
 	fi
 fi
 
