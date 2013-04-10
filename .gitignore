@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 # http://www.gnu.org/software/automake
 
 Makefile.in
@@ -14,6 +16,7 @@ Makefile.in
 
 # Default
 
+>>>>>>> atsai/master
 *~
 *.zip
 VERSION

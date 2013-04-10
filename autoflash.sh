@@ -33,6 +33,7 @@
 #   2013/03/08 Al:      v10.2 Add support of Mac OS X
 #   2013/03/11 Al:      v10.3 Add auto prompt
 #   2013/04/09 Al:      v11.0 Add new devices leo, inari
+#   2013/04/10 Al:      v11.1 Add new devices hamachi (a.k.a. buri)
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -124,6 +125,8 @@ function device(){
 		otoro) Device_Flag="otoro";;
 		inari) Device_Flag="inari";;
 		leo) Device_Flag="leo";;
+		buri) Device_Flag="buri";;
+		hamachi) Device_Flag="hamachi";;
 	esac
 }
 
@@ -133,6 +136,7 @@ function device_info(){
 	echo -e "\totoro"
 	echo -e "\tinari"
 	echo -e "\tleo"
+	echo -e "\tburi"
 }
 
 ## show helper if nothing specified
@@ -282,6 +286,15 @@ elif [ $Device_Flag == "otoro" ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-otoro/latest/${DownloadFilename}
 	else
 		echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for otoro device"
+	fi
+elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
+	DownloadFilename=hamachi.zip
+	Engineer_Flag=0
+	# v1-train: eng/user build
+	if [ $Version_Flag == "v1train" ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-hamachi/latest/${DownloadFilename}
+	else
+		echo -e "There is v1-train (v1.1.0) for buri device"
 	fi
 fi
 
