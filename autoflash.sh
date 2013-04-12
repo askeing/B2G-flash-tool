@@ -181,7 +181,7 @@ do
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
 		-d|--device)
 			case "$2" in
-			 "") device_info; exit 0; shift2;;
+			 "") device_info; exit 0; shift 2;;
 			 *) device $2; shift 2;;
 			esac;;
 		-y) AgreeFlash_Flag=true; shift;;
