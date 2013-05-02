@@ -34,6 +34,7 @@
 #   2013/03/11 Al:      v10.3 Add auto prompt
 #   2013/04/09 Al:      v11.0 Add new devices leo, inari
 #   2013/04/10 Al:      v11.1 Add new devices hamachi (a.k.a. buri)
+#   2013/05/02 Al:      v11.2 Add other version support
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -181,7 +182,7 @@ do
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
 		-d|--device)
 			case "$2" in
-			 "") device_info; exit 0; shift2;;
+			 "") device_info; exit 0; shift 2;;
 			 *) device $2; shift 2;;
 			esac;;
 		-y) AgreeFlash_Flag=true; shift;;
@@ -258,7 +259,9 @@ elif [ $Device_Flag == "leo" ]; then
 	DownloadFilename=leo.zip
 	Engineer_Flag=0
 	# there is v1-train for leo device only
-	if [ $Version_Flag == "v1train" ]; then
+	if [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo-eng/latest/${DownloadFilename}
+	elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
 	else
 		echo -e "There is v1-train (v1.1.0) for leo device only"
@@ -268,7 +271,9 @@ elif [ $Device_Flag == "inari" ]; then
 	DownloadFilename=inari.zip
 	Engineer_Flag=0
 	# there are shira and v1-train available for inari device
-	if [ $Version_Flag == "shira" ]; then
+	if [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari-eng/latest/${DownloadFilename}
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari/latest/${DownloadFilename}
 	elif [ $Version_Flag == "v1train" ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-inari/latest/${DownloadFilename}
@@ -293,8 +298,12 @@ elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
 	# v1-train: eng/user build
 	if [ $Version_Flag == "v1train" ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-hamachi/latest/${DownloadFilename}
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ] ; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi-eng/latest/${DownloadFilename}
+	elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ] ; then
+		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi/latest/${DownloadFilename}		
 	else
-		echo -e "There is v1-train (v1.1.0) for buri device"
+		echo -e "There is v1-train (v1.1.0) and shira (v1.0.1) available  for buri device"
 	fi
 fi
 
@@ -330,7 +339,7 @@ if [ $Download_Flag == true ]; then
 	fi
 
 	# Modify the downloaded filename
-	filetime=`stat -c %y `+${DownloadFilename}+` | sed 's/\s.*$//g'`
+	filetime=`stat -c %y ${DownloadFilename} | sed 's/\s.*$//g'`
 	if [ $Engineer_Flag == 1 ]; then
 		Filename=${Device_Flag}_${filetime}_${Version_Flag}_eng.zip
 	elif [ $Engineer_Flag == 0 ]; then
@@ -339,6 +348,7 @@ if [ $Download_Flag == true ]; then
 
 	rm -f $Filename
 	mv $DownloadFilename $Filename
+    echo "Download file saved as $Filename"
 
 else
 	# Setup the filename for -F
