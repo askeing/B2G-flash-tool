@@ -181,7 +181,7 @@ do
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
 		-d|--device)
 			case "$2" in
-			 "") device_info; exit 0; shift2;;
+			 "") device_info; exit 0; shift 2;;
 			 *) device $2; shift 2;;
 			esac;;
 		-y) AgreeFlash_Flag=true; shift;;
@@ -330,7 +330,7 @@ if [ $Download_Flag == true ]; then
 	fi
 
 	# Modify the downloaded filename
-	filetime=`stat -c %y `+${DownloadFilename}+` | sed 's/\s.*$//g'`
+	filetime=`stat -c %y ${DownloadFilename} | sed 's/\s.*$//g'`
 	if [ $Engineer_Flag == 1 ]; then
 		Filename=${Device_Flag}_${filetime}_${Version_Flag}_eng.zip
 	elif [ $Engineer_Flag == 0 ]; then
@@ -339,6 +339,7 @@ if [ $Download_Flag == true ]; then
 
 	rm -f $Filename
 	mv $DownloadFilename $Filename
+    echo "Download file saved as $Filename"
 
 else
 	# Setup the filename for -F
