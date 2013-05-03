@@ -257,7 +257,6 @@ if [ $Device_Flag == "unagi" ]; then
 	fi
 elif [ $Device_Flag == "leo" ]; then
 	DownloadFilename=leo.zip
-	Engineer_Flag=0
 	# there is v1-train for leo device only
 	if [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo-eng/latest/${DownloadFilename}
@@ -269,7 +268,6 @@ elif [ $Device_Flag == "leo" ]; then
 	fi
 elif [ $Device_Flag == "inari" ]; then
 	DownloadFilename=inari.zip
-	Engineer_Flag=0
 	# there are shira and v1-train available for inari device
 	if [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari-eng/latest/${DownloadFilename}
@@ -294,7 +292,6 @@ elif [ $Device_Flag == "otoro" ]; then
 	fi
 elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
 	DownloadFilename=hamachi.zip
-	Engineer_Flag=0
 	# v1-train: eng/user build
 	if [ $Version_Flag == "v1train" ]; then
 		URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-hamachi/latest/${DownloadFilename}
