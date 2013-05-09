@@ -52,3 +52,4 @@ To download an unagi Engineer build and auto flash into the device without promp
 Download an leo user build and auto flash
 
     ./autoflash.sh -f -d=leo
+
