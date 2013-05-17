@@ -35,6 +35,7 @@
 #   2013/04/09 Al:      v11.0 Add new devices leo, inari
 #   2013/04/10 Al:      v11.1 Add new devices hamachi (a.k.a. buri)
 #   2013/05/02 Al:      v11.2 Add other version support
+#   2013/05/17 Paul:    v11.3 Refactor check file, fix short-circuit, add prompt message and minor bug fix
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -119,6 +120,7 @@ function version_info(){
     echo -e "\t101|shira"
     echo -e "\t110|v1train"
 }
+
 function device(){
     local_dev=$1
     case "$local_dev" in
@@ -236,32 +238,49 @@ fi
 ####################
 # Check Files
 ####################
+# no default value for DownloadFilename
+URL=https://pvtbuilds.mozilla.org
+
 if [ $Device_Flag == "unagi" ]; then
     DownloadFilename=unagi.zip
     # tef v1.0.0: only user build
     if [ $Version_Flag == "tef" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            echo -e "ver 1.0.0 don't support eng build, flash user build insteadily"
+        fi
         Engineer_Flag=0
-        URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_0-unagi/latest/${DownloadFilename}
+        URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_0-unagi/latest/${DownloadFilename}
     # shira v1.0.1: eng/user build
-    elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
-        URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi-eng/latest/${DownloadFilename}
-    elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
-        URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+    elif [ $Version_Flag == "shira" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+        fi
     # v1-train: eng/user build
-    elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
-        URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
-    elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
-        URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
+    elif [ $Version_Flag == "v1train" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
+        fi
     else
-        URL=https://pvtbuilds.mozilla.org/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+        echo -e "no version specified, use 1.0.1 by default"
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+        fi
     fi
 elif [ $Device_Flag == "leo" ]; then
     DownloadFilename=leo.zip
     # there is v1-train for leo device only
-    if [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 1 ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo-eng/latest/${DownloadFilename}
-    elif [ $Version_Flag == "v1train" ] && [ $Engineer_Flag == 0 ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
+    if [ $Version_Flag == "v1train" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
+        fi
     else
         echo -e "There is v1-train (v1.1.0) for leo device only"
         exit 0
@@ -269,38 +288,55 @@ elif [ $Device_Flag == "leo" ]; then
 elif [ $Device_Flag == "inari" ]; then
     DownloadFilename=inari.zip
     # there are shira and v1-train available for inari device
-    if [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari-eng/latest/${DownloadFilename}
-    elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari/latest/${DownloadFilename}
+    if [ $Version_Flag == "shira" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-inari/latest/${DownloadFilename}
+        fi
     elif [ $Version_Flag == "v1train" ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-inari/latest/${DownloadFilename}
+        if [ $Engineer_Flag == 1 ]; then
+            echo -e "inari v1-train don't support eng build, download user build insteadly"
+        fi
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-inari/latest/${DownloadFilename}
     else
         echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for inari device"
+        exit 0
     fi
 elif [ $Device_Flag == "otoro" ]; then
     DownloadFilename=otoro.zip
+    if [ $Engineer_Flag == 1 ]; then
+        echo -e "otoro don't support eng build, download user build insteadly"
+    fi
     Engineer_Flag=0
-    # shira v1.0.1: eng/user build
+    # shira v1.0.1: user build
     if [ $Version_Flag == "shira" ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-otoro/latest/${DownloadFilename}
-    # v1-train: eng/user build
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-otoro/latest/${DownloadFilename}
+    # v1-train: user build
     elif [ $Version_Flag == "v1train" ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-otoro/latest/${DownloadFilename}
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-otoro/latest/${DownloadFilename}
     else
         echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for otoro device"
+        exit 0
     fi
 elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
     DownloadFilename=hamachi.zip
-    # v1-train: eng/user build
+    # v1-train: user build
     if [ $Version_Flag == "v1train" ]; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-hamachi/latest/${DownloadFilename}
-    elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 1 ] ; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi-eng/latest/${DownloadFilename}
-    elif [ $Version_Flag == "shira" ] && [ $Engineer_Flag == 0 ] ; then
-        URL=https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi/latest/${DownloadFilename}        
+        if [ $Engineer_Flag == 1 ]; then
+            echo -e "buri/hamachi ver v1-train don't support eng build, download user build insteadly"
+        fi
+        Engineer_Flag=0
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-hamachi/latest/${DownloadFilename}
+    elif [ $Version_Flag == "shira" ] ; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi/latest/${DownloadFilename}
+        fi
     else
         echo -e "There is v1-train (v1.1.0) and shira (v1.0.1) available  for buri device"
+        exit 0
     fi
 fi
 
@@ -381,7 +417,7 @@ unzip $Filename || exit -1
 # Flash device task
 ####################
 if [ $Flash_Flag == true ]; then
-    if [ $AgreeFlash_Flag != true ]; then
+    if [ -z $AgreeFlash_Flag ]; then
         # make sure
         read -p "Are you sure you want to flash your device? [y/N]" isFlash
         if [ "$isFlash" != "y" ] && [ "$isFlash" != "Y" ]; then
