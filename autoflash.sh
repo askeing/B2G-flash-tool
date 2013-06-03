@@ -123,6 +123,8 @@ function version_info(){
 
 function device(){
     local_dev=$1
+	echo $local_dev
+	echo $1
     case "$local_dev" in
         unagi) Device_Flag="unagi";;
         otoro) Device_Flag="otoro";;
@@ -149,7 +151,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o fF::ebryhv::d:: --long flash,flash-only::,eng,version::,device::,tef,shira,v1train,backup,recover-only,help \
+        TEMP=`getopt -o fF::ebryhv:d: --long flash,flash-only:,eng,version:,device:,tef,shira,v1train,backup,recover-only,help \
         -n 'error occured' -- "$@"`
 
         if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
