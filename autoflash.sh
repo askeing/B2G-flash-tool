@@ -36,6 +36,7 @@
 #   2013/04/10 Al:      v11.1 Add new devices hamachi (a.k.a. buri)
 #   2013/05/02 Al:      v11.2 Add other version support
 #   2013/05/17 Paul:    v11.3 Refactor check file, fix short-circuit, add prompt message and minor bug fix
+#   2013/06/06 Walter:  v11.4 Add v2.0.0 
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -78,6 +79,8 @@ function helper(){
     echo -e "--shira\tchange the target build to shira build v1.0.1."
     # --v1train: v1-train build
     echo -e "--v1train\tchange the target build to v1train build."
+    # --v200: v2.0.0 master build
+    echo -e "--v200\tchange the target build to v200 build. (Currently, it's only for unagi)"
     # -b, --backup
     echo -e "-b|--backup\tbackup and recover the origin profile."
     echo -e "\t\t(it will work with -f anf -F)"
@@ -111,6 +114,7 @@ function version(){
         100|tef) Version_Flag="tef";;
         101|shira) Version_Flag="shira";;
         110|v1train) Version_Flag="v1train";;
+        200|v200) Version_Flag="v200";;
     esac
 }
 
@@ -119,6 +123,7 @@ function version_info(){
     echo -e "\t100|tef"
     echo -e "\t101|shira"
     echo -e "\t110|v1train"
+    echo -e "\t200|v200"
 }
 
 function device(){
@@ -179,6 +184,7 @@ do
         --tef) version "tef"; shift;;
         --shira) version "shira"; shift;;
         --v1train) version "v1train"; shift;;
+        --v200) version "v200"; shift;;
         -b|--backup) Backup_Flag=true; shift;;
         -B|--backup-only) BackupOnly_Flag=true; shift;;
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
@@ -264,12 +270,20 @@ if [ $Device_Flag == "unagi" ]; then
         else
             URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
         fi
+    # v200: eng/user build
+    elif [ $Version_Flag == "v200" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-central-unagi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-central-unagi/latest/${DownloadFilename}
+        fi
+    # default to v1-train now
     else
-        echo -e "no version specified, use 1.0.1 by default"
+        echo -e "no version specified, use 1.1.0(v1train) by default"
         if [ $Engineer_Flag == 1 ]; then
             URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
         else
-            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18_v1_0_1-unagi/latest/${DownloadFilename}
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
         fi
     fi
 elif [ $Device_Flag == "leo" ]; then
@@ -282,7 +296,7 @@ elif [ $Device_Flag == "leo" ]; then
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
         fi
     else
-        echo -e "There is v1-train (v1.1.0) for leo device only"
+        echo -e "There is only v1-train (v1.1.0) for leo device only"
         exit 0
     fi
 elif [ $Device_Flag == "inari" ]; then
@@ -300,7 +314,7 @@ elif [ $Device_Flag == "inari" ]; then
         fi
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-inari/latest/${DownloadFilename}
     else
-        echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for inari device"
+        echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for inari device"
         exit 0
     fi
 elif [ $Device_Flag == "otoro" ]; then
@@ -316,7 +330,7 @@ elif [ $Device_Flag == "otoro" ]; then
     elif [ $Version_Flag == "v1train" ]; then
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-otoro/latest/${DownloadFilename}
     else
-        echo -e "There are v1-train (v1.1.0) and shira (v1.0.1) available for otoro device"
+        echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for otoro device"
         exit 0
     fi
 elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
@@ -335,7 +349,7 @@ elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi/latest/${DownloadFilename}
         fi
     else
-        echo -e "There is v1-train (v1.1.0) and shira (v1.0.1) available  for buri device"
+        echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for buri device"
         exit 0
     fi
 fi
