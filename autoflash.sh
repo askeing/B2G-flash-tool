@@ -37,6 +37,7 @@
 #   2013/05/02 Al:      v11.2 Add other version support
 #   2013/05/17 Paul:    v11.3 Refactor check file, fix short-circuit, add prompt message and minor bug fix
 #   2013/06/06 Walter:  v11.4 Add v2.0.0 
+#   2013/06/07 Walter:  v11.5 Fixed a bug of filename (please do not use + in String typed variable in bash)
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -402,9 +403,9 @@ else
     if ! [ -z $Filename ]; then
         echo "File name is $Filename"
     elif [ $Engineer_Flag == 1 ]; then
-        Filename=`ls -tm `+${Device_Flag}+`_*_`+${Version_Flag}+`_eng.zip | sed 's/,.*$//g' | head -1`
+        Filename=`ls -tm ${Device_Flag}_*_${Version_Flag}_eng.zip | sed 's/,.*$//g' | head -1`
     elif [ $Engineer_Flag == 0 ]; then
-        Filename=`ls -tm `+${Device_Flag}+`_*_`+${Version_Flag}+`_usr.zip | sed 's/,.*$//g' | head -1`
+        Filename=`ls -tm ${Device_Flag}_*_${Version_Flag}_usr.zip | sed 's/,.*$//g' | head -1`
     fi
 fi
 
