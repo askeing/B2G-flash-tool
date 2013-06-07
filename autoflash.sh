@@ -61,7 +61,7 @@ RecoverOnly_Flag=false
 ## no input arguments, simply print helper descirption to std out
 function helper(){
     echo -e "v 11.5"
-    echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
+    echo -e "This script will download latest release build from pvt server.\n"
     echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
     echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
     # -f, --flash
@@ -81,7 +81,7 @@ function helper(){
     # --v1train: v1-train build
     echo -e "--v1train\tchange the target build to v1train build."
     # --v0: master build
-    echo -e "--v0\tchange the target build to master build. (Currently, it's only for unagi)"
+    echo -e "--vmaster\tchange the target build to master build. (Currently, it's only for unagi)"
     # -b, --backup
     echo -e "-b|--backup\tbackup and recover the origin profile."
     echo -e "\t\t(it will work with -f anf -F)"
