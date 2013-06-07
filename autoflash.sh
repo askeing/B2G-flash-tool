@@ -37,6 +37,7 @@
 #   2013/05/02 Al:      v11.2 Add other version support
 #   2013/05/17 Paul:    v11.3 Refactor check file, fix short-circuit, add prompt message and minor bug fix
 #   2013/06/06 Walter:  v11.4 Add v2.0.0 
+#   2013/06/07 Askeing: v11.5 Updated v200 to v0/master.
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -59,7 +60,7 @@ RecoverOnly_Flag=false
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-    echo -e "v 11.0"
+    echo -e "v 11.5"
     echo -e "This script will download latest release build from pvt server. (only for unagi now)\n"
     echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
     echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -79,8 +80,8 @@ function helper(){
     echo -e "--shira\tchange the target build to shira build v1.0.1."
     # --v1train: v1-train build
     echo -e "--v1train\tchange the target build to v1train build."
-    # --v200: v2.0.0 master build
-    echo -e "--v200\tchange the target build to v200 build. (Currently, it's only for unagi)"
+    # --v0: master build
+    echo -e "--v0\tchange the target build to master build. (Currently, it's only for unagi)"
     # -b, --backup
     echo -e "-b|--backup\tbackup and recover the origin profile."
     echo -e "\t\t(it will work with -f anf -F)"
@@ -114,7 +115,7 @@ function version(){
         100|tef) Version_Flag="tef";;
         101|shira) Version_Flag="shira";;
         110|v1train) Version_Flag="v1train";;
-        200|v200) Version_Flag="v200";;
+        0|master) Version_Flag="master";;
     esac
 }
 
@@ -123,7 +124,7 @@ function version_info(){
     echo -e "\t100|tef"
     echo -e "\t101|shira"
     echo -e "\t110|v1train"
-    echo -e "\t200|v200"
+    echo -e "\t0|master"
 }
 
 function device(){
@@ -184,7 +185,7 @@ do
         --tef) version "tef"; shift;;
         --shira) version "shira"; shift;;
         --v1train) version "v1train"; shift;;
-        --v200) version "v200"; shift;;
+        --master) version "master"; shift;;
         -b|--backup) Backup_Flag=true; shift;;
         -B|--backup-only) BackupOnly_Flag=true; shift;;
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
@@ -270,8 +271,8 @@ if [ $Device_Flag == "unagi" ]; then
         else
             URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
         fi
-    # v200: eng/user build
-    elif [ $Version_Flag == "v200" ]; then
+    # master: eng/user build
+    elif [ $Version_Flag == "master" ]; then
         if [ $Engineer_Flag == 1 ]; then
             URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-central-unagi-eng/latest/${DownloadFilename}
         else
