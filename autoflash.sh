@@ -403,9 +403,9 @@ else
     if ! [ -z $Filename ]; then
         echo "File name is $Filename"
     elif [ $Engineer_Flag == 1 ]; then
-        Filename=`ls -tm `+${Device_Flag}+`_*_`+${Version_Flag}+`_eng.zip | sed 's/,.*$//g' | head -1`
+        Filename=$(ls -tm ${Device_Flag}_*_${Version_Flag}_eng.zip | sed 's/,.*$//g' | head -1)
     elif [ $Engineer_Flag == 0 ]; then
-        Filename=`ls -tm `+${Device_Flag}+`_*_`+${Version_Flag}+`_usr.zip | sed 's/,.*$//g' | head -1`
+        Filename=$(ls -tm ${Device_Flag}_*_${Version_Flag}_usr.zip | sed 's/,.*$//g' | head -1)
     fi
 fi
 
