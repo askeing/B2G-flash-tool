@@ -19,7 +19,7 @@ adb pull /system/b2g/webapps/settings.gaiamobile.org/application.zip &> /dev/nul
 adb pull /system/b2g/application.ini &> /dev/null || echo "Error pulling application.ini"
 
 if [ -f omni.ja ] && [ -f application.zip ] && [ -f application.ini ]; then
-        python optimizejars.py --deoptimize ./ ./ ./ &> /dev/null
+	python optimizejars.py --deoptimize ./ ./ ./ &> /dev/null
 	unzip omni.ja chrome/toolkit/content/global/buildconfig.html > /dev/null
 	unzip application.zip resources/gaia_commit.txt > /dev/null
 	
