@@ -3,8 +3,8 @@
 set -e
 
 function helper(){
-    echo "-s<serial number>             - directs command to the USB device or emulator with"
-    echo "--serial=<serial number>         the given serial number. Overrides ANDROID_SERIAL"
+    echo "-s <serial number>            - directs command to the USB device or emulator with"
+    echo "                                 the given serial number. Overrides ANDROID_SERIAL"
     echo "                                 environment variable."
     echo "-h | --help                   - print usage."
     exit 0
