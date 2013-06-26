@@ -113,3 +113,14 @@ This is to get the crash reports of submitted/pending.
 
 This script was written for grant the geolocation permission of unagi.
 
+
+## change_OTA_URL.sh
+
+This script is used to change OTA update URL to a local or a specific URL.
+
+Parameters:
+```
+-u | --url <URL>              - set the following URL for OTA
+-p                            - show current preference
+-h | --help                   - print usage.
+```
