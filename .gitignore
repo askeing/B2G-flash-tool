@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 # http://www.gnu.org/software/automake
 
 Makefile.in
@@ -16,11 +14,11 @@ Makefile.in
 
 # Default
 
->>>>>>> atsai/master
 *~
 *.zip
 VERSION
+version
 b2g-distro/*
 mozilla-profile/*
-crashreport.txt
+crashreports.txt
 .DS_Store
