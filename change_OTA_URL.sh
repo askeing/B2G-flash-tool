@@ -42,6 +42,11 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
+if [ "$URL" == "" ]; then
+    helper_config
+    exit -1
+fi
+echo "Updated URL: $URL"
 
 ####################
 # Start
