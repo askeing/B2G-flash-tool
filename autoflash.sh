@@ -413,8 +413,12 @@ if [ $Download_Flag == true ]; then
         mv $DownloadFilename $Filename
         echo "Download file saved as $Filename"
     else
+        ## test if user have QC ril
+        read -p "Do you have QC ril already? [y/N]" isQCril
+        test "$isQCril" != "y"  && test "$isQCril" != "Y" && echo -e "byebye." && exit 0
         ## Downloading gaia & gecko binary for shallow flash
         URL=$(echo $URL | sed 's|/[^/]\+$||')
+        echo "\$Download URL: $URL"
         rm gaia.zip 2>/dev/null
         rm b2g-18.0.en-US.android-arm.tar.gz 2>/dev.null
         test $flash_gaia == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/gaia.zip
@@ -451,7 +455,7 @@ if [ $Shallow_Flag == false ]; then
     # Unzip file
     echo -e "Unzip $Filename ..."
     unzip $Filename || exit -1
-else
+elif [ $Download_Flag == true ]; then
     rm -r gaia 2>/dev/null
     test -e gaia.zip && unzip gaia.zip
     rm -r b2g 2>/dev/null
@@ -470,7 +474,7 @@ if [ $Flash_Flag == true ] && [ $Shallow_Flag == false ]; then
     fi
 
     # ADB PATH
-    if "$ADB_PATH" == ""; then
+    if [ "$ADB_PATH" == "" ]; then
         echo -e 'No ADB_PATH, using PATH'
     else
         echo -e "Using ADB_PATH = $ADB_PATH"
@@ -519,33 +523,62 @@ elif $Flash_Flag == true; then
 ## Enter shallow flash
 
     adb root
-    adb shell stop b2g
-    adb remount
     adb wait-for-device
+    adb remount
+    adb shell mount -o remount,rw /system &&
+    adb wait-for-device
+    adb shell stop b2g
+    adb wait-for-device
+
+    ## Remove ril TODO: workaround on this part
+    ## Uninstalling old RIL &&
+    adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_location &&
+    adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_ril &&
+
+    ## + Installing new RIL &&
+    test "$ifQCril" != 'y' && adb push b2g-distro/ril /system/b2g/distribution
+
+    ## echo + Removing incompatible extensions &&
+    adb shell rm -r /system/b2g/distribution/bundles/liblge_b2g_extension > /dev/null &&
+
+    ## remove old gaia and profiles
+    adb shell rm -r /cache/* &&
+    adb shell rm -r /data/b2g/* &&
+    adb shell rm -r /data/local/webapps &&
+    adb shell rm -r /data/local/user.js &&
+    adb shell rm -r /data/local/permissions.sqlite* &&
+    adb shell rm -r /data/local/OfflineCache &&
+    adb shell rm -r /data/local/indexedDB &&
+    adb shell rm -r /data/local/debug_info_trigger &&
+    adb shell rm -r /system/b2g/webapps &&
+
+
     if $flash_gecko == true; then
         ## Updating gecko (make sure you push the b2g directory not the b2g app, 
         ## ie be at the directory one level above the unzipped b2g-18 zip file instead of inside the b2g folder)
         adb push b2g /system/b2g
-        rm -r b2g*
+        #rm -r b2g*
     fi
     if $flash_gaia == true; then
         ## If gaia doesn't work the first time around, do the steps above and the following and then do the gaia update portion; 
         ## otherwise skip this and go to the updating gaia portion:
-        adb shell rm -r /cache/*
-        adb shell rm -r /data/b2g/*
-        adb shell rm -r /data/local/webapps
-        adb shell rm -r /system/b2g/webapps
-
-        ## Updating gaia:
-        adb push gaia/profile/webapps /system/b2g/webapps
-        adb push gaia/profile/settings.json /system/b2g/defaults/
-        adb push gaia/profile/user.js /system/b2g/defaults/pref/
         
-        rm -r gaia*
+        ## echo + Adjusting user.js &&
+        cat gaia/profile/user.js | sed -e "s/user_pref/pref/" > user.js
+        
+        ## Updating gaia:
+        adb shell mkdir -p /system/b2g/defaults/pref &&
+        adb push gaia/profile/webapps /system/b2g/webapps &&
+        adb push user.js /system/b2g/defaults/pref &&
+        adb push gaia/profile/settings.json /system/b2g/defaults 
+        
+        #rm -r gaia*
     fi
 
     ## Restart
+    adb shell sync
     adb shell reboot
+    adb wait-for-device
 fi
 
 
