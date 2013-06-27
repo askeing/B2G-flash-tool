@@ -40,7 +40,7 @@ Environment is not a necessary condition. The script has an interaction mode if 
 
 ### Example:
 
-To download an unagi Engineer build and auto flash into the device without prompt
+Download an unagi Engineer build and auto flash into the device without prompt
 
     ./autoflash.sh -e -f -y
 
@@ -53,6 +53,25 @@ Download an leo user build and auto flash
 
 Checking the version of B2G on devices.
 Please make sure your devices can be detected by ADB tool.
+
+### Parameters:
+
+```
+-s <serial number>            - directs command to the USB device or emulator with
+                                 the given serial number. Overrides ANDROID_SERIAL
+                                 environment variable.
+-h | --help                   - print usage.
+```
+
+### Example:
+
+Check version with serial number parameter
+
+    ./check_versions.sh -s serialnumber
+
+Check version with environment variable
+
+    ANDROID_SERIAL=serialnumber ./check_versions.sh
 
 
 ## enable_captiveportal.sh
@@ -94,3 +113,14 @@ This is to get the crash reports of submitted/pending.
 
 This script was written for grant the geolocation permission of unagi.
 
+
+## change_OTA_URL.sh
+
+This script is used to change OTA update URL to a local or a specific URL.
+
+Parameters:
+```
+-u | --url <URL>              - set the following URL for OTA
+-p                            - show current preference
+-h | --help                   - print usage.
+```
