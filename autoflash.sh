@@ -56,6 +56,7 @@ Flash_Flag=false
 Backup_Flag=false
 BackupOnly_Flag=false
 RecoverOnly_Flag=false
+Shallow_Flag=false
 
 ## helper function
 ## no input arguments, simply print helper descirption to std out
@@ -68,8 +69,10 @@ function helper(){
     echo -e "-f|--flash\tFlash your device (unagi) after downlaod finish."
     echo -e "\t\tYou may have to input root password when you add this argument."
     echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
-    # -F, --flash-only
-    echo -e "-F|--flash-only\tFlash your device from local zipped build(ex: -F{file name}); default: use latest downloaded"
+    # -F, --flash-local
+    echo -e "-F|--flash-local\tFlash your device from local zipped build(ex: -F{file name}); default: use latest downloaded"
+    # -s, --shallow
+    echo -e "-s|--shallow\tShallow flash, download package only compiled binary and push into device, without modifying image"
     # -e, --eng
     echo -e "-e|--eng\tchange the target build to engineer build."
     # -v, --version
@@ -99,9 +102,9 @@ function helper(){
     echo -e "  Download build.\t\t./autoflash.sh"
     echo -e "  Download engineer build.\tHTTP_USER=dog@foo.foo HTTP_PWD=foo ./autoflash.sh -e"
     echo -e "  Download and flash build.\t./autoflash.sh -f"
-    echo -e "  Flash engineer build.\t\t./autoflash.sh -e -F"
-    echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -F -b"
-    echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -F --no-kernel"
+    echo -e "  Flash engineer build.\t\t./autoflash.sh -e -f"
+    echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -f -b"
+    echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -f --no-kernel"
     echo -e "  Flash build on leo devices.\t\t ./autoflash.sh -d=leo"
     exit 0
 }
@@ -155,7 +158,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o fF::ebryhv::d:: --long flash,flash-only::,eng,version::,device::,tef,shira,v1train,backup,recover-only,help \
+        TEMP=`getopt -o fF::ebryhv::d::s:: --long flash,flash-only::,eng,version::,device::,tef,shira,v1train,backup,recover-only,shallow::,help \
         -n 'error occured' -- "$@"`
 
         if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
@@ -165,6 +168,7 @@ case `uname` in
 esac
 
 ### TODO: -f can get an optional argument and download with build number or something
+### TODO: refactor tasks into functions to make it more fexilble
 ### write Filename and prevent for future modification
 
 while true
@@ -176,6 +180,15 @@ do
             "") shift 2;;
              *) Filename=$2; shift 2;;
            esac ;;
+        ## Shallow flash: download only gaia/gecko and push into device
+        -s|--shallow)
+           case "$2" in
+            "") Shallow_Flag=true;flash_gaia=true;flash_gecko=true; shift 2;;
+            all) Shallow_Flag=true;flash_gaia=true;flash_gecko=true; shift 2;;
+            gaia) Shallow_Flag=true;flash_gaia=true; shift 2;;
+            gecko) Shallow_Flag=true;flash_gecko=true; shift 2;;
+             *) echo -e "No flash target $2; please specify all/gecko/gaia";exit 0; shift 2;;
+           esac;;
         -e|--eng) Engineer_Flag=1; shift;;
         -v|--version) 
            case "$2" in
@@ -190,10 +203,10 @@ do
         -B|--backup-only) BackupOnly_Flag=true; shift;;
         -r|--recover-only) RecoverOnly_Flag=true; shift;;
         -d|--device)
-            case "$2" in
-             "") device_info; exit 0; shift 2;;
+           case "$2" in
+            "") device_info; exit 0; shift 2;;
              *) device $2; shift 2;;
-            esac;;
+           esac;;
         -y) AgreeFlash_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
@@ -202,7 +215,6 @@ do
     esac
 done
 
-####################
 # Backup Only task
 ####################
 if [ $BackupOnly_Flag == true ]; then
@@ -358,6 +370,8 @@ fi
 ####################
 # Download task
 ####################
+### Shallow flash downloads different packages 
+
 if [ $Download_Flag == true ]; then
     # Clean file
     echo -e "Clean..."
@@ -376,30 +390,43 @@ if [ $Download_Flag == true ]; then
     fi
     
     # Download file
-    [ $Engineer_Flag == 0 ] && Build_SRT="User" || Build_SRT="Engineer"
-    echo -e "\n\nDownload latest ${Version_Flag} ${Build_SRT} build..."
-    wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL
+    if [ $Shallow_Flag == false ]; then
+        [ $Engineer_Flag == 0 ] && Build_SRT="User" || Build_SRT="Engineer"
+        echo -e "\n\nDownload latest ${Version_Flag} ${Build_SRT} build..."
+        wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL
 
-    # Check the download is okay
-    if [ $? -ne 0 ]; then
-        echo -e "Download $URL failed."
-        exit 1
+        # Check the download is okay
+        if [ $? -ne 0 ]; then
+            echo -e "Download $URL failed."
+            exit 1
+        fi
+
+        # Modify the downloaded filename
+        filetime=`stat -c %y ${DownloadFilename} | sed 's/\s.*$//g'`
+        if [ $Engineer_Flag == 1 ]; then
+            Filename=${Device_Flag}_${filetime}_${Version_Flag}_eng.zip
+        elif [ $Engineer_Flag == 0 ]; then
+            Filename=${Device_Flag}_${filetime}_${Version_Flag}_usr.zip
+        fi
+
+        rm -f $Filename
+        mv $DownloadFilename $Filename
+        echo "Download file saved as $Filename"
+    else
+        ## test if user have QC ril
+        read -p "Do you have QC ril already? [y/N]" isQCril
+        test "$isQCril" != "y"  && test "$isQCril" != "Y" && echo -e "byebye." && exit 0
+        ## Downloading gaia & gecko binary for shallow flash
+        URL=$(echo $URL | sed 's|/[^/]\+$||')
+        echo "\$Download URL: $URL"
+        rm gaia.zip 2>/dev/null
+        rm b2g-18.0.en-US.android-arm.tar.gz 2>/dev.null
+        test $flash_gaia == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/gaia.zip
+        test $flash_gecko == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/b2g-18.0.en-US.android-arm.tar.gz
     fi
-
-    # Modify the downloaded filename
-    filetime=`stat -c %y ${DownloadFilename} | sed 's/\s.*$//g'`
-    if [ $Engineer_Flag == 1 ]; then
-        Filename=${Device_Flag}_${filetime}_${Version_Flag}_eng.zip
-    elif [ $Engineer_Flag == 0 ]; then
-        Filename=${Device_Flag}_${filetime}_${Version_Flag}_usr.zip
-    fi
-
-    rm -f $Filename
-    mv $DownloadFilename $Filename
-    echo "Download file saved as $Filename"
-
 else
     # Setup the filename for -F
+    ### TODO: shallow flash from local
     if ! [ -z $Filename ]; then
         echo "File name is $Filename"
     elif [ $Engineer_Flag == 1 ]; then
@@ -413,32 +440,37 @@ fi
 # Decompress task
 ####################
 # Check the file is exist
-if ! [ -z $Filename ]; then
-    test ! -f $Filename && echo -e "The file $Filename DO NOT exist." && exit 1
-else
-    echo -e "The file DO NOT exist." && exit 1
+
+if [ $Shallow_Flag == false ]; then
+    if ! [ -z $Filename ]; then
+        test ! -f $Filename && echo -e "The file $Filename DO NOT exist." && exit 1
+    else
+        echo -e "The file DO NOT exist." && exit 1
+    fi
+    
+    # Delete folder
+    echo -e "Delete old build folder: b2g-distro"
+    rm -rf b2g-distro/
+    
+    # Unzip file
+    echo -e "Unzip $Filename ..."
+    unzip $Filename || exit -1
+elif [ $Download_Flag == true ]; then
+    rm -r gaia 2>/dev/null
+    test -e gaia.zip && unzip gaia.zip
+    rm -r b2g 2>/dev/null
+    test -e b2g-18.0.en-US.android-arm.tar.gz && tar xzf b2g-18.0.en-US.android-arm.tar.gz
 fi
-
-# Delete folder
-echo -e "Delete old build folder: b2g-distro"
-rm -rf b2g-distro/
-
-# Unzip file
-echo -e "Unzip $Filename ..."
-unzip $Filename || exit -1
-
 
 ####################
 # Flash device task
 ####################
-if [ $Flash_Flag == true ]; then
+echo "\$Flash_Flag = $Flash_Flag; \$Shallow_Flag = $Shallow_Flag"
+if [ $Flash_Flag == true ] && [ $Shallow_Flag == false ]; then
     if [ -z $AgreeFlash_Flag ]; then
         # make sure
         read -p "Are you sure you want to flash your device? [y/N]" isFlash
-        if [ "$isFlash" != "y" ] && [ "$isFlash" != "Y" ]; then
-            echo -e "byebye."
-            exit 0
-        fi
+        test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo -e "byebye." && exit 0
     fi
 
     # ADB PATH
@@ -453,11 +485,9 @@ if [ $Flash_Flag == true ]; then
     ####################
     # Backup task
     ####################
-    if [ $Backup_Flag == true ]; then
-        if [ ! -d mozilla-profile ]; then
-            echo "no backup folder, creating..."
-            mkdir mozilla-profile
-        fi
+    if $Backup_Flag == true; then
+        test ! -d mozilla-profile && echo "no backup folder, creating..." \
+            && mkdir mozilla-profile
         echo -e "Backup your profiles..."
         adb shell stop b2g 2> ./mozilla-profile/backup.log &&\
         rm -rf ./mozilla-profile/* &&\
@@ -489,7 +519,71 @@ if [ $Flash_Flag == true ]; then
         adb wait-for-device
         echo -e "Recover done."
     fi
+elif $Flash_Flag == true; then
+## Enter shallow flash
+
+    adb root
+    adb wait-for-device
+    adb remount
+    adb shell mount -o remount,rw /system &&
+    adb wait-for-device
+    adb shell stop b2g
+    adb wait-for-device
+
+    ## Remove ril TODO: workaround on this part
+    ## Uninstalling old RIL &&
+    adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_location &&
+    adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_ril &&
+
+    ## + Installing new RIL &&
+    test "$ifQCril" != 'y' && adb push b2g-distro/ril /system/b2g/distribution
+
+    ## echo + Removing incompatible extensions &&
+    adb shell rm -r /system/b2g/distribution/bundles/liblge_b2g_extension > /dev/null &&
+
+    ## remove old gaia and profiles
+    adb shell rm -r /cache/* &&
+    adb shell rm -r /data/b2g/* &&
+    adb shell rm -r /data/local/webapps &&
+    adb shell rm -r /data/local/user.js &&
+    adb shell rm -r /data/local/permissions.sqlite* &&
+    adb shell rm -r /data/local/OfflineCache &&
+    adb shell rm -r /data/local/indexedDB &&
+    adb shell rm -r /data/local/debug_info_trigger &&
+    adb shell rm -r /system/b2g/webapps &&
+
+
+    if $flash_gecko == true; then
+        ## Updating gecko (make sure you push the b2g directory not the b2g app, 
+        ## ie be at the directory one level above the unzipped b2g-18 zip file instead of inside the b2g folder)
+        adb push b2g /system/b2g
+        #rm -r b2g*
+    fi
+    if $flash_gaia == true; then
+        ## If gaia doesn't work the first time around, do the steps above and the following and then do the gaia update portion; 
+        ## otherwise skip this and go to the updating gaia portion:
+        
+        ## echo + Adjusting user.js &&
+        cat gaia/profile/user.js | sed -e "s/user_pref/pref/" > user.js
+        
+        ## Updating gaia:
+        adb shell mkdir -p /system/b2g/defaults/pref &&
+        adb push gaia/profile/webapps /system/b2g/webapps &&
+        adb push user.js /system/b2g/defaults/pref &&
+        adb push gaia/profile/settings.json /system/b2g/defaults 
+        
+        #rm -r gaia*
+    fi
+
+    ## Restart
+    adb shell sync
+    adb shell reboot
+    adb wait-for-device
 fi
+
+
+
+
 
 ####################
 # Retrieve Version info
@@ -501,12 +595,15 @@ fi
 #    grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gecko\".*revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
 #    grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gaia\".*revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
 #fi
-
-grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml > VERSION
-grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml >> VERSION
-
-echo -e "===== VERSION ====="
-cat VERSION
+if [ -e ./checkVersions.sh ]; then
+    bash ./checkVersions.sh
+else
+    grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml > VERSION
+    grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml >> VERSION
+    
+    echo -e "===== VERSION ====="
+    cat VERSION
+fi
 
 ####################
 # Done

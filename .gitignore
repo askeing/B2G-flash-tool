@@ -18,8 +18,9 @@ Makefile.in
 *.zip
 VERSION
 version
-b2g-distro/*
+b2g*
+gaia*
 mozilla-profile/*
 crashreports.txt
 .DS_Store
-
+user.js
