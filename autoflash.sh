@@ -38,6 +38,7 @@
 #   2013/05/17 Paul:    v11.3 Refactor check file, fix short-circuit, add prompt message and minor bug fix
 #   2013/06/06 Walter:  v11.4 Add v2.0.0 
 #   2013/06/07 Askeing: v11.5 Updated v200 to v0/master.
+#   2013/07/01 Paul:    v11.6 Add shallow flash
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
