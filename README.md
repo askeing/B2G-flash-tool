@@ -23,6 +23,7 @@ Environment is not a necessary condition. The script has an interaction mode if 
                 You may have to input root password when you add this argument.
                 Your PATH should has adb path, or you can setup the ADB_PATH.
 -F|--flash-only Flash your device from local zipped build(ex: -F{file name}); default: use latest downloaded
+-s|--shallow\tShallow flash, download package only compiled binary and push into device, without modifying image
 -e|--eng        change the target build to engineer build.
 -v|--version,    give the target build version, ex: -vtef == -v100; show available version if nothing specified.
 --tef   change the target build to tef build v1.0.0.
