@@ -62,7 +62,7 @@ Shallow_Flag=false
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-    echo -e "v 11.5"
+    echo -e "v 11.6"
     echo -e "This script will download latest release build from pvt server.\n"
     echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
     echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
