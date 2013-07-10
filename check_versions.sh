@@ -57,7 +57,7 @@ if [ -f omni.ja ] && [ -f application.zip ] && [ -f application.ini ]; then
 	echo 'Gaia:    ' $(head -n 1 resources/gaia_commit.txt)
 	echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
 	
-	echo 'Gecko:   ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*<a href=\",,g ; s,\">.*,,g")
+	echo 'Gecko:   ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
 	
 	for i in BuildID Version ; do
 	    echo $i ' ' $(grep "^ *$i" application.ini | sed "s,.*=,,g")
