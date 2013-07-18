@@ -39,6 +39,7 @@
 #   2013/06/06 Walter:  v11.4 Add v2.0.0 
 #   2013/06/07 Askeing: v11.5 Updated v200 to v0/master.
 #   2013/07/01 Paul:    v11.6 Add shallow flash
+#   2013/07/16 Paul:    v11.7 Support Helix
 #
 # = = = = = = = = = = = Backlog = = = = = = = = = = = = = = = = = = = = = =
 #   2013/04/09 Al:      Need to refactor "Check File" section
@@ -62,7 +63,7 @@ Shallow_Flag=false
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-    echo -e "v 11.6"
+    echo -e "v 11.7"
     echo -e "This script will download latest release build from pvt server.\n"
     echo -e "Usage: [Environment] ./autoflash.sh [parameters]"
     echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw} ADB_PATH=adb_path\n"
@@ -127,7 +128,7 @@ function version_info(){
     echo -e "Available version:"
     echo -e "\t100|tef"
     echo -e "\t101|shira"
-    echo -e "\t110|v1train"
+    echo -e "\t110|v1train (default)"
     echo -e "\t0|master"
 }
 
@@ -137,9 +138,10 @@ function device(){
         unagi) Device_Flag="unagi";;
         otoro) Device_Flag="otoro";;
         inari) Device_Flag="inari";;
-        leo) Device_Flag="leo";;
+        leo) Device_Flag="leo";Shallow_Flag=true;flash_gaia=true;flash_gecko=true;;
         buri) Device_Flag="buri";;
         hamachi) Device_Flag="hamachi";;
+        helix) Device_Flag="helix";Shallow_Flag=true;flash_gaia=true;flash_gecko=true;;
     esac
 }
 
@@ -148,8 +150,9 @@ function device_info(){
     echo -e "\tunagi (default)"
     echo -e "\totoro"
     echo -e "\tinari"
+    echo -e "\tburi=hamachi"
     echo -e "\tleo"
-    echo -e "\tburi"
+    echo -e "\thelix"
 }
 
 ## show helper if nothing specified
@@ -181,6 +184,11 @@ do
             "") shift 2;;
              *) Filename=$2; shift 2;;
            esac ;;
+        -v|--version) 
+           case "$2" in
+            "") version_info; exit 0; shift 2;;
+             *) version $2; shift 2;;
+           esac;;
         ## Shallow flash: download only gaia/gecko and push into device
         -s|--shallow)
            case "$2" in
@@ -191,11 +199,6 @@ do
              *) echo -e "No flash target $2; please specify all/gecko/gaia";exit 0; shift 2;;
            esac;;
         -e|--eng) Engineer_Flag=1; shift;;
-        -v|--version) 
-           case "$2" in
-            "") version_info; exit 0; shift 2;;
-             *) version $2; shift 2;;
-           esac;;
         --tef) version "tef"; shift;;
         --shira) version "shira"; shift;;
         --v1train) version "v1train"; shift;;
@@ -352,7 +355,7 @@ elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
     # v1-train: user build
     if [ $Version_Flag == "v1train" ]; then
         if [ $Engineer_Flag == 1 ]; then
-            echo -e "buri/hamachi ver v1-train don't support eng build, download user build insteadly"
+            echo -e "buri/hamachi with v1-train doesn't support eng build, download user build insteadly"
         fi
         Engineer_Flag=0
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-hamachi/latest/${DownloadFilename}
@@ -364,6 +367,19 @@ elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
         fi
     else
         echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for buri device"
+        exit 0
+    fi
+elif [ $Device_Flag == "helix" ]; then
+    DownloadFilename=helix.zip
+    # there is v1-train for helix device only
+    if [ $Version_Flag == "v1train" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            echo -e "helix with v1.1 hd doesn't support eng build, download user build insteadly"
+        fi
+        Engineer_Flag=0
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_1_0_hd-helix/latest/${DownloadFilename}
+    else
+        echo -e "There is only v1.1 hd for helix device only"
         exit 0
     fi
 fi
@@ -415,8 +431,8 @@ if [ $Download_Flag == true ]; then
         echo "Download file saved as $Filename"
     else
         ## test if user have QC ril
-        read -p "Do you have QC ril already? [y/N]" isQCril
-        test "$isQCril" != "y"  && test "$isQCril" != "Y" && echo -e "byebye." && exit 0
+        read -p "Do you have comm-ril to flash? [y/N]" isQCril
+        #test "$isQCril" != "y"  && test "$isQCril" != "Y" && echo -e "byebye." && exit 0
         ## Downloading gaia & gecko binary for shallow flash
         URL=$(echo $URL | sed 's|/[^/]\+$||')
         echo "\$Download URL: $URL"
@@ -526,6 +542,7 @@ elif $Flash_Flag == true; then
     adb root
     adb wait-for-device
     adb remount
+    adb wait-for-device
     adb shell mount -o remount,rw /system &&
     adb wait-for-device
     adb shell stop b2g
@@ -533,11 +550,11 @@ elif $Flash_Flag == true; then
 
     ## Remove ril TODO: workaround on this part
     ## Uninstalling old RIL &&
+    ## + Installing new RIL &&
+    test "$ifQCril" == 'y' &&
     adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_location &&
     adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_ril &&
-
-    ## + Installing new RIL &&
-    test "$ifQCril" != 'y' && adb push b2g-distro/ril /system/b2g/distribution
+    adb push b2g-distro/ril /system/b2g/distribution
 
     ## echo + Removing incompatible extensions &&
     adb shell rm -r /system/b2g/distribution/bundles/liblge_b2g_extension > /dev/null &&
@@ -596,8 +613,8 @@ fi
 #    grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gecko\".*revision=/gecko revision: /g' | sed 's/\/>//g' > VERSION
 #    grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml | sed 's/^.*path=\"gaia\".*revision=/gaia revision: /g' | sed 's/\/>//g' >> VERSION
 #fi
-if [ -e ./checkVersions.sh ]; then
-    bash ./checkVersions.sh
+if [ -e ./check_versions.sh ]; then
+    bash ./check_versions.sh
 else
     grep '^.*path=\"gecko\".*revision=' ./b2g-distro/sources.xml > VERSION
     grep '^.*path=\"gaia\".*revision=' ./b2g-distro/sources.xml >> VERSION
