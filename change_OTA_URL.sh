@@ -19,7 +19,9 @@ function show_prefs(){
 	    echo "Unknown device"
 	    exit -1
     fi
-    adb shell cat /data/b2g/mozilla/*.default/prefs.js
+    default_dir=$(adb shell ls /data/b2g/mozilla/ | grep "default" | sed "s/\n//g" | sed "s/\r//g")
+    prefs_path="/data/b2g/mozilla/${default_dir}/prefs.js"
+    adb shell cat ${prefs_path}
 }
 
 
