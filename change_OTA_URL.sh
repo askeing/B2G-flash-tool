@@ -66,7 +66,8 @@ fi
 ####################
 # Start
 ####################
-TWO_DAY_AGO=$(date --date='2 days ago' +%s)
+TODAY=$(date +%s)
+TWO_DAY_AGO=$((${TODAY} - 172800))
 
 dir=$(mktemp -d -t captive.XXXXXXXXXXXX)
 cd ${dir} 
