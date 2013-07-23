@@ -25,4 +25,5 @@ crashreports.txt
 .DS_Store
 user.js
 size.txt
-diffSize.txt
+sizeDiff.txt
+dir
