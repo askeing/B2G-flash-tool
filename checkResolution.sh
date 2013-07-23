@@ -25,9 +25,10 @@
 ####################
 # Parameter Flags
 ####################
-Branch=helix
-Resolution=1.5
+Branch="helix"
+Resolution="@1.5x"
 Gaia_Path=
+Base_File=
 
 ####################
 # Functions
@@ -44,7 +45,6 @@ case `uname` in
     "Linux")
         ## add getopt argument parsing
         TEMP=`getopt -o b::p::r:: --long branch::,gaia_path::,resolution -n 'error occured' -- "$@"`
-
         if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
 
         eval set -- "$TEMP";;
@@ -54,9 +54,13 @@ esac
 while true
 do
     case "$1" in
-        -b|--branch) Branch=$1; shift 2;;
-        -p|--gaia_path) Gaia_Path=$1; shift 2;;
-        -r|--resolution) Resolution=$1; shift 2;;
+        -b|--branch) Branch=$2; shift 2;;
+        -p|--gaia_path) Gaia_Path=$2; shift 2;;
+        -r|--resolution) 
+            case "$2" in
+                "1.5") Resolution="@1.5x"; shift 2;;
+                "2.0"|"2") Resolution="@2x"; shift 2;;
+            esac;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
         "") shift;break;;
@@ -79,28 +83,42 @@ cd dir
 for f in $(ls */application.zip)
 do
   path=${f%.*}
-  unzip $f style/images/* -d $path > /dev/null &> /dev/null
-  for images in $(ls $path/style/images/*.png &> /dev/null)
+  unzip $f style/images/* -d $path > /dev/null 2>&1
+  for images in $(ls $path/style/images/*.png 2> /dev/null)
   do
       echo $images >> ../size.txt
       ls -al $images | awk '{print $5}' >> ../size.txt 
   done
 done
 
-if true; then
+if [ -d "${Gaia_Path}" ]; then
+    echo "Use path: "${Gaia_Path}
+    for images in $(ls $Gaia_Path/apps/*/style/images/*$Resolution.png 2> /dev/null)
+    do
+        suffix="${images##*/apps/}"
+        prefix="${suffix%/style*}"
+        fn=$(basename $images)
+        echo $prefix.gaiamobile.org/application/style/images/${fn%%$Resolution*}.png >> ../gaiaPngSize.txt
+        ls -al $images | awk '{print $5}' >> ../gaiaPngSize.txt
+    done
+    Base_File="../gaiaPngSize.txt"
+else
     echo "Use data on altsai respository for comparison"
-    git clone http://github.com/altsai/checkResolution.git > /dev/null &> /dev/null
+    git clone http://github.com/altsai/checkResolution.git
     cd checkResolution
-    git checkout $Branch > /dev/null &> /dev/null
+    git checkout $Branch 2>&1
     cd ..
-    diff -u checkResolution/size.txt ../size.txt > sizeDiff.txt
-    fileSize=$(ls -al sizeDiff.txt | awk '{print $5}')
-    if [ $fileSize == "0" ]; then
-        echo "TEST PASS!"
-    else
-        cp sizeDiff.txt ../
-        echo "output Diff to sizeDiff.txt"
-    fi
+    Base_File="checkResolution/size.txt"
+fi
+
+echo "diff -u $Base_File ../size.txt > sizeDiff.txt"
+diff -u $Base_File ../size.txt > sizeDiff.txt
+fileSize=$(ls -al sizeDiff.txt | awk '{print $5}')
+if [ $fileSize == "0" ]; then
+    echo "TEST PASS!"
+else
+    cp sizeDiff.txt ../
+    echo "output Diff to sizeDiff.txt"
 fi
 
 cd ..
