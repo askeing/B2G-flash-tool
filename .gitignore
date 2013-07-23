@@ -24,3 +24,5 @@ mozilla-profile/*
 crashreports.txt
 .DS_Store
 user.js
+size.txt
+diffSize.txt
