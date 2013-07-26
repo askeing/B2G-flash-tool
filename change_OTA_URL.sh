@@ -19,7 +19,7 @@ function show_prefs(){
 	    echo "Unknown device"
 	    exit -1
     fi
-    prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js)
+    prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js | sed "s/\n//g" | sed "s/\r//g" | sed "s/0x0D//g" | sed "s/0x0A//g")
     adb shell cat ${prefs_path}
 }
 
@@ -71,7 +71,7 @@ TWO_DAY_AGO=$((${TODAY} - 172800))
 dir=$(mktemp -d -t captive.XXXXXXXXXXXX)
 cd ${dir} 
 
-prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js)
+prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js | sed "s/\n//g" | sed "s/\r//g" | sed "s/0x0D//g" | sed "s/0x0A//g")
 
 adb pull ${prefs_path}
 cp prefs.js prefs.js.bak
