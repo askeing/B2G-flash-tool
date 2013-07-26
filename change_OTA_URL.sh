@@ -7,6 +7,16 @@
 #
 #==========================================================================
 
+function find_prefs_path(){
+    # distinguish platform
+    case `uname` in
+        "Linux")
+            prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js | tr -d '\n' | tr -d '\r');;
+        "Darwin")
+            prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js | tr -d '\n' | tr -d '\r');;
+    esac
+}
+
 function helper_config(){
     echo -e "-h, --help\tShow usage."
     echo -e "-p\t\tShow prefs file of device."
@@ -19,7 +29,7 @@ function show_prefs(){
 	    echo "Unknown device"
 	    exit -1
     fi
-    prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js | sed "s/\n//g" | sed "s/\r//g" | sed "s/0x0D//g" | sed "s/0x0A//g")
+    find_prefs_path
     adb shell cat ${prefs_path}
 }
 
@@ -71,8 +81,7 @@ TWO_DAY_AGO=$((${TODAY} - 172800))
 dir=$(mktemp -d -t captive.XXXXXXXXXXXX)
 cd ${dir} 
 
-prefs_path=$(adb shell ls /data/b2g/mozilla/*.default/prefs.js | sed "s/\n//g" | sed "s/\r//g" | sed "s/0x0D//g" | sed "s/0x0A//g")
-
+find_prefs_path
 adb pull ${prefs_path}
 cp prefs.js prefs.js.bak
 
