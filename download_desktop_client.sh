@@ -4,17 +4,22 @@
 #   This script was written for download last desktop from server.
 #==========================================================================
 
+Run_Once_Flag=false
 Download_Flag=true
-Version_Flag="l64"
+OS_Flag="LINUX_64"
+Version_Flag="18"
 
 ## helper_config function
 function helper_config(){
     echo -e "The config file error."
     echo -e "\tfilename: .download_desktop_client.conf"
     echo -e "\t===== File Content ====="
-    echo -e "\tCONF_LINUX_32_URL=https://path.to.linux32bit.desktopclient.file/"
-    echo -e "\tCONF_LINUX_64_URL=https://path.to.linux64bit.desktopclient.file/"
-    echo -e "\tCONF_MAC_URL=https://path.to.mac.desktopclient.file/"
+    echo -e "\tCONF_B2G18_LINUX_32_URL=https://path.to.B2G18_linux32bit.desktopclient.file/"
+    echo -e "\tCONF_B2G18_LINUX_64_URL=https://path.to.B2G18_linux64bit.desktopclient.file/"
+    echo -e "\tCONF_B2G18_MAC_URL=https://path.to.B2G18_mac.desktopclient.file/"
+    echo -e "\tCONF_B2G25_LINUX_32_URL=https://path.to.B2G25_linux32bit.desktopclient.file/"
+    echo -e "\tCONF_B2G25_LINUX_64_URL=https://path.to.B2G25_linux64bit.desktopclient.file/"
+    echo -e "\tCONF_B2G25_MAC_URL=https://path.to.B2G25_mac.desktopclient.file/"
     echo -e "\t========================"
 }
 
@@ -23,36 +28,49 @@ function helper_config(){
 function helper(){
 	echo -e "This script was written for download last desktop from server.\n"
 	echo -e "Usage: ./download_desktop_client.sh [parameters]"
-    # -v, --version
-    echo -e "-v|--version\tThe target build version. Default: -v64\n\t\tshow available version if nothing specified."
-	# -h, --help
+    echo -e "-o|--os \tThe target OS. Default: --os l64\n\t\tshow available OS if nothing specified."
+    echo -e "-v|--version\tThe target build version. Default: -v18\n\t\tshow available version if nothing specified."
+    echo -e "-r|--run-once\tRun once to get BuildID."
 	echo -e "-h|--help\tDisplay help."
 	echo -e "Example:"
-	echo -e "  Linux 32bit build.\t./download_desktop_client.sh -v32"
-	echo -e "  Linux 64bit build.\t./download_desktop_client.sh -v64"
-	echo -e "  Mac build.\t./download_desktop_client.sh -vmac"
+	echo -e "  B2G 25 Linux 32bit build.\t./download_desktop_client.sh --os=l32 -v25"
+	echo -e "  B2G 18 Linux 64bit build.\t./download_desktop_client.sh --os=l64 -v18"
+	echo -e "  B2G 18 Mac build.\t./download_desktop_client.sh -omac"
 	exit 0
 }
 
-## version parsing
-## arg1: version for flash, if the version is not specified then default option will be taken
-## output: set version to global $Version_Flag
+## parameters parsing
+## arg1: os for flash, if the version is not specified then default option will be taken
+## output: set version to global $OS_Flag
+function os(){
+    local_ver=$1
+    case "$local_ver" in
+        l32) OS_Flag="LINUX_32";;
+        l64) OS_Flag="LINUX_64";;
+        mac) OS_Flag="MAC";;
+    esac
+}
+
+function os_info(){
+    echo -e "Available OS:"
+    echo -e "\t--os=l32\tLinux 32bit desktop client"
+    echo -e "\t--os=l64\tLinux 64bit desktop client"
+    echo -e "\t--os=mac\tMac desktop client"
+}
+
 function version(){
     local_ver=$1
     case "$local_ver" in
-        32) Version_Flag="l32";;
-        64) Version_Flag="l64";;
-        mac) Version_Flag="mac";;
+        18) Version_Flag="18";;
+        25) Version_Flag="25";;
     esac
 }
 
 function version_info(){
     echo -e "Available version:"
-    echo -e "\t-v32\tLinux 32bit desktop client"
-    echo -e "\t-v64\tLinux 64bit desktop client"
-    echo -e "\t-vmac\tMac desktop client"
+    echo -e "\t--version=18\tB2G 18"
+    echo -e "\t--version=25\tB2G 25"
 }
-
 
 ####################
 # Load Config File (before load parameters)
@@ -64,7 +82,11 @@ else
     helper_config
     exit -2
 fi
-if [ -z $CONF_LINUX_32_URL ] || [ -z $CONF_LINUX_64_URL ] || [ -z $CONF_MAC_URL ]; then
+if [ -z $CONF_B2G18_LINUX_32_URL ] || [ -z $CONF_B2G18_LINUX_64_URL ] || [ -z $CONF_B2G18_MAC_URL ]; then
+    helper_config
+    exit -2
+fi
+if [ -z $CONF_B2G25_LINUX_32_URL ] || [ -z $CONF_B2G25_LINUX_64_URL ] || [ -z $CONF_B2G25_MAC_URL ]; then
     helper_config
     exit -2
 fi
@@ -74,7 +96,7 @@ fi
 case `uname` in
 	"Linux")
 		## add getopt argument parsing
-		TEMP=`getopt -o hv:: --long help,version:: \
+		TEMP=`getopt -o hro::v:: --long help,run-once,os::,version:: \
 	    -n 'error occured' -- "$@"`
 
 		if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
@@ -87,11 +109,17 @@ esac
 while true
 do
     case "$1" in
+        -o|--os)
+           case "$2" in
+            "") os_info; exit 0; shift 2;;
+             *) os $2; shift 2;;
+           esac;;
         -v|--version) 
            case "$2" in
             "") version_info; exit 0; shift 2;;
              *) version $2; shift 2;;
            esac;;
+        -r|--run-once) Run_Once_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
         "") shift;break;;
@@ -99,23 +127,15 @@ do
     esac
 done
 
+####################
+# Parse URL
+####################
+TARGET=CONF_B2G${Version_Flag}_${OS_Flag}_URL
+echo -e "Target: $TARGET"
+eval URL=\$$TARGET
+echo -e "DL URL: $URL"
+DownloadFilename=$(basename ${URL})
 
-####################
-# Check Files
-####################
-# linux 32
-if [ $Version_Flag == "l32" ]; then
-    DownloadFilename=$(basename ${CONF_LINUX_32_URL})
-	URL=${CONF_LINUX_32_URL}
-# linux 64
-elif [ $Version_Flag == "l64" ]; then
-    DownloadFilename=$(basename ${CONF_LINUX_64_URL})
-	URL=${CONF_LINUX_64_URL}
-# mac
-elif [ $Version_Flag == "mac" ]; then
-    DownloadFilename=$(basename ${CONF_MAC_URL})
-	URL=${CONF_MAC_URL}
-fi
 
 ####################
 # Download task
@@ -127,7 +147,7 @@ if [ $Download_Flag == true ]; then
 
 	# Download file
 	echo -e "Download latest desktop client build..."
-    wget -q $URL
+    wget $URL
 
 	# Check the download is okay
 	if [ $? -ne 0 ]; then
@@ -142,7 +162,7 @@ fi
 # Decompress task
 ####################
 
-if ! [ ${Version_Flag} == "mac" ]; then
+if ! [ ${OS_Flag} == "mac" ] && [ $Run_Once_Flag == true ]; then
     Filename=${DownloadFilename}
 
     # Check the file is exist
