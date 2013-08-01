@@ -93,16 +93,27 @@ The [Bug 869394](https://bugzil.la/869394) turn on Captive Portal detection by d
 
 This script was written for download last desktop from server.
 
-Please create the config file `.download_desktop_client.conf` first.
-
-ex:
-```
-CONF_LINUX_32_URL=https://path.to.linux32bit.desktopclient.file/
-CONF_LINUX_64_URL=https://path.to.linux64bit.desktopclient.file/
-CONF_MAC_URL=https://path.to.mac.desktopclient.file/
-```
-
 Visit [MDN: Using the B2G desktop client](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox_OS/Using_the_B2G_desktop_client) for more detail information.
+
+### Parameters:
+
+There are two version `18` and `25`, three os platform `l32`, `l64` and `mac`.
+
+```
+This script was written for download last desktop from server.
+
+Usage: ./download_desktop_client.sh [parameters]
+-o|--os         The target OS. Default: --os l64
+                show available OS if nothing specified.
+-v|--version    The target build version. Default: -v18
+                show available version if nothing specified.
+-r|--run-once   Run once to get BuildID.
+-h|--help       Display help.
+Example:
+  B2G 25 Linux 32bit build.     ./download_desktop_client.sh --os=l32 -v25
+  B2G 18 Linux 64bit build.     ./download_desktop_client.sh --os=l64 -v18
+  B2G 18 Mac build.     ./download_desktop_client.sh -omac
+```
 
 
 ## get_crashreports.sh
