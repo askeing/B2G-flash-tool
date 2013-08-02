@@ -34,7 +34,7 @@ function helper(){
     echo -e "-g|--gaia\tFlash the gaia (zip format) into your device."
     echo -e "-G|--gecko\tFlash the gecko (tar.gz format) into your device."
     echo -e "-s <serial number>\tdirects command to device with the given serial number."
-    echo -e "-y\tflash the file without asking askeing (it's a joke...)"
+    echo -e "-y\t\tflash the file without asking askeing (it's a joke...)"
     echo -e "-h|--help\tDisplay help."
     echo -e "Example:"
     echo -e "  Flash gaia.\t\t./autoflash.sh --gaia=gaia.zip"
