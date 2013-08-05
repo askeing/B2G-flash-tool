@@ -437,7 +437,7 @@ if [ $Download_Flag == true ]; then
         URL=$(echo $URL | sed 's|/[^/]\+$||')
         echo "\$Download URL: $URL"
         rm gaia.zip 2>/dev/null
-        rm b2g-18.0.en-US.android-arm.tar.gz 2>/dev.null
+        rm b2g-18.0.en-US.android-arm.tar.gz 2>/dev/null
         test $flash_gaia == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/gaia.zip
         test $flash_gecko == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/b2g-18.0.en-US.android-arm.tar.gz
     fi
