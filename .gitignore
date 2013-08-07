@@ -16,6 +16,7 @@ Makefile.in
 
 *~
 *.zip
+*.tar.gz
 VERSION
 version
 b2g*
