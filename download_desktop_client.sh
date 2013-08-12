@@ -17,9 +17,9 @@ function helper_config(){
     echo -e "\tCONF_B2G18_LINUX_32_URL=https://path.to.B2G18_linux32bit.desktopclient.file/"
     echo -e "\tCONF_B2G18_LINUX_64_URL=https://path.to.B2G18_linux64bit.desktopclient.file/"
     echo -e "\tCONF_B2G18_MAC_URL=https://path.to.B2G18_mac.desktopclient.file/"
-    echo -e "\tCONF_B2G25_LINUX_32_URL=https://path.to.B2G25_linux32bit.desktopclient.file/"
-    echo -e "\tCONF_B2G25_LINUX_64_URL=https://path.to.B2G25_linux64bit.desktopclient.file/"
-    echo -e "\tCONF_B2G25_MAC_URL=https://path.to.B2G25_mac.desktopclient.file/"
+    echo -e "\tCONF_B2G26_LINUX_32_URL=https://path.to.B2G26_linux32bit.desktopclient.file/"
+    echo -e "\tCONF_B2G26_LINUX_64_URL=https://path.to.B2G26_linux64bit.desktopclient.file/"
+    echo -e "\tCONF_B2G26_MAC_URL=https://path.to.B2G26_mac.desktopclient.file/"
     echo -e "\t========================"
 }
 
@@ -33,7 +33,7 @@ function helper(){
     echo -e "-r|--run-once\tRun once to get BuildID."
 	echo -e "-h|--help\tDisplay help."
 	echo -e "Example:"
-	echo -e "  B2G 25 Linux 32bit build.\t./download_desktop_client.sh --os=l32 -v25"
+	echo -e "  B2G 26 Linux 32bit build.\t./download_desktop_client.sh --os=l32 -v26"
 	echo -e "  B2G 18 Linux 64bit build.\t./download_desktop_client.sh --os=l64 -v18"
 	echo -e "  B2G 18 Mac build.\t./download_desktop_client.sh -omac"
 	exit 0
@@ -62,14 +62,14 @@ function version(){
     local_ver=$1
     case "$local_ver" in
         18) Version_Flag="18";;
-        25) Version_Flag="25";;
+        26) Version_Flag="26";;
     esac
 }
 
 function version_info(){
     echo -e "Available version:"
     echo -e "\t--version=18\tB2G 18"
-    echo -e "\t--version=25\tB2G 25"
+    echo -e "\t--version=26\tB2G 26"
 }
 
 ####################
@@ -86,7 +86,7 @@ if [ -z $CONF_B2G18_LINUX_32_URL ] || [ -z $CONF_B2G18_LINUX_64_URL ] || [ -z $C
     helper_config
     exit -2
 fi
-if [ -z $CONF_B2G25_LINUX_32_URL ] || [ -z $CONF_B2G25_LINUX_64_URL ] || [ -z $CONF_B2G25_MAC_URL ]; then
+if [ -z $CONF_B2G26_LINUX_32_URL ] || [ -z $CONF_B2G26_LINUX_64_URL ] || [ -z $CONF_B2G26_MAC_URL ]; then
     helper_config
     exit -2
 fi
