@@ -106,10 +106,33 @@ function run_adb()
 	adb $ADB_FLAGS $@
 }
 
-## make sure user want to shallow flash
+## make sure user want to flash/shallow flash
 function make_sure() {
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
-    test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo -e "byebye." && exit 0
+    test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo "byebye." && exit 0
+}
+
+function make_sure_dialog() {
+    MAKE_SURE_MSG="\n\n"
+    MAKE_SURE_MSG+="Your Taget Build: ${TARGET_NAME}\n"
+    MAKE_SURE_MSG+="        Rev Info: ${TARGET_DESC}\n"
+    MAKE_SURE_MSG+="           Flash: "
+    if [ ${FLASH_FULL} == true ]; then
+        MAKE_SURE_MSG+="Full Image."
+    else
+        if [ ${FLASH_GAIA} == true ]; then
+            MAKE_SURE_MSG+="Gaia, "
+        fi
+        if [ ${FLASH_GECKO} == true ]; then
+            MAKE_SURE_MSG+="Gecko, "
+        fi
+    fi
+    MAKE_SURE_MSG+="\n\n\nAre you sure you want to flash your device?"
+    dialog --title "Confirmation"  --yesno "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_makesure
+    ret=$?
+    if [ ${ret} == 1 ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
 }
 
 function download_list() {
@@ -181,7 +204,11 @@ function select_build_dialog() {
         MENU_FLAG+=" ${COUNT} \"${VALUE}\""
     done
     dialog --backtitle "Select Build from TW-CI Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-    15 50 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
+    15 55 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
+    ret=$?
+    if [ ${ret} == 1 ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
     menuitem_build=`cat ${TMP_DIR}/menuitem_build`
     case $menuitem_build in
         "") echo ""; echo "byebye."; exit 0;;
@@ -193,7 +220,11 @@ function select_flash_mode_dialog() {
     # if there are no flash flag, then ask
     if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
         dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-        15 50 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+        15 55 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+        ret=$?
+        if [ ${ret} == 1 ]; then
+            echo "" && echo "byebye." && exit 0
+        fi
         menuitem_flash=`cat ${TMP_DIR}/menuitem_flash`
         case $menuitem_flash in
             "") echo ""; echo "byebye."; exit 0;;
@@ -247,8 +278,9 @@ function downlaod_file_from_TWCI() {
     DL_URL=$1
     DL_FILE=$2
     DEST_DIR=$3
+    echo ""
     echo "Download file: ${DL_URL}artifact/${DL_FILE}"
-    wget -q -P ${DEST_DIR} ${DL_URL}artifact/${DL_FILE}
+    wget -P ${DEST_DIR} ${DL_URL}artifact/${DL_FILE}
 }
 
 function do_shallow_flash() {
@@ -392,11 +424,16 @@ fi
 # Find the name of download files. #
 ####################################
 find_download_files_name
-print_flash_info
-if [ ${VERY_SURE} == false ]; then
-    make_sure
+if [ ${INTERACTION_WINDOW} == false ]; then
+    print_flash_info
+    if [ ${VERY_SURE} == false ]; then
+        make_sure
+    fi
+else
+    if [ ${VERY_SURE} == false ]; then
+        make_sure_dialog
+    fi
 fi
-
 
 ##################################
 # Flash full image OR gaia/gecko #
