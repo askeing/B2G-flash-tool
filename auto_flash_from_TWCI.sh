@@ -139,11 +139,35 @@ function print_list() {
     done
 }
 
+function print_flash_mode() {
+    echo "Flash Mode:"
+    echo "  1) Flash Image"
+    echo "  2) Shallow flash Gaia/Gecko"
+    echo "  3) Shallow flash Gaia"
+    echo "  4) Shallow flash Gecko"
+}
+
 function select_build() {
     print_list
     while [[ ${TARGET_ID} -lt 0 ]] || [[ ${TARGET_ID} -gt ${DL_SIZE} ]]; do
 	    read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
         test ${TARGET_ID} == "q" || test ${TARGET_ID} == "Q" && echo "byebye." && exit 0
+    done
+}
+
+function select_flash_mode() {
+    echo "BBB ${FLASH_FULL} ${FLASH_GAIA} ${FLASH_GECKO}"
+    # if there are no flash flag, then ask
+    while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
+        print_flash_mode
+        read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
+        test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
+        case $FLASH_INPUT in
+            1) FLASH_FULL=true;;
+            2) FLASH_GAIA=true; FLASH_GECKO=true;;
+            3) FLASH_GAIA=true;;
+            4) FLASH_GECKO=true;;
+        esac
     done
 }
 
@@ -156,17 +180,29 @@ function select_build_dialog() {
         echo -e "${COUNT}) ${VALUE}"
         MENU_FLAG+=" ${COUNT} \"${VALUE}\""
     done
-    echo ${MENU_FLAG}
     dialog --backtitle "Select Build from TW-CI Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-    15 50 10 \
-    ${MENU_FLAG} 2>${TMP_DIR}/menuitem
-    
-    menuitem=`cat ${TMP_DIR}/menuitem`
-    #opt=$?
-    case $menuitem in
+    15 50 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
+    menuitem_build=`cat ${TMP_DIR}/menuitem_build`
+    case $menuitem_build in
         "") echo ""; echo "byebye."; exit 0;;
-        *) TARGET_ID=$menuitem;;
+        *) TARGET_ID=$menuitem_build;;
     esac
+}
+
+function select_flash_mode_dialog() {
+    # if there are no flash flag, then ask
+    if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
+        dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+        15 50 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+        menuitem_flash=`cat ${TMP_DIR}/menuitem_flash`
+        case $menuitem_flash in
+            "") echo ""; echo "byebye."; exit 0;;
+            1) FLASH_FULL=true;;
+            2) FLASH_GAIA=true; FLASH_GECKO=true;;
+            3) FLASH_GAIA=true;;
+            4) FLASH_GECKO=true;;
+        esac
+    fi
 }
 
 function find_download_files_name() {
@@ -339,6 +375,16 @@ if [ ${FOUND} == false ]; then
     else
         select_build_dialog
     fi
+fi
+
+
+###################################################################################
+# If can NOT find the flash mode from user input parameters, list the flash mode. #
+###################################################################################
+if [ ${INTERACTION_WINDOW} == false ]; then
+    select_flash_mode
+else
+    select_flash_mode_dialog
 fi
 
 

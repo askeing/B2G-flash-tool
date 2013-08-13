@@ -261,6 +261,6 @@ fi
 ####################
 # Done             #
 ####################
-echo -e "Done!\nbyebye."
+echo -e "Shallow Flash Done!"
 
 
