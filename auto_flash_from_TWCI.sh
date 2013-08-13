@@ -109,14 +109,14 @@ function run_adb()
 ## make sure user want to flash/shallow flash
 function make_sure() {
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
-    test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo "byebye." && exit 0
+    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
 }
 
-function make_sure_dialog() {
-    MAKE_SURE_MSG="\n\n"
-    MAKE_SURE_MSG+="Your Taget Build: ${TARGET_NAME}\n"
-    MAKE_SURE_MSG+="        Rev Info: ${TARGET_DESC}\n"
-    MAKE_SURE_MSG+="           Flash: "
+function create_make_sure_msg() {
+    MAKE_SURE_MSG="\n"
+    MAKE_SURE_MSG+="Your Target Build: ${TARGET_NAME}\n"
+    MAKE_SURE_MSG+="         Rev Info: ${TARGET_DESC}\n"
+    MAKE_SURE_MSG+="            Flash: "
     if [ ${FLASH_FULL} == true ]; then
         MAKE_SURE_MSG+="Full Image."
     else
@@ -127,8 +127,12 @@ function make_sure_dialog() {
             MAKE_SURE_MSG+="Gecko, "
         fi
     fi
+}
+
+function make_sure_dialog() {
+    create_make_sure_msg
     MAKE_SURE_MSG+="\n\n\nAre you sure you want to flash your device?"
-    dialog --title "Confirmation"  --yesno "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_makesure
+    dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_makesure
     ret=$?
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
@@ -258,9 +262,9 @@ function find_download_files_name() {
 
 function print_flash_info() {
     echo    ""
-    echo    "Your Taget Build: ${TARGET_NAME}"
-    echo    "        Rev Info: ${TARGET_DESC}"
-    echo -n "           Flash: "
+    echo    "Your Target Build: ${TARGET_NAME}"
+    echo    "         Rev Info: ${TARGET_DESC}"
+    echo -n "            Flash: "
     if [ ${FLASH_FULL} == true ]; then
         echo -n "Full Image."
     else
@@ -449,39 +453,24 @@ fi
 ###################
 # Version          #
 ####################
-if [ -e ./check_versions.sh ] && [ ${FLASH_FULL} == true ]; then
-    bash ./check_versions.sh
+if [ ${INTERACTION_WINDOW} == false ]; then
+    if [ -e ./check_versions.sh ] && [ ${FLASH_FULL} == true ]; then
+        bash ./check_versions.sh
+    fi
+    print_flash_info
+    echo "Done."
+else
+    create_make_sure_msg
+    if [ -e ./check_versions.sh ]; then
+        MAKE_SURE_MSG+="\n\n"
+        MAKE_SURE_MSG+=`bash ./check_versions.sh | sed ':a;N;$!ba;s/\n/\\\n/g'`
+    fi
+    dialog --backtitle "Flash Information " --title "Done" --msgbox "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_done
 fi
-print_flash_info
-echo "Done."
+
 
 #########################
 # Remove Temp Folder    #
 #########################
 rm -rf ${TMP_DIR}
 
-
-exit 0
-
-
-
-
-
-TMP_DIR=`mktemp -d`
-
-dialog --backtitle "Select Build from TW-CI Server " --title "Main Menu" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-15 50 3 \
-1 "Shows Date and Time" 2 "To see calendar " 3 "To start vi editor " 2>${TMP_DIR}/menuitem
-
-menuitem=`cat ${TMP_DIR}/menuitem`
-
-opt=$?
-
-case $menuitem in
-Date/time) date;;
-Calendar) cal;;
-Editor) hello;;
-esac
-
-rm -rf ${TMP_DIR}
-#clear
