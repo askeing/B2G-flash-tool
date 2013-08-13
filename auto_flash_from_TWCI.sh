@@ -46,12 +46,12 @@ function helper(){
     echo -e "  -f|--flash\tflash image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
-    echo -e "  -w\tinteraction window mode."
+    echo -e "  -w\t\tinteraction window mode."
     echo -e "  -y\t\tflash the file without asking askeing (it's a joke...)"
 	echo -e "  -h|--help\tdisplay help."
 	echo -e "Example:"
 	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
-	echo -e "  Flash wasabi master gaia/gecko\t\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
+	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
 	echo -e "  Flash by interaction window mode\t./auto_flash_from_TWCI.sh -w"
 	exit 0
 }
@@ -125,7 +125,7 @@ function download_list() {
     if [ -f $TWCI_DL_LIST ]; then
         . $TWCI_DL_LIST
     else
-        echo "Cannot download the list file, ${TWCI_DL_LIST}, from ${TWCI_DL_LIST_URL}"
+        echo "Cannot download the ${TWCI_DL_LIST} file from ${TWCI_DL_LIST_URL}"
     fi
 }
 
