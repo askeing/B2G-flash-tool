@@ -109,7 +109,7 @@ function run_adb()
 
 ## install dialog package for interaction GUI mode
 function check_install_dialog() {
-    if ! which dialoga > /dev/null; then
+    if ! which dialog > /dev/null; then
         read -p "Package \"dialog\" not found! Install? [Y/n]" REPLY
         test "$REPLY" == "n" || test "$REPLY" == "N" && echo "byebye." && exit 0
         sudo apt-get install dialog
@@ -395,7 +395,7 @@ done
 ##################################################
 # For interaction GUI mode, check dialog package #
 ##################################################
-if [ ${INTERACTION_WINDOW} == false ]; then
+if [ ${INTERACTION_WINDOW} == true ]; then
     check_install_dialog
 fi
 
