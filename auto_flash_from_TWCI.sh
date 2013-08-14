@@ -9,6 +9,7 @@
 # Author: Askeing fyen@mozilla.com
 # History:
 #   2013/08/13 Askeing: v1.0 First release.
+#   2013/08/14 Askeing: v1.1 Interaction GUI mode.
 #==========================================================================
 
 
@@ -46,13 +47,13 @@ function helper(){
     echo -e "  -f|--flash\tflash image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
-    echo -e "  -w\t\tinteraction window mode."
+    echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tflash the file without asking askeing (it's a joke...)"
 	echo -e "  -h|--help\tdisplay help."
 	echo -e "Example:"
 	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
 	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
-	echo -e "  Flash by interaction window mode\t./auto_flash_from_TWCI.sh -w"
+	echo -e "  Flash by interaction GUI mode\t./auto_flash_from_TWCI.sh -w"
 	exit 0
 }
 
@@ -104,6 +105,15 @@ function run_adb()
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
 	adb $ADB_FLAGS $@
+}
+
+## install dialog package for interaction GUI mode
+function check_install_dialog() {
+    if ! which dialoga > /dev/null; then
+        read -p "Package \"dialog\" not found! Install? [Y/n]" REPLY
+        test "$REPLY" == "n" || test "$REPLY" == "N" && echo "byebye." && exit 0
+        sudo apt-get install dialog
+    fi
 }
 
 ## make sure user want to flash/shallow flash
@@ -380,6 +390,14 @@ do
         *) helper; echo error occured; exit 1;;
     esac
 done
+
+
+##################################################
+# For interaction GUI mode, check dialog package #
+##################################################
+if [ ${INTERACTION_WINDOW} == false ]; then
+    check_install_dialog
+fi
 
 
 #############################################
