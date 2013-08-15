@@ -116,6 +116,11 @@ function adb_push_gaia() {
 function shallow_flash_gaia() {
     GAIA_ZIP_FILE=$1
     
+    if ! [ -f $GAIA_ZIP_FILE ]; then
+        echo "Cannot found $GAIA_ZIP_FILE file."
+        exit -1
+    fi
+
     if ! which mktemp > /dev/null; then
         echo "Package \"mktemp\" not found!"
         rm -rf ./shallowflashgaia_temp
@@ -126,11 +131,11 @@ function shallow_flash_gaia() {
     else
         TMP_DIR=`mktemp -d -t shallowflashgaia.XXXXXXXXXXXX`
     fi
-    
+
     unzip_file $GAIA_ZIP_FILE $TMP_DIR &&
     adb_clean_gaia &&
     adb_push_gaia $TMP_DIR
-        
+
     rm -rf $TMP_DIR
 }
 
@@ -149,6 +154,12 @@ function unzip_file() {
 ## shallow flash gecko
 function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
+
+    if ! [ -f $GECKO_TAR_FILE ]; then
+        echo "Cannot found $GECKO_TAR_FILE file."
+        exit -1
+    fi
+
     if ! which mktemp > /dev/null; then
         echo "Package \"mktemp\" not found!"
         rm -rf ./shallowflashgecko_temp
@@ -236,6 +247,14 @@ done
 ####################
 if [ $VERY_SURE == false ] && ([ $FLASH_GAIA == true ] || [ $FLASH_GECKO == true ]); then
     make_sure
+fi
+if ! [ -f $FLASH_GAIA_FILE ] && [ $FLASH_GAIA == true ]; then
+    echo "Cannot found $FLASH_GAIA_FILE file."
+    exit -1
+fi
+if ! [ -f $FLASH_GECKO_FILE ] && [ $FLASH_GECKO == true ]; then
+    echo "Cannot found $FLASH_GECKO_FILE file."
+    exit -1
 fi
 
 

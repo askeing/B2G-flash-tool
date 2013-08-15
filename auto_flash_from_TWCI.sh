@@ -34,10 +34,6 @@ TARGET_ID=-1
 # Functions        #
 ####################
 
-function hello() {
-	echo 'hello world'
-}
-
 function helper(){
 	echo -e "This script was written for download builds from TW-CI server."
 	echo -e "Usage: ./auto_flash_from_TWCI.sh [parameters]"
@@ -319,6 +315,11 @@ function do_shallow_flash() {
     if [ -e ./shallow_flash.sh ]; then
         echo "./shallow_flash.sh ${SHALLOW_FLAG}"
         bash ./shallow_flash.sh ${SHALLOW_FLAG}
+        ret=$?
+        if ! [ ${ret} == 0 ]; then
+            echo "Shallow Flash failed."
+            exit -1
+        fi
     else
         echo -e "There is no shallow_flash.sh in your folder."
     fi
@@ -331,6 +332,11 @@ function do_flash_image() {
     CURRENT_DIR=`pwd`
     cd ${TMP_DIR}/b2g-distro/
     bash ./flash.sh
+    ret=$?
+    if ! [ ${ret} == 0 ]; then
+        echo "Flash image failed."
+        exit -1
+    fi
     cd ${CURRENT_DIR}
 }
 
