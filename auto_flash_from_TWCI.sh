@@ -143,7 +143,7 @@ function create_make_sure_msg() {
 function make_sure_dialog() {
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\n\nAre you sure you want to flash your device?"
-    dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_makesure
+    dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 18 55 2>${TMP_DIR}/menuitem_makesure
     ret=$?
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
@@ -223,7 +223,7 @@ function select_build_dialog() {
         MENU_FLAG+=" ${COUNT} \"${VALUE}\""
     done
     dialog --backtitle "Select Build from TW-CI Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-    15 55 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
+    18 55 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
     ret=$?
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
@@ -239,7 +239,7 @@ function select_flash_mode_dialog() {
     # if there are no flash flag, then ask
     if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
         dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-        15 55 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+        18 55 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
         ret=$?
         if [ ${ret} == 1 ]; then
             echo "" && echo "byebye." && exit 0
