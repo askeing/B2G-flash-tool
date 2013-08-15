@@ -4,7 +4,7 @@
 # IMPORTANT: only for internal use!
 # 
 # Description:
-#   his script was written for download builds from TW-CI server.
+#   This script was written for download builds from TW-CI server.
 #
 # Author: Askeing fyen@mozilla.com
 # History:
