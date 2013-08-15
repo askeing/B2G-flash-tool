@@ -40,7 +40,17 @@ if [ 'unknown' == $(run_adb get-state) ]; then
 	exit -1
 fi
 
-dir=$(mktemp -d -t revision.XXXXXXXXXXXX)
+
+if ! which mktemp > /dev/null; then
+    echo "Package \"mktemp\" not found!"
+    rm -rf ./checkversions_temp
+    mkdir checkversions_temp
+    cd checkversions_temp
+    dir=`pwd`
+    cd ..
+else
+    dir=$(mktemp -d -t checkversions.XXXXXXXXXXXX)
+fi
 cp optimizejars.py $dir
 cd $dir 
 

@@ -338,13 +338,13 @@ function do_flash_image() {
 #########################
 if ! which mktemp > /dev/null; then
     echo "Package \"mktemp\" not found!"
-    rm -rf ./temp
-    mkdir temp
-    cd temp
+    rm -rf ./autoflashfromTWCI_temp
+    mkdir autoflashfromTWCI_temp
+    cd autoflashfromTWCI_temp
     TMP_DIR=`pwd`
     cd ..
 else
-    TMP_DIR=`mktemp -d`
+    TMP_DIR=`mktemp -d -t autoflashfromTWCI.XXXXXXXXXXXX`
 fi
 
 
