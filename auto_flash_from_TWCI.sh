@@ -48,7 +48,7 @@ function helper(){
     echo -e "  -g|--gaia\tshallow flash gaia into device."
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
     echo -e "  -w\t\tinteraction GUI mode."
-    echo -e "  -y\t\tflash the file without asking askeing (it's a joke...)"
+    echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
 	echo -e "Example:"
 	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
