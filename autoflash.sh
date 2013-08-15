@@ -312,8 +312,15 @@ elif [ $Device_Flag == "leo" ]; then
         else
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
         fi
+    # master: eng/user build
+    elif [ $Version_Flag == "master" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-central-leo-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-central-leo/latest/${DownloadFilename}
+        fi
     else
-        echo -e "There is only v1-train (v1.1.0) for leo device only"
+        echo -e "There is only v1-train (v1.1.0) and master for leo device only"
         exit 0
     fi
 elif [ $Device_Flag == "inari" ]; then
@@ -551,13 +558,13 @@ elif $Flash_Flag == true; then
     ## Remove ril TODO: workaround on this part
     ## Uninstalling old RIL &&
     ## + Installing new RIL &&
-    test "$ifQCril" == 'y' &&
-    adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_location &&
-    adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_ril &&
-    adb push b2g-distro/ril /system/b2g/distribution
+    test "$isQCril" == 'y' && echo "flashing QCRil" &&
+    #adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_location &&
+    #adb shell rm -r /system/b2g/distribution/bundles/libqc_b2g_ril &&
+    #adb push b2g-distro/ril /system/b2g/distribution
 
     ## echo + Removing incompatible extensions &&
-    adb shell rm -r /system/b2g/distribution/bundles/liblge_b2g_extension > /dev/null &&
+    adb shell rm -r /system/b2g/distribution/bundles/liblge_b2g_extension > /dev/null
 
     ## remove old gaia and profiles
     adb shell rm -r /cache/* &&
