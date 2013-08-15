@@ -64,10 +64,10 @@ function version_info(){
 function version() {
     local_ver=$1
     case "$local_ver" in
-        110hd|v1.1.0hd) VERSION_NAME="110hd";;
-        110|v1train) VERSION_NAME="110";;
-        101|v1.0.1) VERSION_NAME="101";;
-        0|master) VERSION_NAME="0";;
+        110hd|v1.1.0hd) VERSION_NAME="v110hd";;
+        110|v1train) VERSION_NAME="v110";;
+        101|v1.0.1) VERSION_NAME="v101";;
+        0|master) VERSION_NAME="master";;
         *) version_info; exit -1;;
     esac
     
