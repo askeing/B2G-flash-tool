@@ -78,7 +78,7 @@ function helper(){
     # -e, --eng
     echo -e "-e|--eng\tchange the target build to engineer build."
     # -v, --version
-    echo -e "-v|--version, \t give the target build version, ex: -vtef == -v100; show available version if nothing specified."
+    echo -e "-v|--version\tgive the target build version, ex: -vtef == -v100; show available version if nothing specified."
     # --tef: tef build v1.0.0
     echo -e "--tef\tchange the target build to tef build v1.0.0."
     # --shira: shira build v1.0.1
@@ -97,7 +97,7 @@ function helper(){
     # -d, --choose device
     echo -e "-d|--device:\tchoose device, default for unagi"
     # -y,
-    echo -e "-y\tauto flash the image without asking askeing (it's a joke)"
+    echo -e "-y\t\tAssume \"yes\" to all question"
     # -h, --help
     echo -e "-h|--help\tDisplay help."
     echo -e "Example:"
