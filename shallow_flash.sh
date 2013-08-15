@@ -115,13 +115,23 @@ function adb_push_gaia() {
 ## shallow flash gaia
 function shallow_flash_gaia() {
     GAIA_ZIP_FILE=$1
-    TEMP_DIR=`mktemp -d`
     
-    unzip_file $GAIA_ZIP_FILE $TEMP_DIR &&
+    if ! which mktemp > /dev/null; then
+        echo "Package \"mktemp\" not found!"
+        rm -rf ./shallowflashgaia_temp
+        mkdir shallowflashgaia_temp
+        cd shallowflashgaia_temp
+        TMP_DIR=`pwd`
+        cd ..
+    else
+        TMP_DIR=`mktemp -d -t shallowflashgaia.XXXXXXXXXXXX`
+    fi
+    
+    unzip_file $GAIA_ZIP_FILE $TMP_DIR &&
     adb_clean_gaia &&
-    adb_push_gaia $TEMP_DIR
+    adb_push_gaia $TMP_DIR
         
-    rm -rf $TEMP_DIR
+    rm -rf $TMP_DIR
 }
 
 ## unzip zip file
@@ -139,15 +149,24 @@ function unzip_file() {
 ## shallow flash gecko
 function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
-    TEMP_DIR=`mktemp -d`
+    if ! which mktemp > /dev/null; then
+        echo "Package \"mktemp\" not found!"
+        rm -rf ./shallowflashgecko_temp
+        mkdir shallowflashgecko_temp
+        cd shallowflashgecko_temp
+        TMP_DIR=`pwd`
+        cd ..
+    else
+        TMP_DIR=`mktemp -d -t shallowflashgaia.XXXXXXXXXXXX`
+    fi
     
-    untar_file $GECKO_TAR_FILE $TEMP_DIR &&
+    untar_file $GECKO_TAR_FILE $TMP_DIR &&
     echo "Push Gecko ..."
     ## push gecko into device
-    run_adb push $TEMP_DIR/b2g /system/b2g &&
+    run_adb push $TMP_DIR/b2g /system/b2g &&
     echo "Push Done."
     
-    rm -rf $TEMP_DIR
+    rm -rf $TMP_DIR
 }
 
 ## untar tar.gz file
@@ -261,6 +280,6 @@ fi
 ####################
 # Done             #
 ####################
-echo -e "Done!\nbyebye."
+echo -e "Shallow Flash Done!"
 
 
