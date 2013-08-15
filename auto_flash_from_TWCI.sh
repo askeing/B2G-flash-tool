@@ -405,6 +405,11 @@ do
     esac
 done
 
+## Disable GUI mode for MAC OS X, issue #20 will reslove it.
+case `uname` in
+    "Darwin") INTERACTION_WINDOW=false;;
+esac
+
 
 ##################################################
 # For interaction GUI mode, check dialog package #
