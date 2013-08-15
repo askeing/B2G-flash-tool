@@ -95,6 +95,7 @@ function device() {
         leo) DEVICE_NAME="leo";;
         helix) DEVICE_NAME="helix";;
         wasabi) DEVICE_NAME="wasabi";;
+        nexus4) DEVICE_NAME="nexus4";;
         *) device_info; exit -1;;
     esac
     
