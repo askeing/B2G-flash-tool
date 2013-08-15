@@ -153,6 +153,9 @@ function download_list() {
     CONFIG_FILE=.auto_flash_from_TWCI.conf
     if [ -f $CONFIG_FILE ]; then
         . $CONFIG_FILE
+    else
+        echo "Can NOT found the config file: $CONFIG_FILE"
+        exit -1
     fi
 
     TWCI_DL_LIST=.TWCI_DL_LIST.conf
@@ -163,6 +166,7 @@ function download_list() {
         . $TWCI_DL_LIST
     else
         echo "Cannot download the ${TWCI_DL_LIST} file from ${TWCI_DL_LIST_URL}"
+        exit -1
     fi
 }
 
@@ -332,7 +336,16 @@ function do_flash_image() {
 #########################
 # Create TEMP Folder    #
 #########################
-TMP_DIR=`mktemp -d`
+if ! which mktemp > /dev/null; then
+    echo "Package \"mktemp\" not found!"
+    rm -rf ./temp
+    mkdir temp
+    cd temp
+    TMP_DIR=`pwd`
+    cd ..
+else
+    TMP_DIR=`mktemp -d`
+fi
 
 
 #########################
