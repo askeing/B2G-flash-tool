@@ -84,6 +84,7 @@ function device_info(){
     echo -e "  leo"
     echo -e "  helix"
     echo -e "  wasabi"
+    echo -e "  nexus4"
 }
 
 function device() {
