@@ -33,6 +33,7 @@ TARGET_ID=-1
 # Functions        #
 ####################
 
+## Show usage
 function helper(){
 	echo -e "This script was written for download builds from TW-CI server."
 	echo -e "Usage: ./auto_flash_from_TWCI.sh [parameters]"
@@ -52,6 +53,7 @@ function helper(){
 	exit 0
 }
 
+## Show the available version info
 function version_info(){
     print_list
     echo -e "Available version:"
@@ -61,6 +63,7 @@ function version_info(){
     echo -e "  0|master"
 }
 
+## Select the version
 function version() {
     local_ver=$1
     case "$local_ver" in
@@ -73,6 +76,7 @@ function version() {
     
 }
 
+## Show the available device info
 function device_info(){
     echo -e "Available device:"
     echo -e "  otoro"
@@ -85,6 +89,7 @@ function device_info(){
     #echo -e "  nexus4"
 }
 
+## Select the device
 function device() {
     local_ver=$1
     case "$local_ver" in
@@ -123,12 +128,7 @@ function check_install_dialog() {
     fi
 }
 
-## make sure user want to flash/shallow flash
-function make_sure() {
-    read -p "Are you sure you want to flash your device? [y/N]" isFlash
-    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
-}
-
+## Create the message for make sure dialog
 function create_make_sure_msg() {
     MAKE_SURE_MSG="\n"
     MAKE_SURE_MSG+="Your Target Build: ${TARGET_NAME}\n"
@@ -146,6 +146,12 @@ function create_make_sure_msg() {
     fi
 }
 
+## make sure user want to flash/shallow flash
+function make_sure() {
+    read -p "Are you sure you want to flash your device? [y/N]" isFlash
+    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
+}
+
 function make_sure_dialog() {
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\n\nAre you sure you want to flash your device?"
@@ -156,6 +162,7 @@ function make_sure_dialog() {
     fi
 }
 
+## Loading the download list
 function load_list() {
     PVT_DL_LIST=.PVT_DL_LIST.conf
     if [ -f $PVT_DL_LIST ]; then
@@ -166,6 +173,7 @@ function load_list() {
     fi
 }
 
+## Print download list
 function print_list() {
     echo "Available Builds:"
     for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
@@ -176,35 +184,12 @@ function print_list() {
     done
 }
 
-function print_flash_mode() {
-    echo "Flash Mode:"
-    echo "  1) Flash Image"
-    echo "  2) Shallow flash Gaia/Gecko"
-    echo "  3) Shallow flash Gaia"
-    echo "  4) Shallow flash Gecko"
-}
-
+## Select build
 function select_build() {
     print_list
     while [[ ${TARGET_ID} -lt 0 ]] || [[ ${TARGET_ID} -gt ${DL_SIZE} ]]; do
 	    read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
         test ${TARGET_ID} == "q" || test ${TARGET_ID} == "Q" && echo "byebye." && exit 0
-    done
-}
-
-function select_flash_mode() {
-    echo "BBB ${FLASH_FULL} ${FLASH_GAIA} ${FLASH_GECKO}"
-    # if there are no flash flag, then ask
-    while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
-        print_flash_mode
-        read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
-        test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
-        case $FLASH_INPUT in
-            1) FLASH_FULL=true;;
-            2) FLASH_GAIA=true; FLASH_GECKO=true;;
-            3) FLASH_GAIA=true;;
-            4) FLASH_GECKO=true;;
-        esac
     done
 }
 
@@ -230,6 +215,32 @@ function select_build_dialog() {
     esac
 }
 
+## Print flash mode
+function print_flash_mode() {
+    echo "Flash Mode:"
+    echo "  1) Flash Image"
+    echo "  2) Shallow flash Gaia/Gecko"
+    echo "  3) Shallow flash Gaia"
+    echo "  4) Shallow flash Gecko"
+}
+
+## Select flash mode
+function select_flash_mode() {
+    echo "BBB ${FLASH_FULL} ${FLASH_GAIA} ${FLASH_GECKO}"
+    # if there are no flash flag, then ask
+    while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
+        print_flash_mode
+        read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
+        test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
+        case $FLASH_INPUT in
+            1) FLASH_FULL=true;;
+            2) FLASH_GAIA=true; FLASH_GECKO=true;;
+            3) FLASH_GAIA=true;;
+            4) FLASH_GECKO=true;;
+        esac
+    done
+}
+
 function select_flash_mode_dialog() {
     # if there are no flash flag, then ask
     if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
@@ -250,6 +261,7 @@ function select_flash_mode_dialog() {
     fi
 }
 
+## Find the download build's info
 function find_download_files_name() {
     TARGET_NAME_KEY=DL_${TARGET_ID}_NAME
     eval TARGET_NAME=\$$TARGET_NAME_KEY
@@ -283,6 +295,7 @@ function find_download_files_name() {
     
 }
 
+## Print flash info
 function print_flash_info() {
     echo    ""
     echo    "Your Target Build: ${TARGET_NAME}"
@@ -301,6 +314,15 @@ function print_flash_info() {
     echo ""
 }
 
+function print_flash_info_dialog() {
+    create_make_sure_msg
+    if [ -e ./check_versions.sh ]; then
+        MAKE_SURE_MSG+="\n\n"
+        MAKE_SURE_MSG+=`bash ./check_versions.sh | sed ':a;N;$!ba;s/\n/\\\n/g'`
+    fi
+    dialog --backtitle "Flash Information " --title "Done" --msgbox "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_done
+}
+
 function downlaod_file_from_PVT() {
     DL_URL=$1
     DL_FILE=$2
@@ -310,6 +332,7 @@ function downlaod_file_from_PVT() {
     run_wget -P ${DEST_DIR} ${DL_URL}${DL_FILE}
 }
 
+## Shallow flash gaia/gecko
 function do_shallow_flash() {
     SHALLOW_FLAG+=$ADB_FLAGS
     if [ ${FLASH_GAIA} == true ]; then
@@ -336,6 +359,7 @@ function do_shallow_flash() {
     fi
 }
 
+## Flash full image
 function do_flash_image() {
     downlaod_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${TMP_DIR}
     IMG_BASENAME=`basename ${TMP_DIR}/${TARGET_IMG}`
@@ -531,12 +555,7 @@ if [ ${INTERACTION_WINDOW} == false ]; then
     print_flash_info
     echo "Done."
 else
-    create_make_sure_msg
-    if [ -e ./check_versions.sh ]; then
-        MAKE_SURE_MSG+="\n\n"
-        MAKE_SURE_MSG+=`bash ./check_versions.sh | sed ':a;N;$!ba;s/\n/\\\n/g'`
-    fi
-    dialog --backtitle "Flash Information " --title "Done" --msgbox "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_done
+    print_flash_info_dialog
 fi
 
 
