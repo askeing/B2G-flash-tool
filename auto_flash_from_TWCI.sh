@@ -36,7 +36,7 @@ TARGET_ID=-1
 
 ## Show usage
 function helper(){
-	echo -e "This script was written for download builds from TW-CI server."
+	echo -e "This script was written for download builds from TW-CI server.\n"
 	echo -e "Usage: ./auto_flash_from_TWCI.sh [parameters]"
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
