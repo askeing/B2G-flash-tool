@@ -8,7 +8,7 @@
 #
 # Author: Askeing fyen@mozilla.com
 # History:
-#   2013/08/13 Askeing: v1.0 First release.
+#   2013/08/16 Askeing: v1.0 First release.
 #==========================================================================
 
 
@@ -19,7 +19,7 @@ VERY_SURE=false
 INTERACTION_WINDOW=false
 ADB_DEVICE="Device"
 DEVICE_NAME=""
-VERSION_NAME=-1
+VERSION_NAME=""
 FLASH_FULL=false
 FLASH_GAIA=false
 FLASH_GECKO=false
@@ -27,6 +27,8 @@ FLASH_FULL_IMG_FILE=""
 FLASH_GAIA_FILE=""
 FLASH_GECKO_FILE=""
 TARGET_ID=-1
+FLASH_USR_IF_POSSIBLE=false
+FLASH_ENG_IF_POSSIBLE=false
 
 
 ####################
@@ -35,8 +37,8 @@ TARGET_ID=-1
 
 ## Show usage
 function helper(){
-	echo -e "This script was written for download builds from TW-CI server."
-	echo -e "Usage: ./auto_flash_from_TWCI.sh [parameters]"
+	echo -e "This script was written for download builds from PVT server."
+	echo -e "Usage: ./auto_flash_from_PVT.sh [parameters]"
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
@@ -47,9 +49,9 @@ function helper(){
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
 	echo -e "Example:"
-	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
-	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
-	echo -e "  Flash by interaction GUI mode\t./auto_flash_from_TWCI.sh -w"
+	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_PVT.sh -vv1train -dunagi -f"
+	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_PVT.sh -vmaster -dwasabi -g -G"
+	echo -e "  Flash by interaction GUI mode\t./auto_flash_from_PVT.sh -w"
 	exit 0
 }
 
@@ -103,8 +105,57 @@ function device() {
 #        nexus4) DEVICE_NAME="nexus4";;
         *) device_info; exit -1;;
     esac
-    
 }
+
+function select_device_dialog() {
+    dialog --backtitle "Select Device from PVT Server " --title "Device List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+    18 80 10 \
+    "otoro" "Otoro Device" \
+    "unagi" "Unagi Device" \
+    "hamachi" "Hamachi/Buri Device" \
+    "inari" "Inari/Ikura Device" \
+    "leo" "Leo Device" \
+    "helix" "Helix Device" 2>${TMP_DIR}/menuitem_device
+    ret=$?
+    if [ ${ret} == 1 ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
+    menuitem_device=`cat ${TMP_DIR}/menuitem_device`
+    case $menuitem_device in
+        "") echo ""; echo "byebye."; exit 0;;
+        *) DEVICE_NAME=$menuitem_device;;
+    esac
+}
+
+function select_version_dialog() {
+    MENU_VERSION_LIST=""
+    for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
+    do
+        KEY=DL_${COUNT}_NAME
+        eval VALUE=\$$KEY
+        ## if Name contain the DEVICE_NAME, add into List
+        if [[ ${VALUE} == *"$DEVICE_NAME" ]]; then
+            echo -e "${COUNT}) ${VALUE}"
+            MENU_VERSION_LIST+=" ${COUNT} \"${VALUE}\""
+        fi
+    done
+    
+    dialog --backtitle "Select Device from PVT Server " --title "Device List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+    18 80 10 ${MENU_VERSION_LIST} 2>${TMP_DIR}/menuitem_version
+    ret=$?
+    if [ ${ret} == 1 ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
+    menuitem_version=`cat ${TMP_DIR}/menuitem_version`
+    case $menuitem_version in
+        "") echo ""; echo "byebye."; exit 0;;
+        *) TARGET_ID=$menuitem_version; NAME_KEY=DL_${TARGET_ID}_NAME; eval TARGET_NAME=\$$NAME_KEY; VERSION_NAME=`echo $TARGET_NAME | sed "s,PVT\.,,g;s,\.$DEVICE_NAME,,g"`;;
+    esac
+    echo "Device: $DEVICE_NAME"     #ASKEING TEST
+    echo "Version: $VERSION_NAME"   #ASKEING TEST
+    echo "TARGET_ID: $TARGET_ID"    #ASKEING TEST
+}
+
 
 ## adb with flags
 function run_adb()
@@ -117,6 +168,58 @@ function run_adb()
 ## wget with flags
 function run_wget() {
     wget $WGET_FLAG $@
+}
+
+## setup the http user account and passwd
+function set_wget_acct_pwd() {
+    WGET_FLAG=""
+    if [ "$HTTP_USER" != "" ]; then
+        HTTPUser=$HTTP_USER
+    else
+        read -p "Enter HTTP Username (LDAP): " HTTPUser
+    fi
+    WGET_FLAG+=" --http-user="${HTTPUser}""
+    if [ "$HTTP_PWD" != "" ]; then
+        HTTPPwd=$HTTP_PWD
+    else
+        read -s -p "Enter HTTP Password (LDAP): " HTTPPwd
+    fi
+        WGET_FLAG+=" --http-passwd="${HTTPPwd}""
+    echo ""
+}
+
+function set_wget_acct_pwd_dialog() {
+    WGET_FLAG=""
+    if [ "$HTTP_USER" != "" ]; then
+        HTTPUser=$HTTP_USER
+    else
+        dialog --backtitle "Setup WGET" --title "HTTP User Name" --inputbox "\n\nEnter HTTP Username (LDAP)\n\nMove using [Tab] to Select\n" 15 80 2>${TMP_DIR}/menuitem_wgetacct
+        ret=$?
+        if [ ${ret} == 1 ]; then
+            echo "" && echo "byebye." && exit 0
+        fi
+        menuitem_wgetacct=`cat ${TMP_DIR}/menuitem_wgetacct`
+        case $menuitem_wgetacct in
+            "") echo ""; echo "byebye."; exit 0;;
+            *) HTTPUser=$menuitem_wgetacct;;
+        esac
+    fi
+    WGET_FLAG+=" --http-user="${HTTPUser}""
+    if [ "$HTTP_PWD" != "" ]; then
+        HTTPPwd=$HTTP_PWD
+    else
+        dialog --backtitle "Setup WGET" --title "HTTP Password" --insecure --passwordbox "\n\nEnter HTTP Password (LDAP)\n\nMove using [Tab] to Select" 15 80 2>${TMP_DIR}/menuitem_wgetpwd
+        ret=$?
+        if [ ${ret} == 1 ]; then
+            echo "" && echo "byebye." && exit 0
+        fi
+        menuitem_wgetpwd=`cat ${TMP_DIR}/menuitem_wgetpwd`
+        case $menuitem_wgetpwd in
+            "") echo ""; echo "byebye."; exit 0;;
+            *) HTTPPwd=$menuitem_wgetpwd;;
+        esac
+    fi
+        WGET_FLAG+=" --http-passwd="${HTTPPwd}""
 }
 
 ## install dialog package for interaction GUI mode
@@ -133,6 +236,7 @@ function create_make_sure_msg() {
     MAKE_SURE_MSG="\n"
     MAKE_SURE_MSG+="Your Target Build: ${TARGET_NAME}\n"
     MAKE_SURE_MSG+="URL:  ${TARGET_URL}\n"
+    MAKE_SURE_MSG+="ENG Ver: ${FLASH_ENG}\n"
     MAKE_SURE_MSG+="Flash: "
     if [ ${FLASH_FULL} == true ]; then
         MAKE_SURE_MSG+="Full Image."
@@ -199,10 +303,9 @@ function select_build_dialog() {
     do
         KEY=DL_${COUNT}_NAME
         eval VALUE=\$$KEY
-        echo -e "${COUNT}) ${VALUE}"
         MENU_FLAG+=" ${COUNT} \"${VALUE}\""
     done
-    dialog --backtitle "Select Build from TW-CI Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+    dialog --backtitle "Select Build from PVT Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
     18 80 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
     ret=$?
     if [ ${ret} == 1 ]; then
@@ -215,28 +318,82 @@ function select_build_dialog() {
     esac
 }
 
-## Print flash mode
-function print_flash_mode() {
-    echo "Flash Mode:"
-    echo "  1) Flash Image"
-    echo "  2) Shallow flash Gaia/Gecko"
-    echo "  3) Shallow flash Gaia"
-    echo "  4) Shallow flash Gecko"
+
+## Select User or Eng build
+function if_has_eng_build() {
+    TARGET_HAS_ENG=false
+    KEY=DL_${TARGET_ID}_ENG
+    eval VALUE=\$$KEY
+    if [ $VALUE == true ]; then
+        TARGET_HAS_ENG=true
+    fi
+}
+
+function select_user_eng_build() {
+    FLASH_USER_ENG_DONE=false
+    while [ ${FLASH_USER_ENG_DONE} == false ]; do
+        echo "User or Eng build:"
+        echo "  1) User build"
+        echo "  2) Engineer build"
+        read -p "What do you want to flash? [Q to exit]" FLASH_USER_ENG
+        test ${FLASH_USER_ENG} == "q" || test ${FLASH_USER_ENG} == "Q" && echo "byebye." && exit 0
+        case ${FLASH_USER_ENG} in
+            1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
+            2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
+        esac
+    done
+}
+
+function select_user_eng_build_dialog() {
+    FLASH_USER_ENG_DONE=false
+    if [ ${FLASH_USER_ENG_DONE} == false ]; then
+        dialog --backtitle "Select Build from PVT Server " --title "User or Engineer Build" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+        18 80 10 1 "User build" 2 "Engineer build" 2>${TMP_DIR}/menuitem_usereng
+        ret=$?
+        if [ ${ret} == 1 ]; then
+            echo "" && echo "byebye." && exit 0
+        fi
+        menuitem_usereng=`cat ${TMP_DIR}/menuitem_usereng`
+        case $menuitem_usereng in
+            "") echo ""; echo "byebye."; exit 0;;
+            1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
+            2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
+        esac
+    fi
 }
 
 ## Select flash mode
 function select_flash_mode() {
-    echo "BBB ${FLASH_FULL} ${FLASH_GAIA} ${FLASH_GECKO}"
     # if there are no flash flag, then ask
+    GAIA_KEY=DL_${TARGET_ID}${ENG_FLAG}_GAIA
+    eval GAIA_VALUE=\$$GAIA_KEY
+    GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
+    eval GECKO_VALUE=\$$GECKO_KEY
     while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
-        print_flash_mode
+        echo "Flash Mode:"
+        echo "  1) Flash Image"
+        if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
+            echo "  2) Shallow flash Gaia/Gecko"
+        fi
+        if ! [ -z $GAIA_VALUE ]; then
+            echo "  3) Shallow flash Gaia"
+        fi
+        if ! [ -z $GECKO_VALUE ]; then
+            echo "  4) Shallow flash Gecko"
+        fi
         read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
         test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
-        case $FLASH_INPUT in
+        case ${FLASH_INPUT} in
             1) FLASH_FULL=true;;
-            2) FLASH_GAIA=true; FLASH_GECKO=true;;
-            3) FLASH_GAIA=true;;
-            4) FLASH_GECKO=true;;
+            2)  if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
+                    FLASH_GAIA=true; FLASH_GECKO=true
+                fi;;
+            3)  if ! [ -z $GAIA_VALUE ]; then
+                    FLASH_GAIA=true
+                fi;;
+            4)  if ! [ -z $GECKO_VALUE ]; then
+                    FLASH_GECKO=true
+                fi;;
         esac
     done
 }
@@ -244,8 +401,32 @@ function select_flash_mode() {
 function select_flash_mode_dialog() {
     # if there are no flash flag, then ask
     if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
-        dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-        18 80 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+#        dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+#        18 80 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+
+        COUNT=1
+        FLASH_MODE_FLAG=""
+        FLASH_MODE_FLAG+=" $COUNT Flash_Image"
+        GAIA_KEY=DL_${TARGET_ID}${ENG_FLAG}_GAIA
+        eval GAIA_VALUE=\$$GAIA_KEY
+        GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
+        eval GECKO_VALUE=\$$GECKO_KEY
+        if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
+            COUNT=2
+            FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gaia/Gecko"
+        fi
+        if ! [ -z $GAIA_VALUE ]; then
+            COUNT=3
+            FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gaia"
+        fi
+        if ! [ -z $GECKO_VALUE ]; then
+            COUNT=4
+            FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gecko"
+        fi
+
+        dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+        18 80 10 ${FLASH_MODE_FLAG} 2>${TMP_DIR}/menuitem_flash
+
         ret=$?
         if [ ${ret} == 1 ]; then
             echo "" && echo "byebye." && exit 0
@@ -266,32 +447,32 @@ function find_download_files_name() {
     TARGET_NAME_KEY=DL_${TARGET_ID}_NAME
     eval TARGET_NAME=\$$TARGET_NAME_KEY
 
-    TARGET_URL_KEY=DL_${TARGET_ID}_URL
+    TARGET_URL_KEY=DL_${TARGET_ID}${ENG_FLAG}_URL
     eval TARGET_URL=\$$TARGET_URL_KEY
 
-    TARGET_IMG_KEY=DL_${TARGET_ID}_IMG
+    TARGET_IMG_KEY=DL_${TARGET_ID}${ENG_FLAG}_IMG
     eval TARGET_IMG=\$$TARGET_IMG_KEY
     
-    TARGET_GAIA_KEY=DL_${TARGET_ID}_GAIA
+    TARGET_GAIA_KEY=DL_${TARGET_ID}${ENG_FLAG}_GAIA
     eval TARGET_GAIA=\$$TARGET_GAIA_KEY
 
-    TARGET_GECKO_KEY=DL_${TARGET_ID}_GECKO
+    TARGET_GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
     eval TARGET_GECKO=\$$TARGET_GECKO_KEY
 
-    TARGET_ENG_KEY=DL_${TARGET_ID}_ENG
-    eval TARGET_ENG=\$$TARGET_ENG_KEY
+    #TARGET_ENG_KEY=DL_${TARGET_ID}_ENG
+    #eval TARGET_ENG=\$$TARGET_ENG_KEY
 
-    TARGET_ENG_URL_KEY=DL_${TARGET_ID}_ENG_URL
-    eval TARGET_ENG_URL=\$$TARGET_ENG_URL_KEY
+    #TARGET_ENG_URL_KEY=DL_${TARGET_ID}_ENG_URL
+    #eval TARGET_ENG_URL=\$$TARGET_ENG_URL_KEY
 
-    TARGET_ENG_IMG_KEY=DL_${TARGET_ID}_ENG_IMG
-    eval TARGET_ENG_IMG=\$$TARGET_ENG_IMG_KEY
+    #TARGET_ENG_IMG_KEY=DL_${TARGET_ID}_ENG_IMG
+    #eval TARGET_ENG_IMG=\$$TARGET_ENG_IMG_KEY
     
-    TARGET_ENG_GAIA_KEY=DL_${TARGET_ID}_ENG_GAIA
-    eval TARGET_ENG_GAIA=\$$TARGET_ENG_GAIA_KEY
+    #TARGET_ENG_GAIA_KEY=DL_${TARGET_ID}_ENG_GAIA
+    #eval TARGET_ENG_GAIA=\$$TARGET_ENG_GAIA_KEY
 
-    TARGET_ENG_GECKO_KEY=DL_${TARGET_ID}_ENG_GECKO
-    eval TARGET_ENG_GECKO=\$$TARGET_ENG_GECKO_KEY
+    #TARGET_ENG_GECKO_KEY=DL_${TARGET_ID}_ENG_GECKO
+    #eval TARGET_ENG_GECKO=\$$TARGET_ENG_GECKO_KEY
     
 }
 
@@ -299,8 +480,9 @@ function find_download_files_name() {
 function print_flash_info() {
     echo    ""
     echo    "Your Target Build: ${TARGET_NAME}"
-    echo -e "URL:\n  ${TARGET_URL}\n"
-    echo -n "             Flash: "
+    echo -e "URL:  ${TARGET_URL}"
+    echo -e "ENG Ver: ${FLASH_ENG}"
+    echo -n "Flash: "
     if [ ${FLASH_FULL} == true ]; then
         echo -n "Full Image."
     else
@@ -381,18 +563,18 @@ function do_flash_image() {
 #########################
 if ! which mktemp > /dev/null; then
     echo "Package \"mktemp\" not found!"
-    rm -rf ./autoflashfromTWCI_temp
-    mkdir autoflashfromTWCI_temp
-    cd autoflashfromTWCI_temp
+    rm -rf ./autoflashfromPVT_temp
+    mkdir autoflashfromPVT_temp
+    cd autoflashfromPVT_temp
     TMP_DIR=`pwd`
     cd ..
 else
-    TMP_DIR=`mktemp -d -t autoflashfromTWCI.XXXXXXXXXXXX`
+    TMP_DIR=`mktemp -d -t autoflashfromPVT.XXXXXXXXXXXX`
 fi
 
 
 #########################
-# Download TWCI List    #
+# Download PVT List     #
 #########################
 load_list
 
@@ -408,7 +590,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::gGfwyh --long version::,device::,gaia,gecko,flash,help \
+        TEMP=`getopt -o v::d::s::gGfwyh --long version::,device::,usr,eng,gaia,gecko,flash,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -435,6 +617,8 @@ do
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
+        --usr) FLASH_USR_IF_POSSIBLE=true; FLASH_ENG_IF_POSSIBLE=false; shift;;
+        --eng) FLASH_ENG_IF_POSSIBLE=true; FLASH_USR_IF_POSSIBLE=false; shift;;
         -f|--flash) FLASH_FULL=true; shift;;
         -g|--gaia) FLASH_GAIA=true; shift;;
         -G|--gecko) FLASH_GECKO=true; shift;;
@@ -461,20 +645,14 @@ if [ ${INTERACTION_WINDOW} == true ]; then
 fi
 
 
-# Prepare the authn of web site
-WGET_FLAG=""
-if [ "$HTTP_USER" != "" ]; then
-    HTTPUser=$HTTP_USER
+#################################
+# Prepare the authn of web site #
+#################################
+if [ ${INTERACTION_WINDOW} == false ]; then
+    set_wget_acct_pwd
 else
-    read -p "Enter HTTP Username (LDAP): " HTTPUser
+    set_wget_acct_pwd_dialog
 fi
-WGET_FLAG+=" --http-user="${HTTPUser}""
-if [ "$HTTP_PWD" != "" ]; then
-    HTTPPwd=$HTTP_PWD
-else
-    read -s -p "Enter HTTP Password (LDAP): " HTTPPwd
-fi
-WGET_FLAG+=" --http-passwd="${HTTPPwd}""
 
 
 #############################################
@@ -484,7 +662,7 @@ FOUND=false
 TARGET_NAME=PVT.${VERSION_NAME}.${DEVICE_NAME}
 for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
 do
-    KEY=DL_${COUNT}_JOB_NAME
+    KEY=DL_${COUNT}_NAME
     eval VALUE=\$$KEY
     
     if [ ${TARGET_NAME} == ${VALUE} ]; then
@@ -494,6 +672,16 @@ do
     fi
 done
 
+###########################################
+# If not select DEVICE, then list DEVICES #
+###########################################
+if [ ${INTERACTION_WINDOW} == true ] && [ -z $DEVICE_NAME ]; then
+    select_device_dialog
+    select_version_dialog
+    if ! [ -z $TARGET_ID ]; then
+        FOUND=true
+    fi
+fi
 
 ##########################################################################################
 # If can NOT find the target from user input parameters, list the download list to user. #
@@ -508,6 +696,29 @@ if [ ${FOUND} == false ]; then
     fi
 fi
 
+#########################
+# Select USER/ENG build #
+#########################
+ENG_FLAG=""
+if_has_eng_build
+if [ $TARGET_HAS_ENG == true ]; then
+    if [ $FLASH_ENG_IF_POSSIBLE == true ]; then
+        FLASH_ENG=true
+    elif [ $FLASH_USR_IF_POSSIBLE == true ]; then
+        FLASH_ENG=false
+    else
+        if [ ${INTERACTION_WINDOW} == false ]; then
+            select_user_eng_build
+        else
+            select_user_eng_build_dialog
+        fi
+    fi
+else
+    FLASH_ENG=false
+fi
+if [ $FLASH_ENG == true ]; then
+    ENG_FLAG="_ENG"
+fi
 
 ###################################################################################
 # If can NOT find the flash mode from user input parameters, list the flash mode. #
