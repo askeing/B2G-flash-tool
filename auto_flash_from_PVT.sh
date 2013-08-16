@@ -37,8 +37,9 @@ FLASH_ENG_IF_POSSIBLE=false
 
 ## Show usage
 function helper(){
-	echo -e "This script was written for download builds from PVT server."
+	echo -e "This script was written for download builds from PVT server.\n"
 	echo -e "Usage: ./auto_flash_from_PVT.sh [parameters]"
+    echo -e "Environment:\n\tHTTP_USER={username} HTTP_PWD={pw}"
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
@@ -49,8 +50,8 @@ function helper(){
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
 	echo -e "Example:"
-	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_PVT.sh -vv1train -dunagi -f"
-	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_PVT.sh -vmaster -dwasabi -g -G"
+	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
+	echo -e "  Flash inari v1.0.1 gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
 	echo -e "  Flash by interaction GUI mode\t./auto_flash_from_PVT.sh -w"
 	exit 0
 }
