@@ -107,7 +107,7 @@ function helper(){
     echo -e "  Flash engineer build.\t\t./autoflash.sh -e -f"
     echo -e "  Flash engineer build, backup profile.\t\t./autoflash.sh -e -f -b"
     echo -e "  Flash engineer build, don't update kernel.\t./autoflash.sh -e -f --no-kernel"
-    echo -e "  Flash build on leo devices.\t\t ./autoflash.sh -d=leo"
+    echo -e "  Flash build on leo devices.\t\t ./autoflash.sh -dleo"
     exit 0
 }
 
