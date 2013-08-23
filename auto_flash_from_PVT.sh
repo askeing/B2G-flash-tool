@@ -46,13 +46,17 @@ function helper(){
     echo -e "  -f|--flash\tflash image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
+    echo -e "  --usr\tspecify User(USR) build."
+    echo -e "  --eng\tspecify Engineer(ENG) build."
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
 	echo -e "Example:"
-	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
-	echo -e "  Flash inari v1.0.1 gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
-	echo -e "  Flash by interaction GUI mode\t./auto_flash_from_PVT.sh -w"
+	echo -e "  Flash unagi v1train image\t\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
+	echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v110 -dunagi --eng -f"
+	echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
+	echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari --usr -g -G"
+	echo -e "  Flash by interaction GUI mode\t\t\t./auto_flash_from_PVT.sh -w"
 	exit 0
 }
 
