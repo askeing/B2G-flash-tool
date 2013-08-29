@@ -441,7 +441,7 @@ if [ $Download_Flag == true ]; then
         read -p "Do you have comm-ril to flash? [y/N]" isQCril
         #test "$isQCril" != "y"  && test "$isQCril" != "Y" && echo -e "byebye." && exit 0
         ## Downloading gaia & gecko binary for shallow flash
-        URL=$(echo $URL | sed 's|/[^/]\+$||')
+        URL=${URL%/*.zip}/
         echo "\$Download URL: $URL"
         rm gaia.zip 2>/dev/null
         rm b2g-18.0.en-US.android-arm.tar.gz 2>/dev/null
