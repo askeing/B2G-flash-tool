@@ -142,17 +142,24 @@ function create_make_sure_msg() {
 ## make sure user want to flash/shallow flash
 function make_sure() {
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
-    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
+    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0;;
 }
 
 function make_sure_dialog() {
-    create_make_sure_msg
-    MAKE_SURE_MSG+="\n\n\nAre you sure you want to flash your device?"
-    dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 18 55 2>${TMP_DIR}/menuitem_makesure
-    ret=$?
-    if [ ${ret} == 1 ]; then
-        echo "" && echo "byebye." && exit 0
-    fi
+    case `uname` in
+        "Linux")
+            create_make_sure_msg
+            MAKE_SURE_MSG+="\n\n\nAre you sure you want to flash your device?"
+            dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 18 55 2>${TMP_DIR}/menuitem_makesure
+            ret=$?
+    
+            if [ ${ret} == 1 ]; then
+                echo "" && echo "byebye." && exit 0
+            fi
+        "Darwin")
+            ret=$(osascript -e 'tell app "Terminal" to display dialog "Are you sure you want to flash your device? [y/N]" with buttons {"N", "Y"} with title "Check Message"')
+            test "$ret" != "Y" && echo "byebye." && exit 0;;
+    esac
 }
 
 ## Download the download list
@@ -198,25 +205,43 @@ function select_build() {
 }
 
 function select_build_dialog() {
-    MENU_FLAG=""
-    for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
-    do
-        KEY=DL_${COUNT}_JOB_NAME
-        eval VALUE=\$$KEY
-        echo -e "${COUNT}) ${VALUE}"
-        MENU_FLAG+=" ${COUNT} \"${VALUE}\""
-    done
-    dialog --backtitle "Select Build from TW-CI Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-    18 55 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
-    ret=$?
-    if [ ${ret} == 1 ]; then
-        echo "" && echo "byebye." && exit 0
-    fi
-    menuitem_build=`cat ${TMP_DIR}/menuitem_build`
-    case $menuitem_build in
-        "") echo ""; echo "byebye."; exit 0;;
-        *) TARGET_ID=$menuitem_build;;
+    case `uname` in
+        "Linux")
+            MENU_FLAG=""
+            for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
+            do
+                KEY=DL_${COUNT}_JOB_NAME
+                eval VALUE=\$$KEY
+                echo -e "${COUNT}) ${VALUE}"
+                MENU_FLAG+=" ${COUNT} \"${VALUE}\""
+            done
+            dialog --backtitle "Select Build from TW-CI Server " --title "Download List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+            18 55 10 ${MENU_FLAG} 2>${TMP_DIR}/menuitem_build
+            ret=$?
+            if [ ${ret} == 1 ]; then
+                echo "" && echo "byebye." && exit 0
+            fi
+            menuitem_build=`cat ${TMP_DIR}/menuitem_build`
+            case $menuitem_build in
+                "") echo ""; echo "byebye."; exit 0;;
+                *) TARGET_ID=$menuitem_build;;
+            esac
+        "Darwin")
+            option_list="{"
+            for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
+            do
+                KEY=DL_${COUNT}_JOB_NAME
+                eval VALUE=\$$KEY
+
+                option_list=$option_list,\"${COUNT}-${VALUE}\",
+            done
+            option_list=${option_list%s}\}
+
+            ret=$(osascript -e 'tell app "Terminal" to display dialog "Select Build from TW-CI Server" choose from $option_list with title "Select Build"')
+            ret=${ret%%-*}
+            ;;
     esac
+    
 }
 
 ## Print flash mode
