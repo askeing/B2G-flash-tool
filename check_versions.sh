@@ -65,7 +65,7 @@ if [ -f omni.ja ] && [ -f application.zip ] && [ -f application.ini ]; then
 	unzip application.zip resources/gaia_commit.txt > /dev/null
 	
 	echo 'Gaia:    ' $(head -n 1 resources/gaia_commit.txt)
-	echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
+	# echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
 	
 	echo 'Gecko:   ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
 	
