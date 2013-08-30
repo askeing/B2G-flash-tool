@@ -142,7 +142,7 @@ function create_make_sure_msg() {
 ## make sure user want to flash/shallow flash
 function make_sure() {
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
-    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0;;
+    test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
 }
 
 function make_sure_dialog() {
@@ -155,10 +155,9 @@ function make_sure_dialog() {
     
             if [ ${ret} == 1 ]; then
                 echo "" && echo "byebye." && exit 0
-            fi
+            fi;;
         "Darwin")
-            ret=$(osascript -e 'tell app "Terminal" to display dialog "Are you sure you want to flash your device? [y/N]" with buttons {"N", "Y"} with title "Check Message"')
-            test "$ret" != "Y" && echo "byebye." && exit 0;;
+            ret=$(osascript -e 'tell application "Terminal" to display dialog "Do you want to flash your device?" with title "Check Message"')
     esac
 }
 
@@ -225,23 +224,21 @@ function select_build_dialog() {
             case $menuitem_build in
                 "") echo ""; echo "byebye."; exit 0;;
                 *) TARGET_ID=$menuitem_build;;
-            esac
+            esac;;
         "Darwin")
-            option_list="{"
+            option_list=""
             for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
             do
                 KEY=DL_${COUNT}_JOB_NAME
                 eval VALUE=\$$KEY
 
-                option_list=$option_list,\"${COUNT}-${VALUE}\",
+                option_list=$option_list,\"${COUNT}-${VALUE}\"
             done
-            option_list=${option_list%s}\}
-
-            ret=$(osascript -e 'tell app "Terminal" to display dialog "Select Build from TW-CI Server" choose from $option_list with title "Select Build"')
-            ret=${ret%%-*}
-            ;;
+            local_option_list=${option_list#,*}
+            eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list \{$local_option_list\} with title \"Select Build\"\'\)
+            echo $ret
+            TARGET_ID=${ret%%-*};;
     esac
-    
 }
 
 ## Print flash mode
@@ -271,23 +268,36 @@ function select_flash_mode() {
 }
 
 function select_flash_mode_dialog() {
-    # if there are no flash flag, then ask
-    if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
-        dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-        18 55 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
-        ret=$?
-        if [ ${ret} == 1 ]; then
-            echo "" && echo "byebye." && exit 0
-        fi
-        menuitem_flash=`cat ${TMP_DIR}/menuitem_flash`
-        case $menuitem_flash in
-            "") echo ""; echo "byebye."; exit 0;;
-            1) FLASH_FULL=true;;
-            2) FLASH_GAIA=true; FLASH_GECKO=true;;
-            3) FLASH_GAIA=true;;
-            4) FLASH_GECKO=true;;
-        esac
-    fi
+    case `uname` in
+        "Linux")
+            # if there are no flash flag, then ask
+            if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
+                dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+                18 55 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+                ret=$?
+                if [ ${ret} == 1 ]; then
+                    echo "" && echo "byebye." && exit 0
+                fi
+                menuitem_flash=`cat ${TMP_DIR}/menuitem_flash`
+                case $menuitem_flash in
+                    "") echo ""; echo "byebye."; exit 0;;
+                    1) FLASH_FULL=true;;
+                    2) FLASH_GAIA=true; FLASH_GECKO=true;;
+                    3) FLASH_GAIA=true;;
+                    4) FLASH_GECKO=true;;
+                esac
+            fi;;
+        "Darwin")
+            ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-Flash Full", "2-Flash Gaia and Gecko", "3-Flash Gaia", "4-Flash Gecko"}')
+            echo $ret
+            case ${ret%%-*} in
+                "") echo ""; echo "byebye."; exit 0;;
+                1) FLASH_FULL=true;;
+                2) FLASH_GAIA=true; FLASH_GECKO=true;;
+                3) FLASH_GAIA=true;;
+                4) FLASH_GECKO=true;;
+            esac;;
+    esac
 }
 
 ## Find the download build's info
@@ -336,7 +346,10 @@ function print_flash_info_dialog() {
         MAKE_SURE_MSG+="\n\n"
         MAKE_SURE_MSG+=`bash ./check_versions.sh | sed ':a;N;$!ba;s/\n/\\\n/g'`
     fi
-    dialog --backtitle "Flash Information " --title "Done" --msgbox "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_done
+    case `uname` in
+        "Linux")
+            dialog --backtitle "Flash Information " --title "Done" --msgbox "${MAKE_SURE_MSG}" 15 55 2>${TMP_DIR}/menuitem_done ;;
+    esac
 }
 
 function downlaod_file_from_TWCI() {
@@ -354,12 +367,18 @@ function do_shallow_flash() {
     if [ ${FLASH_GAIA} == true ]; then
         downlaod_file_from_TWCI ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
         GAIA_BASENAME=`basename ${TMP_DIR}/${TARGET_GAIA}`
-        SHALLOW_FLAG+=" -g${TMP_DIR}/${GAIA_BASENAME}"
+        case `uname` in
+            "Linux") SHALLOW_FLAG+=" -g${TMP_DIR}/${GAIA_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -g ${TMP_DIR}/${GAIA_BASENAME}";;
+        esac
     fi
     if [ ${FLASH_GECKO} == true ]; then
         downlaod_file_from_TWCI ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
         GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
-        SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}"
+        case `uname` in
+            "Linux") SHALLOW_FLAG+=" -g${TMP_DIR}/${GECKO_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -g ${TMP_DIR}/${GECKO_BASENAME}";;
+        esac
     fi
     SHALLOW_FLAG+=" -y"
     if [ -e ./shallow_flash.sh ]; then
@@ -465,16 +484,18 @@ do
 done
 
 ## Disable GUI mode for MAC OS X, issue #20 will reslove it.
-case `uname` in
-    "Darwin") INTERACTION_WINDOW=false;;
-esac
+# case `uname` in
+#     "Darwin") INTERACTION_WINDOW=false;;
+# esac
 
 
 ##################################################
 # For interaction GUI mode, check dialog package #
 ##################################################
 if [ ${INTERACTION_WINDOW} == true ]; then
-    check_install_dialog
+    case `uname` in
+        "Linux") check_install_dialog;;
+    esac
 fi
 
 
