@@ -372,8 +372,15 @@ elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
         else
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi/latest/${DownloadFilename}
         fi
+    # master: eng/user build
+    elif [ $Version_Flag == "master" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-central-hamachi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-central-hamachi/latest/${DownloadFilename}
+        fi
     else
-        echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for buri device"
+        echo -e "There's no required build on pvt server"
         exit 0
     fi
 elif [ $Device_Flag == "helix" ]; then
@@ -385,6 +392,13 @@ elif [ $Device_Flag == "helix" ]; then
         fi
         Engineer_Flag=0
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_1_0_hd-helix/latest/${DownloadFilename}
+    # master: eng/user build
+    elif [ $Version_Flag == "master" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-central-helix-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-central-helix/latest/${DownloadFilename}
+        fi
     else
         echo -e "There is only v1.1 hd for helix device only"
         exit 0
@@ -446,7 +460,7 @@ if [ $Download_Flag == true ]; then
         rm gaia.zip 2>/dev/null
         rm b2g-18.0.en-US.android-arm.tar.gz 2>/dev/null
         test $flash_gaia == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/gaia.zip
-        test $flash_gecko == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/b2g-18.0.en-US.android-arm.tar.gz
+        test $flash_gecko == true && wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $URL/b2g-26.0a1.en-US.android-arm.tar.gz
     fi
 else
     # Setup the filename for -F
