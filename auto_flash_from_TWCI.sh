@@ -376,8 +376,8 @@ function do_shallow_flash() {
         downlaod_file_from_TWCI ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
         GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
         case `uname` in
-            "Linux") SHALLOW_FLAG+=" -g${TMP_DIR}/${GECKO_BASENAME}";;
-            "Darwin") SHALLOW_FLAG+=" -g ${TMP_DIR}/${GECKO_BASENAME}";;
+            "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -G ${TMP_DIR}/${GECKO_BASENAME}";;
         esac
     fi
     SHALLOW_FLAG+=" -y"

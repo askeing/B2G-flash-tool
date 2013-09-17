@@ -29,6 +29,7 @@ FLASH_GECKO_FILE=""
 TARGET_ID=-1
 FLASH_USR_IF_POSSIBLE=false
 FLASH_ENG_IF_POSSIBLE=false
+FLASH_USER_ENG_DONE=false
 
 
 ####################
@@ -132,6 +133,11 @@ function select_device_dialog() {
     esac
 }
 
+function select_device_dialog_mac() {
+    device_option_list='{"otoro","unagi","hamachi","inari","leo","helix","mako"}'
+    eval DEVICE_NAME=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
+}
+
 function select_version_dialog() {
     MENU_VERSION_LIST=""
     for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
@@ -161,6 +167,10 @@ function select_version_dialog() {
     echo "TARGET_ID: $TARGET_ID"    #ASKEING TEST
 }
 
+function select_version_dialog_mac() {
+    version_option_list='{"v101","v110","v110hd","master"}'
+    eval VERSION_NAME=\$\(osascript -e \'tell application \"Terminal\" to choose from list $version_option_list with title \"Choose Version\"\'\)
+}
 
 ## adb with flags
 function run_adb()
@@ -225,7 +235,27 @@ function set_wget_acct_pwd_dialog() {
             *) HTTPPwd=$menuitem_wgetpwd;;
         esac
     fi
-        WGET_FLAG+=" --http-passwd="${HTTPPwd}""
+    WGET_FLAG+=" --http-passwd="${HTTPPwd}""
+}
+
+function set_wget_acct_pwd_dialog_mac() {
+    WGET_FLAG=""
+    if [ "$HTTP_USER" != "" ]; then
+        HTTPUser=$HTTPUser
+    else
+        ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP account" default answer "" with title "Account Info"')
+        ret=${ret%,*}
+        HTTPUser=${ret#*:}
+    fi
+    if [ "$HTTP_PWD" != "" ]; then
+        HTTPPwd=$HTTP_PWD
+    else
+        ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP password" default answer "" with hidden answer with title "Account Info"')
+        ret=${ret%,*}
+        HTTPPwd=${ret#*:}
+    fi
+    WGET_FLAG+=" --http-user="${HTTPUSER}""
+    WGET_FLAG+=" --http-passwd="${HTTPPwd}""
 }
 
 ## install dialog package for interaction GUI mode
@@ -271,6 +301,11 @@ function make_sure_dialog() {
         echo "" && echo "byebye." && exit 0
     fi
 }
+
+function make_sure_dialog_mac() {
+    osascript -e 'tell application "Terminal" to display dialog "Confirm to flash your device"'
+}
+
 
 ## Loading the download list
 function load_list() {
@@ -324,6 +359,21 @@ function select_build_dialog() {
     esac
 }
 
+function select_build_dialog_mac() {
+    option_list=""
+    for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
+    do
+        KEY=DL_${COUNT}_NAME
+        eval VALUE=\$$KEY
+
+        option_list=$option_list,\"${COUNT}-${VALUE}\"
+    done
+    local_option_list=#{option_list#,*}
+    eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list \{$local_option_list\} with title \"Select Build\"\'\)
+    echo $ret
+    TARGET_ID=${ret%%-*}
+}
+
 
 ## Select User or Eng build
 function if_has_eng_build() {
@@ -336,7 +386,6 @@ function if_has_eng_build() {
 }
 
 function select_user_eng_build() {
-    FLASH_USER_ENG_DONE=false
     while [ ${FLASH_USER_ENG_DONE} == false ]; do
         echo "User or Eng build:"
         echo "  1) User build"
@@ -351,7 +400,6 @@ function select_user_eng_build() {
 }
 
 function select_user_eng_build_dialog() {
-    FLASH_USER_ENG_DONE=false
     if [ ${FLASH_USER_ENG_DONE} == false ]; then
         dialog --backtitle "Select Build from PVT Server " --title "User or Engineer Build" --menu "Move using [UP] [DOWN],[Enter] to Select" \
         18 80 10 1 "User build" 2 "Engineer build" 2>${TMP_DIR}/menuitem_usereng
@@ -362,6 +410,16 @@ function select_user_eng_build_dialog() {
         menuitem_usereng=`cat ${TMP_DIR}/menuitem_usereng`
         case $menuitem_usereng in
             "") echo ""; echo "byebye."; exit 0;;
+            1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
+            2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
+        esac
+    fi
+}
+
+function select_user_eng_build_dialog_mac() {
+    if [ $TARGET_HAS_ENG == true ]; then
+        ret=$(osascript -e 'tell application "Terminal" to choose from list {"0-User build", "1-Engineer Build" with title "Choose build type"')
+        case ${ret%-*} in
             1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
             2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
         esac
@@ -446,6 +504,18 @@ function select_flash_mode_dialog() {
             4) FLASH_GECKO=true;;
         esac
     fi
+}
+
+function select_flash_mode_dialog_mac() {
+    ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-Flash Full", "2-Flash Gaia and Gecko", "3-Flash Gaia", "4-Flash Gecko"}')
+    echo $ret
+    case ${ret%%-*} in
+        "") echo ""; echo "byebye."; exit 0;;
+        1) FLASH_FULL=true;;
+        2) FLASH_GAIA=true; FLASH_GECKO=true;;
+        3) FLASH_GAIA=true;;
+        4) FLASH_GECKO=true;;
+    esac
 }
 
 ## Find the download build's info
@@ -637,17 +707,15 @@ do
     esac
 done
 
-## Disable GUI mode for MAC OS X, issue #20 will reslove it.
-case `uname` in
-    "Darwin") INTERACTION_WINDOW=false;;
-esac
-
 
 ##################################################
 # For interaction GUI mode, check dialog package #
 ##################################################
 if [ ${INTERACTION_WINDOW} == true ]; then
-    check_install_dialog
+    case `uname` in
+        "Linux") check_install_dialog;;
+        "Darwin") ;;
+    esac
 fi
 
 
@@ -657,7 +725,10 @@ fi
 if [ ${INTERACTION_WINDOW} == false ]; then
     set_wget_acct_pwd
 else
-    set_wget_acct_pwd_dialog
+    case `uname` in
+        "Linux") set_wget_acct_pwd_dialog;;
+        "Darwin") set_wget_acct_pwd_dialog_mac;;
+    esac
 fi
 
 
@@ -682,8 +753,11 @@ done
 # If not select DEVICE, then list DEVICES #
 ###########################################
 if [ ${INTERACTION_WINDOW} == true ] && [ -z $DEVICE_NAME ]; then
-    select_device_dialog
-    select_version_dialog
+    case `uname` in
+        "Linux") select_device_dialog; select_version_dialog;;
+        "Darwin") select_device_dialog_mac; select_version_dialog_mac;;
+    esac
+
     if ! [ -z $TARGET_ID ]; then
         FOUND=true
     fi
@@ -698,7 +772,10 @@ if [ ${FOUND} == false ]; then
     if [ ${INTERACTION_WINDOW} == false ]; then
         select_build
     else
-        select_build_dialog
+        case `uname` in
+            "Linux") select_build_dialog;;
+            "Darwin") select_build_dialog_mac;;
+        esac
     fi
 fi
 
@@ -716,7 +793,10 @@ if [ $TARGET_HAS_ENG == true ]; then
         if [ ${INTERACTION_WINDOW} == false ]; then
             select_user_eng_build
         else
-            select_user_eng_build_dialog
+            case `uname` in
+                "Linux") select_user_eng_build_dialog;;
+                "Darwin") select_user_eng_build_dialog_mac;;
+            esac
         fi
     fi
 else
@@ -732,7 +812,10 @@ fi
 if [ ${INTERACTION_WINDOW} == false ]; then
     select_flash_mode
 else
-    select_flash_mode_dialog
+    case `uname` in
+        "Linux") select_flash_mode_dialog;;
+        "Darwin") select_flash_mode_dialog_mac;;
+    esac
 fi
 
 
@@ -747,7 +830,10 @@ if [ ${INTERACTION_WINDOW} == false ]; then
     fi
 else
     if [ ${VERY_SURE} == false ]; then
-        make_sure_dialog
+        case `uname` in
+            "Linux") make_sure_dialog;;
+            "Darwin") make_sure_dialog_mac;;
+        esac
     fi
 fi
 
@@ -772,7 +858,10 @@ if [ ${INTERACTION_WINDOW} == false ]; then
     print_flash_info
     echo "Done."
 else
-    print_flash_info_dialog
+    case `uname` in
+        "Linux") print_flash_info_dialog;;
+        "Darwin") ;;
+    esac
 fi
 
 
