@@ -172,6 +172,7 @@ function run_adb()
 
 ## wget with flags
 function run_wget() {
+    echo "WGET: wget" $WGET_FLAG $@
     wget $WGET_FLAG $@
 }
 
@@ -189,7 +190,7 @@ function set_wget_acct_pwd() {
     else
         read -s -p "Enter HTTP Password (LDAP): " HTTPPwd
     fi
-        WGET_FLAG+=" --http-passwd="${HTTPPwd}""
+        WGET_FLAG+=" --http-passwd='"${HTTPPwd}"'"
     echo ""
 }
 
