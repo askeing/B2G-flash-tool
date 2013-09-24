@@ -322,7 +322,7 @@ elif [ $Device_Flag == "leo" ]; then
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
         fi
     # there is koi for leo device only
-    if [ $Version_Flag == "koi" ]; then
+    elif [ $Version_Flag == "koi" ]; then
         if [ $Engineer_Flag == 1 ]; then
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-leo-eng/latest/${DownloadFilename}
         else
@@ -578,7 +578,7 @@ if [ $Flash_Flag == true ] && [ $Shallow_Flag == false ]; then
     echo -e "flash your device..."
     cd ./b2g-distro
     #sudo env PATH=$PATH ./flash.sh
-    ./flash.sh
+    ./flash.sh -f
     cd ..
 
     ####################
