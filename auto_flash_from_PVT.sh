@@ -11,6 +11,9 @@
 #   2013/08/16 Askeing: v1.0 First release.
 #==========================================================================
 
+## Get the newest build
+git checkout master
+git pull --rebase
 
 ####################
 # Parameter Flags  #
@@ -624,7 +627,7 @@ function do_flash_image() {
     unzip -d ${TMP_DIR} ${TMP_DIR}/${IMG_BASENAME}
     CURRENT_DIR=`pwd`
     cd ${TMP_DIR}/b2g-distro/
-    bash ./flash.sh
+    bash ./flash.sh -f
     ret=$?
     if ! [ ${ret} == 0 ]; then
         echo "Flash image failed."
