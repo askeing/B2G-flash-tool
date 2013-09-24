@@ -50,7 +50,7 @@
 # Parameter Flags
 ####################
 # Default: download, no flash, nightly build, no backup
-Version_Flag="v1train"
+Version_Flag="koi"
 Device_Flag="unagi"
 Engineer_Flag=0
 Download_Flag=true
@@ -120,6 +120,7 @@ function version(){
         100|tef) Version_Flag="tef";;
         101|shira) Version_Flag="shira";;
         110|v1train) Version_Flag="v1train";;
+        120|koi) Version_Flag="koi";;
         0|master) Version_Flag="master";;
     esac
 }
@@ -128,7 +129,8 @@ function version_info(){
     echo -e "Available version:"
     echo -e "\t100|tef"
     echo -e "\t101|shira"
-    echo -e "\t110|v1train (default)"
+    echo -e "\t110|v1train"
+    echo -e "\t120|koi (default)"
     echo -e "\t0|master"
 }
 
@@ -287,6 +289,13 @@ if [ $Device_Flag == "unagi" ]; then
         else
             URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
         fi
+    # koi: eng/user build
+    elif [ $Version_Flag == "koi" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-aurora-unagi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-aurora-unagi/latest/${DownloadFilename}
+        fi
     # master: eng/user build
     elif [ $Version_Flag == "master" ]; then
         if [ $Engineer_Flag == 1 ]; then
@@ -296,11 +305,11 @@ if [ $Device_Flag == "unagi" ]; then
         fi
     # default to v1-train now
     else
-        echo -e "no version specified, use 1.1.0(v1train) by default"
+        echo -e "no version specified, use v1.2.0 (koi) by default"
         if [ $Engineer_Flag == 1 ]; then
-            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi-eng/latest/${DownloadFilename}
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-aurora-unagi-eng/latest/${DownloadFilename}
         else
-            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-b2g18-unagi/latest/${DownloadFilename}
+            URL=$URL/pub/mozilla.org/b2g/nightly/mozilla-aurora-unagi/latest/${DownloadFilename}
         fi
     fi
 elif [ $Device_Flag == "leo" ]; then
@@ -311,6 +320,13 @@ elif [ $Device_Flag == "leo" ]; then
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo-eng/latest/${DownloadFilename}
         else
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-leo/latest/${DownloadFilename}
+        fi
+    # there is koi for leo device only
+    if [ $Version_Flag == "koi" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-leo-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-leo/latest/${DownloadFilename}
         fi
     # master: eng/user build
     elif [ $Version_Flag == "master" ]; then
@@ -337,6 +353,12 @@ elif [ $Device_Flag == "inari" ]; then
             echo -e "inari v1-train don't support eng build, download user build insteadly"
         fi
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-inari/latest/${DownloadFilename}
+    elif [ $Version_Flag == "koi" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-inari-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-inari/latest/${DownloadFilename}
+        fi
     else
         echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for inari device"
         exit 0
@@ -353,6 +375,9 @@ elif [ $Device_Flag == "otoro" ]; then
     # v1-train: user build
     elif [ $Version_Flag == "v1train" ]; then
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18-otoro/latest/${DownloadFilename}
+    # koi: user build
+    elif [ $Version_Flag == "koi" ]; then
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-otoro/latest/${DownloadFilename}
     else
         echo -e "There are only v1-train (v1.1.0) and shira (v1.0.1) available for otoro device"
         exit 0
@@ -371,6 +396,12 @@ elif [ $Device_Flag == "buri" ] || [ $Device_Flag == "hamachi" ]; then
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi-eng/latest/${DownloadFilename}
         else
             URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_0_1-hamachi/latest/${DownloadFilename}
+        fi
+    elif [ $Version_Flag == "koi" ] ; then
+        if [ $Engineer_Flag == 1 ]; then
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-hamachi-eng/latest/${DownloadFilename}
+        else
+            URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-hamachi/latest/${DownloadFilename}
         fi
     # master: eng/user build
     elif [ $Version_Flag == "master" ]; then
@@ -392,6 +423,13 @@ elif [ $Device_Flag == "helix" ]; then
         fi
         Engineer_Flag=0
         URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-b2g18_v1_1_0_hd-helix/latest/${DownloadFilename}
+    # this is koi for helix device
+    elif [ $Version_Flag == "koi" ]; then
+        if [ $Engineer_Flag == 1 ]; then
+            echo -e "helix with v1.1 hd doesn't support eng build, download user build insteadly"
+        fi
+        Engineer_Flag=0
+        URL=$URL/pvt/mozilla.org/b2gotoro/nightly/mozilla-aurora-helix/latest/${DownloadFilename}
     # master: eng/user build
     elif [ $Version_Flag == "master" ]; then
         if [ $Engineer_Flag == 1 ]; then
