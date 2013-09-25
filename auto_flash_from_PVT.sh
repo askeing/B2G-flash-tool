@@ -9,6 +9,10 @@
 # Author: Askeing fyen@mozilla.com
 # History:
 #   2013/08/16 Askeing: v1.0 First release.
+#   2013/09/25 Askeing: added v1.2.0 and changed the seqence of flash mode.
+#
+# Backlog:
+#   2013/09/25 Askeing: support flash by Build ID.
 #==========================================================================
 
 ## Get the newest build
@@ -68,6 +72,7 @@ function helper(){
 function version_info(){
     print_list
     echo -e "Available version:"
+    echo -e "  120|v1.2.0"
     echo -e "  110hd|v1.1.0hd"
     echo -e "  110|v1train"
     echo -e "  101|v1.0.1"
@@ -78,6 +83,7 @@ function version_info(){
 function version() {
     local_ver=$1
     case "$local_ver" in
+        120|v1.2.0) VERSION_NAME="v120";;
         110hd|v1.1.0hd) VERSION_NAME="v110hd";;
         110|v1train) VERSION_NAME="v110";;
         101|v1.0.1) VERSION_NAME="v101";;
@@ -165,9 +171,6 @@ function select_version_dialog() {
         "") echo ""; echo "byebye."; exit 0;;
         *) TARGET_ID=$menuitem_version; NAME_KEY=DL_${TARGET_ID}_NAME; eval TARGET_NAME=\$$NAME_KEY; VERSION_NAME=`echo $TARGET_NAME | sed "s,PVT\.,,g;s,\.$DEVICE_NAME,,g"`;;
     esac
-    echo "Device: $DEVICE_NAME"     #ASKEING TEST
-    echo "Version: $VERSION_NAME"   #ASKEING TEST
-    echo "TARGET_ID: $TARGET_ID"    #ASKEING TEST
 }
 
 function select_version_dialog_mac() {
@@ -471,25 +474,25 @@ function select_flash_mode_dialog() {
 #        dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
 #        18 80 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
 
-        COUNT=1
         FLASH_MODE_FLAG=""
-        FLASH_MODE_FLAG+=" $COUNT Flash_Image"
         GAIA_KEY=DL_${TARGET_ID}${ENG_FLAG}_GAIA
         eval GAIA_VALUE=\$$GAIA_KEY
         GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
         eval GECKO_VALUE=\$$GECKO_KEY
         if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
-            COUNT=2
+            COUNT=1
             FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gaia/Gecko"
         fi
         if ! [ -z $GAIA_VALUE ]; then
-            COUNT=3
+            COUNT=2
             FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gaia"
         fi
         if ! [ -z $GECKO_VALUE ]; then
-            COUNT=4
+            COUNT=3
             FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gecko"
         fi
+        COUNT=4
+        FLASH_MODE_FLAG+=" $COUNT Flash_Image"
 
         dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
         18 80 10 ${FLASH_MODE_FLAG} 2>${TMP_DIR}/menuitem_flash
@@ -501,23 +504,23 @@ function select_flash_mode_dialog() {
         menuitem_flash=`cat ${TMP_DIR}/menuitem_flash`
         case $menuitem_flash in
             "") echo ""; echo "byebye."; exit 0;;
-            1) FLASH_FULL=true;;
-            2) FLASH_GAIA=true; FLASH_GECKO=true;;
-            3) FLASH_GAIA=true;;
-            4) FLASH_GECKO=true;;
+            1) FLASH_GAIA=true; FLASH_GECKO=true;;
+            2) FLASH_GAIA=true;;
+            3) FLASH_GECKO=true;;
+            4) FLASH_FULL=true;;
         esac
     fi
 }
 
 function select_flash_mode_dialog_mac() {
-    ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-Flash Full", "2-Flash Gaia and Gecko", "3-Flash Gaia", "4-Flash Gecko"}')
+    ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-Flash Gaia and Gecko", "2-Flash Gaia", "3-Flash Gecko", "4-Flash Full"}')
     echo $ret
     case ${ret%%-*} in
         "") echo ""; echo "byebye."; exit 0;;
-        1) FLASH_FULL=true;;
-        2) FLASH_GAIA=true; FLASH_GECKO=true;;
-        3) FLASH_GAIA=true;;
-        4) FLASH_GECKO=true;;
+        1) FLASH_GAIA=true; FLASH_GECKO=true;;
+        2) FLASH_GAIA=true;;
+        3) FLASH_GECKO=true;;
+        4) FLASH_FULL=true;;
     esac
 }
 
