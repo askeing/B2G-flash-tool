@@ -10,6 +10,7 @@
 # History:
 #   2013/08/16 Askeing: v1.0 First release.
 #   2013/09/25 Askeing: added v1.2.0 and changed the seqence of flash mode.
+#   2013/09/25 Askeing: removed the pwd of wget when using command mode.
 #
 # Backlog:
 #   2013/09/25 Askeing: support flash by Build ID.
@@ -188,7 +189,7 @@ function run_adb()
 
 ## wget with flags
 function run_wget() {
-    echo "WGET: wget" $WGET_FLAG $@
+    echo "WGET: " $@
     wget $WGET_FLAG $@
 }
 
