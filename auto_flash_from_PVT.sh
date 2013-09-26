@@ -18,8 +18,8 @@
 #==========================================================================
 
 ## Get the newest build
-git checkout master
-git pull --rebase
+# git checkout master
+# git pull --rebase
 
 ####################
 # Parameter Flags  #
@@ -147,6 +147,11 @@ function select_device_dialog() {
 function select_device_dialog_mac() {
     device_option_list='{"otoro","unagi","hamachi","inari","leo","helix","mako"}'
     eval DEVICE_NAME=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
+    if [ ${DEVICE_NAME} == false ]; then
+        echo ""
+        echo "byebye"
+        exit 0
+    fi
 }
 
 function select_version_dialog() {
@@ -176,8 +181,23 @@ function select_version_dialog() {
 }
 
 function select_version_dialog_mac() {
-    version_option_list='{"v101","v110","v110hd","master"}'
-    eval VERSION_NAME=\$\(osascript -e \'tell application \"Terminal\" to choose from list $version_option_list with title \"Choose Version\"\'\)
+    option_list=""
+    for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
+    do
+        KEY=DL_${COUNT}_NAME
+        eval VALUE=\$$KEY
+        if [[ ${VALUE} == *"$DEVICE_NAME" ]]; then
+            option_list=$option_list,\"${COUNT}-${VALUE}\"
+        fi
+    done
+    local_option_list=${option_list#,*}
+    eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list \{$local_option_list\} with title \"Select Version\"\'\)
+    TARGET_ID=${ret%%-*}
+    if [ ${ret} == false ]; then
+        echo ""
+        echo "byebye"
+        exit 0
+    fi
 }
 
 ## adb with flags
@@ -191,7 +211,7 @@ function run_adb()
 ## wget with flags
 function run_wget() {
     echo "WGET: " $@
-    if [ ${HTTPUser} != "" ] && [ ${HTTPPwd} != "" ]; then
+    if [ "${HTTPUser}" != "" ] && [ "${HTTPPwd}" != "" ]; then
         wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $@
     else
         wget $@
@@ -421,7 +441,7 @@ function select_user_eng_build_dialog() {
 
 function select_user_eng_build_dialog_mac() {
     if [ $TARGET_HAS_ENG == true ]; then
-        ret=$(osascript -e 'tell application "Terminal" to choose from list {"0-User build", "1-Engineer Build" with title "Choose build type"')
+        ret=$(osascript -e 'tell application "Terminal" to choose from list {"0-User Build", "1-Engineer Build"} with title "Choose build type"')
         case ${ret%-*} in
             1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
             2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
@@ -599,12 +619,18 @@ function do_shallow_flash() {
     if [ ${FLASH_GAIA} == true ]; then
         downlaod_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
         GAIA_BASENAME=`basename ${TMP_DIR}/${TARGET_GAIA}`
-        SHALLOW_FLAG+=" -g${TMP_DIR}/${GAIA_BASENAME}"
+        case `uname` in
+            "Linux") SHALLOW_FLAG+=" -g${TMP_DIR}/${GAIA_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -g ${TMP_DIR}/${GAIA_BASENAME}";;
+        esac
     fi
     if [ ${FLASH_GECKO} == true ]; then
         downlaod_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
         GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
-        SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}"
+        case `uname` in
+            "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -G ${TMP_DIR}/${GECKO_BASENAME}";;
+        esac
     fi
     SHALLOW_FLAG+=" -y"
     if [ -e ./shallow_flash.sh ]; then
@@ -788,9 +814,9 @@ fi
 ENG_FLAG=""
 if_has_eng_build
 if [ $TARGET_HAS_ENG == true ]; then
-    if [ $FLASH_ENG_IF_POSSIBLE == true ]; then
+    if [ {$FLASH_ENG_IF_POSSIBLE} == true ]; then
         FLASH_ENG=true
-    elif [ $FLASH_USR_IF_POSSIBLE == true ]; then
+    elif [ ${FLASH_USR_IF_POSSIBLE} == true ]; then
         FLASH_ENG=false
     else
         if [ ${INTERACTION_WINDOW} == false ]; then
@@ -805,7 +831,7 @@ if [ $TARGET_HAS_ENG == true ]; then
 else
     FLASH_ENG=false
 fi
-if [ $FLASH_ENG == true ]; then
+if [ ${FLASH_ENG} == true ]; then
     ENG_FLAG="_ENG"
 fi
 
