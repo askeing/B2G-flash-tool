@@ -63,6 +63,7 @@ function version(){
     case "$local_ver" in
         18) Version_Flag="18";;
         26) Version_Flag="26";;
+        27) Version_Flag="27";;
     esac
 }
 
@@ -70,6 +71,7 @@ function version_info(){
     echo -e "Available version:"
     echo -e "\t--version=18\tB2G 18"
     echo -e "\t--version=26\tB2G 26"
+    echo -e "\t--version=27\tB2G 27"
 }
 
 ####################
@@ -87,6 +89,10 @@ if [ -z $CONF_B2G18_LINUX_32_URL ] || [ -z $CONF_B2G18_LINUX_64_URL ] || [ -z $C
     exit -2
 fi
 if [ -z $CONF_B2G26_LINUX_32_URL ] || [ -z $CONF_B2G26_LINUX_64_URL ] || [ -z $CONF_B2G26_MAC_URL ]; then
+    helper_config
+    exit -2
+fi
+if [ -z $CONF_B2G27_LINUX_32_URL ] || [ -z $CONF_B2G27_LINUX_64_URL ] || [ -z $CONF_B2G27_MAC_URL ]; then
     helper_config
     exit -2
 fi
