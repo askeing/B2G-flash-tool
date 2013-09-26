@@ -11,6 +11,7 @@
 #   2013/08/16 Askeing: v1.0 First release.
 #   2013/09/25 Askeing: added v1.2.0 and changed the seqence of flash mode.
 #   2013/09/25 Askeing: removed the pwd of wget when using command mode.
+#   2013/09/26 Askeing: fixed the HTTP_PWD issue.
 #
 # Backlog:
 #   2013/09/25 Askeing: support flash by Build ID.
@@ -190,29 +191,29 @@ function run_adb()
 ## wget with flags
 function run_wget() {
     echo "WGET: " $@
-    wget $WGET_FLAG $@
+    if [ ${HTTPUser} != "" ] && [ ${HTTPPwd} != "" ]; then
+        wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $@
+    else
+        wget $@
+    fi
 }
 
 ## setup the http user account and passwd
 function set_wget_acct_pwd() {
-    WGET_FLAG=""
     if [ "$HTTP_USER" != "" ]; then
         HTTPUser=$HTTP_USER
     else
         read -p "Enter HTTP Username (LDAP): " HTTPUser
     fi
-    WGET_FLAG+=" --http-user="${HTTPUser}""
     if [ "$HTTP_PWD" != "" ]; then
         HTTPPwd=$HTTP_PWD
     else
         read -s -p "Enter HTTP Password (LDAP): " HTTPPwd
     fi
-        WGET_FLAG+=" --http-passwd='"${HTTPPwd}"'"
     echo ""
 }
 
 function set_wget_acct_pwd_dialog() {
-    WGET_FLAG=""
     if [ "$HTTP_USER" != "" ]; then
         HTTPUser=$HTTP_USER
     else
@@ -227,7 +228,6 @@ function set_wget_acct_pwd_dialog() {
             *) HTTPUser=$menuitem_wgetacct;;
         esac
     fi
-    WGET_FLAG+=" --http-user="${HTTPUser}""
     if [ "$HTTP_PWD" != "" ]; then
         HTTPPwd=$HTTP_PWD
     else
@@ -242,11 +242,9 @@ function set_wget_acct_pwd_dialog() {
             *) HTTPPwd=$menuitem_wgetpwd;;
         esac
     fi
-    WGET_FLAG+=" --http-passwd="${HTTPPwd}""
 }
 
 function set_wget_acct_pwd_dialog_mac() {
-    WGET_FLAG=""
     if [ "$HTTP_USER" != "" ]; then
         HTTPUser=$HTTPUser
     else
@@ -261,8 +259,6 @@ function set_wget_acct_pwd_dialog_mac() {
         ret=${ret%,*}
         HTTPPwd=${ret#*:}
     fi
-    WGET_FLAG+=" --http-user="${HTTPUSER}""
-    WGET_FLAG+=" --http-passwd="${HTTPPwd}""
 }
 
 ## install dialog package for interaction GUI mode
