@@ -18,8 +18,8 @@
 #==========================================================================
 
 ## Get the newest build
-# git checkout master
-# git pull --rebase
+git checkout master
+git pull --rebase
 
 ####################
 # Parameter Flags  #
