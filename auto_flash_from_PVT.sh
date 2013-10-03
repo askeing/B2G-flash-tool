@@ -751,7 +751,10 @@ fi
 #################################
 # Prepare the authn of web site #
 #################################
-if [ ${INTERACTION_WINDOW} == false ]; then
+source .ldap
+if [ "$HTTPUser" != "" ] && [ "HTTPPwd" != "" ]; then
+    echo -e "Load account info from .ldap"
+elif [ ${INTERACTION_WINDOW} == false ]; then
     set_wget_acct_pwd
 else
     case `uname` in
@@ -814,7 +817,7 @@ fi
 ENG_FLAG=""
 if_has_eng_build
 if [ $TARGET_HAS_ENG == true ]; then
-    if [ {$FLASH_ENG_IF_POSSIBLE} == true ]; then
+    if [ ${FLASH_ENG_IF_POSSIBLE} == true ]; then
         FLASH_ENG=true
     elif [ ${FLASH_USR_IF_POSSIBLE} == true ]; then
         FLASH_ENG=false
@@ -831,7 +834,7 @@ if [ $TARGET_HAS_ENG == true ]; then
 else
     FLASH_ENG=false
 fi
-if [ ${FLASH_ENG} == true ]; then
+if [ "$FLASH_ENG" == true ]; then
     ENG_FLAG="_ENG"
 fi
 
