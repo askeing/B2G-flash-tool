@@ -279,6 +279,11 @@ function set_wget_acct_pwd_dialog_mac() {
         ret=${ret%,*}
         HTTPPwd=${ret#*:}
     fi
+    if [ "$HTTPUser" == "" ] || ["$HTTPPwd" == "" ] ; then
+        echo ""
+        echo "byebye"
+        exit 0
+    fi
 }
 
 ## install dialog package for interaction GUI mode
@@ -326,7 +331,10 @@ function make_sure_dialog() {
 }
 
 function make_sure_dialog_mac() {
-    osascript -e 'tell application "Terminal" to display dialog "Confirm to flash your device"'
+    ret=$(osascript -e 'tell application "Terminal" to display dialog "Confirm to flash your device"')
+    if [ "$ret" == "" ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
 }
 
 
@@ -395,6 +403,9 @@ function select_build_dialog_mac() {
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list \{$local_option_list\} with title \"Select Build\"\'\)
     echo $ret
     TARGET_ID=${ret%%-*}
+    if [ "$TARGET_ID" == "" ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
 }
 
 
@@ -446,6 +457,10 @@ function select_user_eng_build_dialog_mac() {
             1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
             2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
         esac
+
+        if [ "$ret" == "" ]; then
+            echo "" && echo "byebye." && exit 0
+        fi
     fi
 }
 
@@ -539,6 +554,9 @@ function select_flash_mode_dialog_mac() {
         3) FLASH_GECKO=true;;
         4) FLASH_FULL=true;;
     esac
+    if [ "$ret" == "" ]; then
+        echo "" && echo "byebye." && exit 0
+    fi
 }
 
 ## Find the download build's info
