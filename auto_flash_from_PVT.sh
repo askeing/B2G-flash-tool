@@ -29,6 +29,7 @@ INTERACTION_WINDOW=false
 ADB_DEVICE="Device"
 DEVICE_NAME=""
 VERSION_NAME=""
+BUILD_ID=""
 FLASH_FULL=false
 FLASH_GAIA=false
 FLASH_GECKO=false
@@ -58,6 +59,7 @@ function helper(){
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
     echo -e "  --usr\tspecify User(USR) build."
     echo -e "  --eng\tspecify Engineer(ENG) build."
+    echo -e "  -b|--build\tspecify target build YYYYMMDDhhmmss"
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
@@ -66,6 +68,7 @@ function helper(){
 	echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v110 -dunagi --eng -f"
 	echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
 	echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari --usr -g -G"
+    echo -e "  Flash buri v1.2 USR build 20131007004003 gaia/gecko\t./auto_flash_from_PVT.sh -v120 -dburi --usr -g -G -b20131007004003"
 	echo -e "  Flash by interaction GUI mode\t\t\t./auto_flash_from_PVT.sh -w"
 	exit 0
 }
@@ -279,7 +282,7 @@ function set_wget_acct_pwd_dialog_mac() {
         ret=${ret%,*}
         HTTPPwd=${ret#*:}
     fi
-    if [ "$HTTPUser" == "" ] || ["$HTTPPwd" == "" ] ; then
+    if [ -z '$HTTPUser' ] || [ -z '$HTTPPwd' ] ; then
         echo ""
         echo "byebye"
         exit 0
@@ -321,6 +324,7 @@ function make_sure() {
 }
 
 function make_sure_dialog() {
+    ## TODO, changes to flash the latest build. [:atsai]
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\nAre you sure you want to flash your device?"
     dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 18 80 2>${TMP_DIR}/menuitem_makesure
@@ -331,9 +335,17 @@ function make_sure_dialog() {
 }
 
 function make_sure_dialog_mac() {
-    ret=$(osascript -e 'tell application "Terminal" to display dialog "Confirm to flash your device"')
-    if [ "$ret" == "" ]; then
-        echo "" && echo "byebye." && exit 0
+    ret=$(osascript -e 'tell application "Terminal" to display dialog "Do you want to flash the latest build?\n Yes-Latest; No-Enter Build ID" buttons {"Cancel", "No", "Yes"} default button 3 with icon caution')
+    if [ "${ret##*:}" == "No" ]; then
+        ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter the Build ID you want to flash (YYYYMMDDhhmmss)" default answer "" with title "Build Info"')
+        tmp=${ret%,*}
+        BUILD_ID=${tmp#*:}
+        
+        if [ ${#BUILD_ID} != 14 ]; then
+            echo "" && echo "BUILD_ID should be 14 digits" && exit 0
+        fi
+    elif [[ "${ret##*:}" != "Yes" ]]; then
+        echo "" && echo "byebye" && exit 0
     fi
 }
 
@@ -403,7 +415,7 @@ function select_build_dialog_mac() {
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list \{$local_option_list\} with title \"Select Build\"\'\)
     echo $ret
     TARGET_ID=${ret%%-*}
-    if [ "$TARGET_ID" == "" ]; then
+    if [ -z "$TARGET_ID" ]; then
         echo "" && echo "byebye." && exit 0
     fi
 }
@@ -458,7 +470,7 @@ function select_user_eng_build_dialog_mac() {
             2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
         esac
 
-        if [ "$ret" == "" ]; then
+        if [ -z "$ret" ]; then
             echo "" && echo "byebye." && exit 0
         fi
     fi
@@ -554,7 +566,7 @@ function select_flash_mode_dialog_mac() {
         3) FLASH_GECKO=true;;
         4) FLASH_FULL=true;;
     esac
-    if [ "$ret" == "" ]; then
+    if [ -z "$ret" ]; then
         echo "" && echo "byebye." && exit 0
     fi
 }
@@ -622,7 +634,7 @@ function print_flash_info_dialog() {
     dialog --backtitle "Flash Information " --title "Done" --msgbox "${MAKE_SURE_MSG}" 18 80 2>${TMP_DIR}/menuitem_done
 }
 
-function downlaod_file_from_PVT() {
+function download_file_from_PVT() {
     DL_URL=$1
     DL_FILE=$2
     DEST_DIR=$3
@@ -633,9 +645,15 @@ function downlaod_file_from_PVT() {
 
 ## Shallow flash gaia/gecko
 function do_shallow_flash() {
+    ## Replace Target URL with BUILD ID
+    if [ -n BUILD_ID ]; then
+        TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
+        echo ------$TARGET_URL
+    fi
+
     SHALLOW_FLAG+=$ADB_FLAGS
     if [ ${FLASH_GAIA} == true ]; then
-        downlaod_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
+        download_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
         GAIA_BASENAME=`basename ${TMP_DIR}/${TARGET_GAIA}`
         case `uname` in
             "Linux") SHALLOW_FLAG+=" -g${TMP_DIR}/${GAIA_BASENAME}";;
@@ -643,7 +661,7 @@ function do_shallow_flash() {
         esac
     fi
     if [ ${FLASH_GECKO} == true ]; then
-        downlaod_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
+        download_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
         GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
         case `uname` in
             "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
@@ -666,7 +684,7 @@ function do_shallow_flash() {
 
 ## Flash full image
 function do_flash_image() {
-    downlaod_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${TMP_DIR}
+    download_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${TMP_DIR}
     IMG_BASENAME=`basename ${TMP_DIR}/${TARGET_IMG}`
     unzip -d ${TMP_DIR} ${TMP_DIR}/${IMG_BASENAME}
     CURRENT_DIR=`pwd`
@@ -713,7 +731,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::gGfwyh --long version::,device::,usr,eng,gaia,gecko,flash,help \
+        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,build::,usr,eng,gaia,gecko,flash,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -740,6 +758,7 @@ do
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
+        -b|--build) BUILD_ID=$2; shift 2;;
         --usr) FLASH_USR_IF_POSSIBLE=true; FLASH_ENG_IF_POSSIBLE=false; shift;;
         --eng) FLASH_ENG_IF_POSSIBLE=true; FLASH_USR_IF_POSSIBLE=false; shift;;
         -f|--flash) FLASH_FULL=true; shift;;
