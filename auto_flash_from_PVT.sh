@@ -646,9 +646,8 @@ function download_file_from_PVT() {
 ## Shallow flash gaia/gecko
 function do_shallow_flash() {
     ## Replace Target URL with BUILD ID
-    if [ -n BUILD_ID ]; then
+    if [ $BUILD_ID != "" ]; then
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
-        echo ------$TARGET_URL
     fi
 
     SHALLOW_FLAG+=$ADB_FLAGS
