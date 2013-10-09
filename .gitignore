@@ -24,11 +24,14 @@ b2g*
 gaia*
 mozilla-profile/*
 crashreports.txt
-.DS_Store
 user.js
 size.txt
 sizeDiff.txt
 dir
+
+# Configure files
+
+.DS_Store
 .TWCI_DL_LIST.conf
 .ldap
 
