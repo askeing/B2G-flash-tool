@@ -16,6 +16,7 @@
 #   2013/10/09 Askeing: added buildID support on Linux.
 #   2013/10/09 Askeing: modified the seqence of flash mode in command mode.
 #   2013/10/09 Askeing: added download failed message for wget.
+#   2013/10/09 Askeing: rename -b|--build to -b|--buildid.
 #
 # Backlog:
 #   2013/09/25 Askeing: support flash by Build ID.
@@ -63,7 +64,7 @@ function helper(){
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
     echo -e "  --usr\tspecify User(USR) build."
     echo -e "  --eng\tspecify Engineer(ENG) build."
-    echo -e "  -b|--build\tspecify target build YYYYMMDDhhmmss"
+    echo -e "  -b|--buildid\tspecify target build YYYYMMDDhhmmss"
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
@@ -774,7 +775,7 @@ do
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
-        -b|--build) BUILD_ID=$2; shift 2;;
+        -b|--buildid) BUILD_ID=$2; shift 2;;
         --usr) FLASH_USR_IF_POSSIBLE=true; FLASH_ENG_IF_POSSIBLE=false; shift;;
         --eng) FLASH_ENG_IF_POSSIBLE=true; FLASH_USR_IF_POSSIBLE=false; shift;;
         -f|--flash) FLASH_FULL=true; shift;;
