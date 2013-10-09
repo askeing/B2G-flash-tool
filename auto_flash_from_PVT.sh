@@ -322,7 +322,7 @@ function create_make_sure_msg() {
 
 function replace_url_for_build_id() {
     ## Replace Target URL with BUILD ID
-    if [ $BUILD_ID != "" ]; then
+    if [[ ${BUILD_ID} != "" ]]; then
         if [ ${#BUILD_ID} != 14 ]; then
             echo "" && echo "BUILD_ID ($BUILD_ID) should be 14 digits" && exit 0
         fi
@@ -341,7 +341,7 @@ function make_sure() {
 
 function make_sure_dialog() {
     ## Build ID support
-    if [ $BUILD_ID == "" ]; then
+    if [[ ${BUILD_ID} == "" ]]; then
         dialog --backtitle "Latest Build or Enter Build ID" --title "Selection" --yesno "\n\n\nDo you want to flash the latest build? \n\nClick [No] to enter the Build ID (YYYYMMDDhhmmss)." 15 80 2>${TMP_DIR}/menuitem_latestbuild
         ret=$?
         ## Enter BuildID
