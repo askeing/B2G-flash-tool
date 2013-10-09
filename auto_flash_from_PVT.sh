@@ -12,6 +12,8 @@
 #   2013/09/25 Askeing: added v1.2.0 and changed the seqence of flash mode.
 #   2013/09/25 Askeing: removed the pwd of wget when using command mode.
 #   2013/09/26 Askeing: fixed the HTTP_PWD issue.
+#   2013/10/07 Al: added buildID support on Mac.
+#   2013/10/09 Askeing: added buildID support on Linux.
 #
 # Backlog:
 #   2013/09/25 Askeing: support flash by Build ID.
@@ -317,17 +319,49 @@ function create_make_sure_msg() {
     fi
 }
 
+function replace_url_for_build_id() {
+    ## Replace Target URL with BUILD ID
+    if [ $BUILD_ID != "" ]; then
+        if [ ${#BUILD_ID} != 14 ]; then
+            echo "" && echo "BUILD_ID ($BUILD_ID) should be 14 digits" && exit 0
+        fi
+        TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
+    fi
+}
+
 ## make sure user want to flash/shallow flash
 function make_sure() {
+    ## Build ID support
+    replace_url_for_build_id
+        
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
     test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
 }
 
 function make_sure_dialog() {
-    ## TODO, changes to flash the latest build. [:atsai]
+    ## Build ID support
+    if [ $BUILD_ID == "" ]; then
+        dialog --backtitle "Latest Build or Enter Build ID" --title "Selection" --yesno "\n\n\nDo you want to flash the latest build? \n\nClick [No] to enter the Build ID (YYYYMMDDhhmmss)." 15 80 2>${TMP_DIR}/menuitem_latestbuild
+        ret=$?
+        ## Enter BuildID
+        if [ ${ret} == 1 ]; then
+            dialog --backtitle "Latest Build or Enter Build ID" --title "Enter Build ID" --inputbox "\n\nEnter the Build ID you want to flash (YYYYMMDDhhmmss)\n\nMove using [Tab] to Select\n" 15 80 2>${TMP_DIR}/menuitem_buildid
+            ret=$?
+            if [ ${ret} == 1 ]; then
+                echo "" && echo "byebye." && exit 0
+            fi
+            menuitem_buildid=`cat ${TMP_DIR}/menuitem_buildid`
+            case $menuitem_buildid in
+                "") echo ""; echo "byebye."; exit 0;;
+                *) BUILD_ID=$menuitem_buildid;;
+            esac
+        fi
+    fi
+
+    replace_url_for_build_id
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\nAre you sure you want to flash your device?"
-    dialog --backtitle "Confirm the Information " --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 18 80 2>${TMP_DIR}/menuitem_makesure
+    dialog --backtitle "Confirm the Information" --title "Confirmation" --yesno "${MAKE_SURE_MSG}" 18 80 2>${TMP_DIR}/menuitem_makesure
     ret=$?
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
@@ -341,9 +375,7 @@ function make_sure_dialog_mac() {
         tmp=${ret%,*}
         BUILD_ID=${tmp#*:}
         
-        if [ ${#BUILD_ID} != 14 ]; then
-            echo "" && echo "BUILD_ID should be 14 digits" && exit 0
-        fi
+        replace_url_for_build_id
     elif [[ "${ret##*:}" != "Yes" ]]; then
         echo "" && echo "byebye" && exit 0
     fi
@@ -645,11 +677,6 @@ function download_file_from_PVT() {
 
 ## Shallow flash gaia/gecko
 function do_shallow_flash() {
-    ## Replace Target URL with BUILD ID
-    if [ $BUILD_ID != "" ]; then
-        TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
-    fi
-
     SHALLOW_FLAG+=$ADB_FLAGS
     if [ ${FLASH_GAIA} == true ]; then
         download_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
