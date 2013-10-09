@@ -14,6 +14,7 @@
 #   2013/09/26 Askeing: fixed the HTTP_PWD issue.
 #   2013/10/07 Al: added buildID support on Mac.
 #   2013/10/09 Askeing: added buildID support on Linux.
+#   2013/10/09 Askeing: modified the seqence of flash mode in command mode.
 #
 # Backlog:
 #   2013/09/25 Askeing: support flash by Build ID.
@@ -333,7 +334,7 @@ function replace_url_for_build_id() {
 function make_sure() {
     ## Build ID support
     replace_url_for_build_id
-        
+
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
     test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
 }
@@ -517,29 +518,29 @@ function select_flash_mode() {
     eval GECKO_VALUE=\$$GECKO_KEY
     while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
         echo "Flash Mode:"
-        echo "  1) Flash Image"
         if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
-            echo "  2) Shallow flash Gaia/Gecko"
+            echo "  1) Shallow flash Gaia/Gecko"
         fi
         if ! [ -z $GAIA_VALUE ]; then
-            echo "  3) Shallow flash Gaia"
+            echo "  2) Shallow flash Gaia"
         fi
         if ! [ -z $GECKO_VALUE ]; then
-            echo "  4) Shallow flash Gecko"
+            echo "  3) Shallow flash Gecko"
         fi
+        echo "  4) Flash Full Image"
         read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
         test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
         case ${FLASH_INPUT} in
-            1) FLASH_FULL=true;;
-            2)  if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
+            1)  if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
                     FLASH_GAIA=true; FLASH_GECKO=true
                 fi;;
-            3)  if ! [ -z $GAIA_VALUE ]; then
+            2)  if ! [ -z $GAIA_VALUE ]; then
                     FLASH_GAIA=true
                 fi;;
-            4)  if ! [ -z $GECKO_VALUE ]; then
+            3)  if ! [ -z $GECKO_VALUE ]; then
                     FLASH_GECKO=true
                 fi;;
+            4) FLASH_FULL=true;;
         esac
     done
 }
@@ -568,7 +569,7 @@ function select_flash_mode_dialog() {
             FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gecko"
         fi
         COUNT=4
-        FLASH_MODE_FLAG+=" $COUNT Flash_Image"
+        FLASH_MODE_FLAG+=" $COUNT Flash_Full_Image"
 
         dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
         18 80 10 ${FLASH_MODE_FLAG} 2>${TMP_DIR}/menuitem_flash
@@ -619,22 +620,6 @@ function find_download_files_name() {
 
     TARGET_GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
     eval TARGET_GECKO=\$$TARGET_GECKO_KEY
-
-    #TARGET_ENG_KEY=DL_${TARGET_ID}_ENG
-    #eval TARGET_ENG=\$$TARGET_ENG_KEY
-
-    #TARGET_ENG_URL_KEY=DL_${TARGET_ID}_ENG_URL
-    #eval TARGET_ENG_URL=\$$TARGET_ENG_URL_KEY
-
-    #TARGET_ENG_IMG_KEY=DL_${TARGET_ID}_ENG_IMG
-    #eval TARGET_ENG_IMG=\$$TARGET_ENG_IMG_KEY
-    
-    #TARGET_ENG_GAIA_KEY=DL_${TARGET_ID}_ENG_GAIA
-    #eval TARGET_ENG_GAIA=\$$TARGET_ENG_GAIA_KEY
-
-    #TARGET_ENG_GECKO_KEY=DL_${TARGET_ID}_ENG_GECKO
-    #eval TARGET_ENG_GECKO=\$$TARGET_ENG_GECKO_KEY
-    
 }
 
 ## Print flash info
