@@ -15,6 +15,7 @@
 #   2013/10/07 Al: added buildID support on Mac.
 #   2013/10/09 Askeing: added buildID support on Linux.
 #   2013/10/09 Askeing: modified the seqence of flash mode in command mode.
+#   2013/10/09 Askeing: added download failed message for wget.
 #
 # Backlog:
 #   2013/09/25 Askeing: support flash by Build ID.
@@ -658,6 +659,10 @@ function download_file_from_PVT() {
     echo ""
     echo "Download file: ${DL_URL}${DL_FILE}"
     run_wget -P ${DEST_DIR} ${DL_URL}${DL_FILE}
+    ret=$?
+    if [ ${ret} != 0 ]; then
+        echo "Download failed." && echo "byebye." && exit 0
+    fi
 }
 
 ## Shallow flash gaia/gecko
