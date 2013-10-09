@@ -803,9 +803,14 @@ fi
 # Prepare the authn of web site #
 #################################
 source .ldap
-if [ "$HTTPUser" != "" ] && [ "HTTPPwd" != "" ]; then
-    echo -e "Load account info from .ldap"
-elif [ ${INTERACTION_WINDOW} == false ]; then
+if [ "$HTTP_USER" != "" ]; then
+    echo -e "Load account [$HTTP_USER] from .ldap"
+fi
+if [ "$HTTP_PWD" != "" ]; then
+    echo -e "Load password from .ldap"
+fi
+
+if [ ${INTERACTION_WINDOW} == false ]; then
     set_wget_acct_pwd
 else
     case `uname` in
