@@ -18,6 +18,7 @@ Makefile.in
 *.zip
 *.tar.gz
 VERSION
+VERSION-DESKTOP
 version
 b2g*
 gaia*
