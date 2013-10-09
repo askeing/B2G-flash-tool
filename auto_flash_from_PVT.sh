@@ -334,9 +334,6 @@ function replace_url_for_build_id() {
 
 ## make sure user want to flash/shallow flash
 function make_sure() {
-    ## Build ID support
-    replace_url_for_build_id
-
     read -p "Are you sure you want to flash your device? [y/N]" isFlash
     test "$isFlash" != "y" && test "$isFlash" != "Y" && echo "byebye." && exit 0
 }
@@ -910,6 +907,8 @@ fi
 ####################################
 find_download_files_name
 if [ ${INTERACTION_WINDOW} == false ]; then
+    ## Build ID support
+    replace_url_for_build_id
     print_flash_info
     if [ ${VERY_SURE} == false ]; then
         make_sure
