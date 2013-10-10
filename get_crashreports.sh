@@ -8,6 +8,8 @@ then
 rm crashreports.txt
 fi
 
+echo "Getting root for device"
+adb root
 echo "Submitted crash reports" > crashreports.txt
 adb shell ls -al /data/b2g/mozilla/Crash\ Reports/submitted >> crashreports.txt
 echo "Pending crash reports" >> crashreports.txt
