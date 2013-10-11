@@ -80,7 +80,6 @@ function helper(){
 
 ## Show the available version info
 function version_info(){
-    print_list
     echo -e "Available version:"
     echo -e "  120|v1.2.0"
     echo -e "  110hd|v1.1.0hd"
