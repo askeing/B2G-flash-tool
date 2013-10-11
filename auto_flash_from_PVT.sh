@@ -18,6 +18,7 @@
 #   2013/10/09 Askeing: added download failed message for wget.
 #   2013/10/09 Askeing: rename -b|--build to -b|--buildid.
 #   2013/10/11 Askeing: updated -f|--flash to -f|--full.
+#   2013/10/11 Askeing: added check_build_id function.
 #
 #==========================================================================
 
@@ -321,12 +322,31 @@ function create_make_sure_msg() {
     fi
 }
 
+## check the build id should be 14 digits
+function check_build_id() {
+    if [[ ${BUILD_ID} == "" ]]; then
+        echo "Please enter build id." &&
+        echo "Try '--help' for more information." &&
+        exit 0
+    fi
+
+    ## BUILD_ID only can contains [0-9]
+    VERIFY_BUILDID=`echo "$BUILD_ID" | awk '$0 ~/[^0-9]/ { print "TRUE" }'`
+    if [[ $VERIFY_BUILDID == "TRUE" ]]; then
+        echo "BUILD_ID ($BUILD_ID) should be 14 digits" &&
+        exit 0
+    fi
+
+    if [ ${#BUILD_ID} != 14 ]; then
+        echo "BUILD_ID ($BUILD_ID) should be 14 digits" &&
+        exit 0
+    fi
+}
+
 function replace_url_for_build_id() {
     ## Replace Target URL with BUILD ID
     if [[ ${BUILD_ID} != "" ]]; then
-        if [ ${#BUILD_ID} != 14 ]; then
-            echo "" && echo "BUILD_ID ($BUILD_ID) should be 14 digits" && exit 0
-        fi
+        checko_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
 }
@@ -771,7 +791,7 @@ do
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
-        -b|--buildid) BUILD_ID=$2; shift 2;;
+        -b|--buildid) BUILD_ID=$2; check_build_id; shift 2;;
         --usr) FLASH_USR_IF_POSSIBLE=true; FLASH_ENG_IF_POSSIBLE=false; shift;;
         --eng) FLASH_ENG_IF_POSSIBLE=true; FLASH_USR_IF_POSSIBLE=false; shift;;
         -f|--full) FLASH_FULL=true; shift;;
