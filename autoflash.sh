@@ -621,6 +621,7 @@ elif $Flash_Flag == true; then
     ## remove old gaia and profiles
     adb shell rm -r /cache/* &&
     adb shell rm -r /data/b2g/* &&
+    adb shell rm -r /data/local/storage/persistent/* &&
     adb shell rm -r /data/local/webapps &&
     adb shell rm -r /data/local/user.js &&
     adb shell rm -r /data/local/permissions.sqlite* &&
