@@ -62,7 +62,7 @@ function helper(){
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
     echo -e "  -f|--full\tflash full image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
-    echo -e "  -G|--Gecko\tshallow flash gecko into device."
+    echo -e "  -G|--gecko\tshallow flash gecko into device."
     echo -e "  --usr\tspecify User(USR) build."
     echo -e "  --eng\tspecify Engineer(ENG) build."
     echo -e "  -b|--buildid\tspecify target build YYYYMMDDhhmmss"
@@ -764,7 +764,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,build::,usr,eng,gaia,gecko,flash,help \
+        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,buildid::,usr,eng,gaia,gecko,full,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
