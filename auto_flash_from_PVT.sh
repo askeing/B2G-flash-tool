@@ -17,9 +17,8 @@
 #   2013/10/09 Askeing: modified the seqence of flash mode in command mode.
 #   2013/10/09 Askeing: added download failed message for wget.
 #   2013/10/09 Askeing: rename -b|--build to -b|--buildid.
+#   2013/10/11 Askeing: updated -f|--flash to -f|--full.
 #
-# Backlog:
-#   2013/09/25 Askeing: support flash by Build ID.
 #==========================================================================
 
 ## Get the newest build
@@ -60,7 +59,7 @@ function helper(){
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
-    echo -e "  -f|--flash\tflash image into device."
+    echo -e "  -f|--full\tflash full image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
     echo -e "  -G|--Gecko\tshallow flash gecko into device."
     echo -e "  --usr\tspecify User(USR) build."
@@ -776,7 +775,7 @@ do
         -b|--buildid) BUILD_ID=$2; shift 2;;
         --usr) FLASH_USR_IF_POSSIBLE=true; FLASH_ENG_IF_POSSIBLE=false; shift;;
         --eng) FLASH_ENG_IF_POSSIBLE=true; FLASH_USR_IF_POSSIBLE=false; shift;;
-        -f|--flash) FLASH_FULL=true; shift;;
+        -f|--full) FLASH_FULL=true; shift;;
         -g|--gaia) FLASH_GAIA=true; shift;;
         -G|--gecko) FLASH_GECKO=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;
