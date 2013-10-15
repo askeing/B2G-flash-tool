@@ -10,6 +10,8 @@
 # History:
 #   2013/08/13 Askeing: v1.0 First release.
 #   2013/08/14 Askeing: v1.1 Interaction GUI mode.
+#   2013/10/11 Askeing: updated -f|--flash to -f|--full.
+#
 #==========================================================================
 
 
@@ -41,9 +43,9 @@ function helper(){
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
-    echo -e "  -f|--flash\tflash image into device."
+    echo -e "  -f|--full\tflash full image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
-    echo -e "  -G|--Gecko\tshallow flash gecko into device."
+    echo -e "  -G|--gecko\tshallow flash gecko into device."
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
@@ -57,7 +59,6 @@ function helper(){
 
 ## Show the available version info
 function version_info(){
-    print_list
     echo -e "Available version:"
     echo -e "  110hd|v1.1.0hd"
     echo -e "  110|v1train"
@@ -444,7 +445,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::gGfwyh --long version::,device::,gaia,gecko,flash,help \
+        TEMP=`getopt -o v::d::s::gGfwyh --long version::,device::,gaia,gecko,full,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -471,7 +472,7 @@ do
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
-        -f|--flash) FLASH_FULL=true; shift;;
+        -f|--full) FLASH_FULL=true; shift;;
         -g|--gaia) FLASH_GAIA=true; shift;;
         -G|--gecko) FLASH_GECKO=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;

@@ -17,9 +17,9 @@
 #   2013/10/09 Askeing: modified the seqence of flash mode in command mode.
 #   2013/10/09 Askeing: added download failed message for wget.
 #   2013/10/09 Askeing: rename -b|--build to -b|--buildid.
+#   2013/10/11 Askeing: updated -f|--flash to -f|--full.
+#   2013/10/11 Askeing: added check_build_id function.
 #
-# Backlog:
-#   2013/09/25 Askeing: support flash by Build ID.
 #==========================================================================
 
 ## Get the newest build
@@ -60,9 +60,9 @@ function helper(){
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
-    echo -e "  -f|--flash\tflash image into device."
+    echo -e "  -f|--full\tflash full image into device."
     echo -e "  -g|--gaia\tshallow flash gaia into device."
-    echo -e "  -G|--Gecko\tshallow flash gecko into device."
+    echo -e "  -G|--gecko\tshallow flash gecko into device."
     echo -e "  --usr\tspecify User(USR) build."
     echo -e "  --eng\tspecify Engineer(ENG) build."
     echo -e "  -b|--buildid\tspecify target build YYYYMMDDhhmmss"
@@ -81,7 +81,6 @@ function helper(){
 
 ## Show the available version info
 function version_info(){
-    print_list
     echo -e "Available version:"
     echo -e "  120|v1.2.0"
     echo -e "  110hd|v1.1.0hd"
@@ -323,12 +322,31 @@ function create_make_sure_msg() {
     fi
 }
 
+## check the build id should be 14 digits
+function check_build_id() {
+    if [[ ${BUILD_ID} == "" ]]; then
+        echo "Please enter build id." &&
+        echo "Try '--help' for more information." &&
+        exit 0
+    fi
+
+    ## BUILD_ID only can contains [0-9]
+    VERIFY_BUILDID=`echo "$BUILD_ID" | awk '$0 ~/[^0-9]/ { print "TRUE" }'`
+    if [[ $VERIFY_BUILDID == "TRUE" ]]; then
+        echo "BUILD_ID ($BUILD_ID) should be 14 digits" &&
+        exit 0
+    fi
+
+    if [ ${#BUILD_ID} != 14 ]; then
+        echo "BUILD_ID ($BUILD_ID) should be 14 digits" &&
+        exit 0
+    fi
+}
+
 function replace_url_for_build_id() {
     ## Replace Target URL with BUILD ID
     if [[ ${BUILD_ID} != "" ]]; then
-        if [ ${#BUILD_ID} != 14 ]; then
-            echo "" && echo "BUILD_ID ($BUILD_ID) should be 14 digits" && exit 0
-        fi
+        checko_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
 }
@@ -668,6 +686,9 @@ function download_file_from_PVT() {
 function do_shallow_flash() {
     SHALLOW_FLAG+=$ADB_FLAGS
     if [ ${FLASH_GAIA} == true ]; then
+        if [[ ${TARGET_GAIA} == "" ]]; then
+            echo "No Gaia file at ${TARGET_URL}" && exit 0
+        fi
         download_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
         GAIA_BASENAME=`basename ${TMP_DIR}/${TARGET_GAIA}`
         case `uname` in
@@ -676,6 +697,9 @@ function do_shallow_flash() {
         esac
     fi
     if [ ${FLASH_GECKO} == true ]; then
+        if [[ ${TARGET_GECKO} == "" ]]; then
+            echo "No Gecko file at ${TARGET_URL}" && exit 0
+        fi
         download_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
         GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
         case `uname` in
@@ -699,6 +723,9 @@ function do_shallow_flash() {
 
 ## Flash full image
 function do_flash_image() {
+    if [[ ${TARGET_IMG} == "" ]]; then
+        echo "No full image file at ${TARGET_URL}" && exit 0
+    fi
     download_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${TMP_DIR}
     IMG_BASENAME=`basename ${TMP_DIR}/${TARGET_IMG}`
     unzip -d ${TMP_DIR} ${TMP_DIR}/${IMG_BASENAME}
@@ -746,7 +773,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,build::,usr,eng,gaia,gecko,flash,help \
+        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,buildid::,usr,eng,gaia,gecko,full,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -773,10 +800,10 @@ do
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
-        -b|--buildid) BUILD_ID=$2; shift 2;;
+        -b|--buildid) BUILD_ID=$2; check_build_id; shift 2;;
         --usr) FLASH_USR_IF_POSSIBLE=true; FLASH_ENG_IF_POSSIBLE=false; shift;;
         --eng) FLASH_ENG_IF_POSSIBLE=true; FLASH_USR_IF_POSSIBLE=false; shift;;
-        -f|--flash) FLASH_FULL=true; shift;;
+        -f|--full) FLASH_FULL=true; shift;;
         -g|--gaia) FLASH_GAIA=true; shift;;
         -G|--gecko) FLASH_GECKO=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;
