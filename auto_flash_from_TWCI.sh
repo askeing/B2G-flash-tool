@@ -60,8 +60,10 @@ function helper(){
 ## Show the available version info
 function version_info(){
     echo -e "Available version:"
+    echo -e "  120|v1.2.0"
     echo -e "  110hd|v1.1.0hd"
-    echo -e "  110|v1train"
+#    echo -e "  110|v1train"
+#    echo -e "  101|v1.0.1"
     echo -e "  0|master"
 }
 
@@ -70,8 +72,10 @@ function version_info(){
 function version() {
     local_ver=$1
     case "$local_ver" in
+        120|v1.2.0) VERSION_NAME="v1.2.0";;
         110hd|v1.1.0hd) VERSION_NAME="v1.1.0hd";;
-        110|v1train) VERSION_NAME="v1train";;
+#        110|v1train) VERSION_NAME="v1train";;
+#        101|v1.0.1) VERSION_NAME="v101";;
         0|master) VERSION_NAME="master";;
         *) version_info; exit -1;;
     esac
@@ -83,10 +87,11 @@ function device_info(){
     print_list
     echo -e "Available device:"
     echo -e "  unagi"
-    echo -e "  inari"
-    echo -e "  leo"
+#    echo -e "  inari"
+#    echo -e "  leo"
     echo -e "  helix"
     echo -e "  wasabi"
+    echo -e "  flatfish"
     echo -e "  nexus4"
 }
 
@@ -95,10 +100,11 @@ function device() {
     local_ver=$1
     case "$local_ver" in
         unagi) DEVICE_NAME="unagi";;
-        inari) DEVICE_NAME="inari";;
-        leo) DEVICE_NAME="leo";;
+#        inari) DEVICE_NAME="inari";;
+#        leo) DEVICE_NAME="leo";;
         helix) DEVICE_NAME="helix";;
         wasabi) DEVICE_NAME="wasabi";;
+        flatfish) DEVICE_NAME="flatfish";;
         nexus4) DEVICE_NAME="nexus4";;
         *) device_info; exit -1;;
     esac
@@ -245,25 +251,24 @@ function select_build_dialog() {
 ## Print flash mode
 function print_flash_mode() {
     echo "Flash Mode:"
-    echo "  1) Flash Image"
-    echo "  2) Shallow flash Gaia/Gecko"
-    echo "  3) Shallow flash Gaia"
-    echo "  4) Shallow flash Gecko"
+    echo "  1) Shallow flash Gaia/Gecko"
+    echo "  2) Shallow flash Gaia"
+    echo "  3) Shallow flash Gecko"
+    echo "  4) Flash Full Image"
 }
 
 ## Select flash mode
 function select_flash_mode() {
-    echo "BBB ${FLASH_FULL} ${FLASH_GAIA} ${FLASH_GECKO}"
     # if there are no flash flag, then ask
     while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
         print_flash_mode
         read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
         test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
         case $FLASH_INPUT in
-            1) FLASH_FULL=true;;
-            2) FLASH_GAIA=true; FLASH_GECKO=true;;
-            3) FLASH_GAIA=true;;
-            4) FLASH_GECKO=true;;
+            1) FLASH_GAIA=true; FLASH_GECKO=true;;
+            2) FLASH_GAIA=true;;
+            3) FLASH_GECKO=true;;
+            4) FLASH_FULL=true;;
         esac
     done
 }
@@ -274,7 +279,7 @@ function select_flash_mode_dialog() {
             # if there are no flash flag, then ask
             if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
                 dialog --backtitle "Select Build from TW-CI Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
-                18 55 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+                18 55 10 1 "Shallow flash Gaia/Gecko" 2 "Shallow flash Gaia" 3 "Shallow flash Gecko" 4 "Flash Full Image" 2>${TMP_DIR}/menuitem_flash
                 ret=$?
                 if [ ${ret} == 1 ]; then
                     echo "" && echo "byebye." && exit 0
@@ -282,21 +287,21 @@ function select_flash_mode_dialog() {
                 menuitem_flash=`cat ${TMP_DIR}/menuitem_flash`
                 case $menuitem_flash in
                     "") echo ""; echo "byebye."; exit 0;;
-                    1) FLASH_FULL=true;;
-                    2) FLASH_GAIA=true; FLASH_GECKO=true;;
-                    3) FLASH_GAIA=true;;
-                    4) FLASH_GECKO=true;;
+                    1) FLASH_GAIA=true; FLASH_GECKO=true;;
+                    2) FLASH_GAIA=true;;
+                    3) FLASH_GECKO=true;;
+                    4) FLASH_FULL=true;;
                 esac
             fi;;
         "Darwin")
-            ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-Flash Full", "2-Flash Gaia and Gecko", "3-Flash Gaia", "4-Flash Gecko"}')
+            ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-Flash Gaia and Gecko", "2-Flash Gaia", "3-Flash Gecko", "4-Flash Full Image"}')
             echo $ret
             case ${ret%%-*} in
                 "") echo ""; echo "byebye."; exit 0;;
-                1) FLASH_FULL=true;;
-                2) FLASH_GAIA=true; FLASH_GECKO=true;;
-                3) FLASH_GAIA=true;;
-                4) FLASH_GECKO=true;;
+                1) FLASH_GAIA=true; FLASH_GECKO=true;;
+                2) FLASH_GAIA=true;;
+                3) FLASH_GECKO=true;;
+                4) FLASH_FULL=true;;
             esac;;
     esac
 }
@@ -572,10 +577,10 @@ fi
 # Version          #
 ####################
 if [ ${INTERACTION_WINDOW} == false ]; then
+    print_flash_info
     if [ -e ./check_versions.sh ] && [ ${FLASH_FULL} == true ]; then
         bash ./check_versions.sh
     fi
-    print_flash_info
     echo "Done."
 else
     print_flash_info_dialog
