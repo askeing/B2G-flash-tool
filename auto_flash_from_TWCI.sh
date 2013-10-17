@@ -329,7 +329,6 @@ function find_download_files_name() {
 
 ## Print flash info
 function print_flash_info() {
-    echo    ""
     echo    "Your Target Build: ${TARGET_NAME}"
     echo    "         Rev Info: ${TARGET_DESC}"
     echo -n "            Flash: "
@@ -573,17 +572,23 @@ elif [ ${FLASH_GAIA} == true ] || [ ${FLASH_GECKO} == true ]; then
     do_shallow_flash
 fi
 
-###################
+####################
 # Version          #
 ####################
+echo "================="
+echo "Flash Information"
+echo "================="
 if [ ${INTERACTION_WINDOW} == false ]; then
     print_flash_info
-    if [ -e ./check_versions.sh ] && [ ${FLASH_FULL} == true ]; then
+    if [ -e ./check_versions.sh ]; then
         bash ./check_versions.sh
     fi
     echo "Done."
 else
-    print_flash_info_dialog
+    case `uname` in
+        "Linux") print_flash_info_dialog;;
+        "Darwin") print_flash_info;;
+    esac
 fi
 
 
