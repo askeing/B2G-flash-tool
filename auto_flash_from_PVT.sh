@@ -970,10 +970,10 @@ fi
 # Version          #
 ####################
 if [ ${INTERACTION_WINDOW} == false ]; then
+    print_flash_info
     if [ -e ./check_versions.sh ] && [ ${FLASH_FULL} == true ]; then
         bash ./check_versions.sh
     fi
-    print_flash_info
     echo "Done."
 else
     case `uname` in
