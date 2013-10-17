@@ -109,6 +109,7 @@ function device_info(){
     echo -e "  otoro"
     echo -e "  unagi"
     echo -e "  hamachi"
+    echo -e "  buri"
     echo -e "  inari"
     echo -e "  leo"
     echo -e "  helix"
@@ -123,6 +124,7 @@ function device() {
         otoro) DEVICE_NAME="otoro";;
         unagi) DEVICE_NAME="unagi";;
         hamachi) DEVICE_NAME="hamachi";;
+        buri) DEVICE_NAME="hamachi";;
         inari) DEVICE_NAME="inari";;
         leo) DEVICE_NAME="leo";;
         helix) DEVICE_NAME="helix";;
@@ -138,6 +140,7 @@ function select_device_dialog() {
     "otoro" "Otoro Device" \
     "unagi" "Unagi Device" \
     "hamachi" "Hamachi/Buri Device" \
+    "buri" "Hamachi/Buri Device" \
     "inari" "Inari/Ikura Device" \
     "leo" "Leo Device" \
     "helix" "Helix Device" 2>${TMP_DIR}/menuitem_device
@@ -153,7 +156,7 @@ function select_device_dialog() {
 }
 
 function select_device_dialog_mac() {
-    device_option_list='{"otoro","unagi","hamachi","inari","leo","helix","mako"}'
+    device_option_list='{"otoro","unagi","hamachi","buri","inari","leo","helix","mako"}'
     eval DEVICE_NAME=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
     if [ ${DEVICE_NAME} == false ]; then
         echo ""
