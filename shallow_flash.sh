@@ -169,7 +169,7 @@ function shallow_flash_gecko() {
         TMP_DIR=`pwd`
         cd ..
     else
-        TMP_DIR=`mktemp -d -t shallowflashgaia.XXXXXXXXXXXX`
+        TMP_DIR=`mktemp -d -t shallowflashgecko.XXXXXXXXXXXX`
     fi
     
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
