@@ -89,6 +89,7 @@ function adb_clean_gaia() {
     run_adb shell rm -r /cache/* &&
     run_adb shell rm -r /data/b2g/* &&
     run_adb shell rm -r /data/local/storage/persistent/* &&
+    run_adb shell rm -r /data/local/svoperapps &&
     run_adb shell rm -r /data/local/webapps &&
     run_adb shell rm -r /data/local/user.js &&
     run_adb shell rm -r /data/local/permissions.sqlite* &&
