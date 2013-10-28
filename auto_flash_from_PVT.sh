@@ -139,9 +139,8 @@ function select_device_dialog() {
     18 80 10 \
     "otoro" "Otoro Device" \
     "unagi" "Unagi Device" \
-    "hamachi" "Hamachi/Buri Device" \
-    "buri" "Hamachi/Buri Device" \
-    "inari" "Inari/Ikura Device" \
+    "hamachi" "Buri/Hamachi Device" \
+    "inari" "Ikura/Inari Device" \
     "leo" "Leo Device" \
     "helix" "Helix Device" 2>${TMP_DIR}/menuitem_device
     ret=$?
@@ -151,7 +150,7 @@ function select_device_dialog() {
     menuitem_device=`cat ${TMP_DIR}/menuitem_device`
     case $menuitem_device in
         "") echo ""; echo "byebye."; exit 0;;
-        *) DEVICE_NAME=$menuitem_device;;
+        *) device $menuitem_device;;
     esac
 }
 
