@@ -518,12 +518,11 @@ function select_user_eng_build_dialog() {
 
 function select_user_eng_build_dialog_mac() {
     if [ $TARGET_HAS_ENG == true ]; then
-        ret=$(osascript -e 'tell application "Terminal" to choose from list {"0-User Build", "1-Engineer Build"} with title "Choose build type"')
+        ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-User Build", "2-Engineer Build"} with title "Choose build type"')
         case ${ret%-*} in
             1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
             2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
         esac
-
         if [ -z "$ret" ]; then
             echo "" && echo "byebye." && exit 0
         fi
