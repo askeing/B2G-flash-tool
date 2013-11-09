@@ -16,7 +16,7 @@ while [ $# -gt 0 ]; do
       echo "
       Help:
           -d <device>  : specify a device (leo, hamachi, helix, inari) to update
-          -v <version> : version to update to ( 1.3.0, 1.2.0, 1.1.0hd)
+          -v <version> : version to update to ( 1.3.0, 1.2.0, 1.1.1)
           -h : this help menu
       "
       ;;
@@ -46,10 +46,10 @@ case "$VERSION" in
     ;;
   "1.2.0")
     ;;
-  "1.1.0hd")
+  "1.1.1")
     ;;
   *)
-    echo "You must specify a version : 1.3.0, 1.2.0, 1.1.0hd"
+    echo "You must specify a version : 1.3.0, 1.2.0, 1.1.1 (1.1.1 for 1.1hd)"
     exit
     ;;
 esac
