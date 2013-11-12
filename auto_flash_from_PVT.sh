@@ -158,7 +158,9 @@ function select_device_dialog() {
 function select_device_dialog_mac() {
     device_option_list='{"otoro","unagi","hamachi","buri","inari","leo","helix","mako"}'
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
-    device ${ret#*text returned:}
+    ret=${ret#*text returned:}
+    ret=${ret%, button returned:*}
+    device ${ret}
     if [ ${ret} == false ]; then
         echo ""
         echo "byebye"
@@ -281,13 +283,17 @@ function set_wget_acct_pwd_dialog_mac() {
         HTTPUser=$HTTP_USER
     else
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP account" default answer "" with title "Account Info"')
-        HTTPUser=${ret#*text returned:}
+        ret=${ret#*text returned:}
+        ret=${ret%, button returned:*}
+        HTTPUser=${ret}
     fi
     if [ "$HTTP_PWD" != "" ]; then
         HTTPPwd=$HTTP_PWD
     else
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP password" default answer "" with hidden answer with title "Account Info"')
-        HTTPPwd=${ret#*text returned:}
+        ret=${ret#*text returned:}
+        ret=${ret%, button returned:*}
+        HTTPPwd=${ret}
     fi
     if [ -z '$HTTPUser' ] || [ -z '$HTTPPwd' ] ; then
         echo ""
