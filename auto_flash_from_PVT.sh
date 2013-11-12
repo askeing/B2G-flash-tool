@@ -280,15 +280,13 @@ function set_wget_acct_pwd_dialog_mac() {
         HTTPUser=$HTTP_USER
     else
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP account" default answer "" with title "Account Info"')
-        ret=${ret%,*}
-        HTTPUser=${ret#*:}
+        HTTPUser=${ret#*text returned:}
     fi
     if [ "$HTTP_PWD" != "" ]; then
         HTTPPwd=$HTTP_PWD
     else
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP password" default answer "" with hidden answer with title "Account Info"')
-        ret=${ret%,*}
-        HTTPPwd=${ret#*:}
+        HTTPPwd=${ret#*text returned:}
     fi
     if [ -z '$HTTPUser' ] || [ -z '$HTTPPwd' ] ; then
         echo ""
