@@ -156,9 +156,10 @@ function select_device_dialog() {
 }
 
 function select_device_dialog_mac() {
-    device_option_list='{"otoro","unagi","hamachi","buri","inari","leo","helix","nexus4"}'
-    eval DEVICE_NAME=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
-    if [ ${DEVICE_NAME} == false ]; then
+    device_option_list='{"otoro","unagi","hamachi","buri","inari","leo","helix","mako"}'
+    eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
+    device ${ret#*text returned:}
+    if [ ${ret} == false ]; then
         echo ""
         echo "byebye"
         exit 0
