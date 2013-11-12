@@ -89,6 +89,8 @@ function device_info(){
     echo -e "  unagi"
 #    echo -e "  inari"
 #    echo -e "  leo"
+    echo -e "  hamachi"
+    echo -e "  buri"
     echo -e "  helix"
     echo -e "  wasabi"
     echo -e "  flatfish"
@@ -102,6 +104,8 @@ function device() {
         unagi) DEVICE_NAME="unagi";;
 #        inari) DEVICE_NAME="inari";;
 #        leo) DEVICE_NAME="leo";;
+        hamachi) DEVICE_NAME="hamachi";;
+        buri) DEVICE_NAME="hamachi";;
         helix) DEVICE_NAME="helix";;
         wasabi) DEVICE_NAME="wasabi";;
         flatfish) DEVICE_NAME="flatfish";;
