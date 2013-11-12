@@ -114,7 +114,7 @@ function device_info(){
     echo -e "  leo"
     echo -e "  helix"
     #echo -e "  wasabi"
-    #echo -e "  nexus4"
+    echo -e "  nexus4"
 }
 
 ## Select the device
@@ -129,7 +129,7 @@ function device() {
         leo) DEVICE_NAME="leo";;
         helix) DEVICE_NAME="helix";;
 #        wasabi) DEVICE_NAME="wasabi";;
-#        nexus4) DEVICE_NAME="nexus4";;
+        nexus4) DEVICE_NAME="nexus4";;
         *) device_info; exit -1;;
     esac
 }
@@ -142,7 +142,8 @@ function select_device_dialog() {
     "hamachi" "Buri/Hamachi Device" \
     "inari" "Ikura/Inari Device" \
     "leo" "Leo Device" \
-    "helix" "Helix Device" 2>${TMP_DIR}/menuitem_device
+    "helix" "Helix Device" \
+    "nexus4" "Nexus 4 Device" 2>${TMP_DIR}/menuitem_device
     ret=$?
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
@@ -277,18 +278,16 @@ function set_wget_acct_pwd_dialog() {
 
 function set_wget_acct_pwd_dialog_mac() {
     if [ "$HTTP_USER" != "" ]; then
-        HTTPUser=$HTTPUser
+        HTTPUser=$HTTP_USER
     else
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP account" default answer "" with title "Account Info"')
-        ret=${ret%,*}
-        HTTPUser=${ret#*:}
+        HTTPUser=${ret#*text returned:}
     fi
     if [ "$HTTP_PWD" != "" ]; then
         HTTPPwd=$HTTP_PWD
     else
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter LDAP password" default answer "" with hidden answer with title "Account Info"')
-        ret=${ret%,*}
-        HTTPPwd=${ret#*:}
+        HTTPPwd=${ret#*text returned:}
     fi
     if [ -z '$HTTPUser' ] || [ -z '$HTTPPwd' ] ; then
         echo ""
@@ -518,12 +517,11 @@ function select_user_eng_build_dialog() {
 
 function select_user_eng_build_dialog_mac() {
     if [ $TARGET_HAS_ENG == true ]; then
-        ret=$(osascript -e 'tell application "Terminal" to choose from list {"0-User Build", "1-Engineer Build"} with title "Choose build type"')
+        ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-User Build", "2-Engineer Build"} with title "Choose build type"')
         case ${ret%-*} in
             1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
             2) FLASH_ENG=true; FLASH_USER_ENG_DONE=true;;
         esac
-
         if [ -z "$ret" ]; then
             echo "" && echo "byebye." && exit 0
         fi

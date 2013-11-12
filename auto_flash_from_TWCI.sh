@@ -89,6 +89,8 @@ function device_info(){
     echo -e "  unagi"
 #    echo -e "  inari"
 #    echo -e "  leo"
+    echo -e "  hamachi"
+    echo -e "  buri"
     echo -e "  helix"
     echo -e "  wasabi"
     echo -e "  flatfish"
@@ -102,6 +104,8 @@ function device() {
         unagi) DEVICE_NAME="unagi";;
 #        inari) DEVICE_NAME="inari";;
 #        leo) DEVICE_NAME="leo";;
+        hamachi) DEVICE_NAME="hamachi";;
+        buri) DEVICE_NAME="hamachi";;
         helix) DEVICE_NAME="helix";;
         wasabi) DEVICE_NAME="wasabi";;
         flatfish) DEVICE_NAME="flatfish";;
@@ -406,7 +410,25 @@ function do_flash_image() {
     unzip -d ${TMP_DIR} ${TMP_DIR}/${IMG_BASENAME}
     CURRENT_DIR=`pwd`
     cd ${TMP_DIR}/b2g-distro/
-    bash ./flash.sh
+
+    ## if no DEVICE_NAME (GUI mode), then find the DEVICE_NAME from TARGET_NAME
+    if [[ ${DEVICE_NAME} == "" ]]; then
+        IFS="." read -a TEMP_NAMES <<< "${TARGET_NAME}"
+        TEMP_NAMES_SIZE=${#TEMP_NAMES[@]}
+        let TEMP_NAMES_INDEX=${TEMP_NAMES_SIZE}-1
+        TEMP_NAMES_KEY=TEMP_NAMES[${TEMP_NAMES_INDEX}]
+        eval DEVICE_NAME=\${$TEMP_NAMES_KEY}
+    fi
+
+    ## flash flatfish device
+    if [[ ${DEVICE_NAME} == "flatfish" ]]; then
+        echo "Flash by flash_flatfish.sh script..."
+        bash ./flash_flatfish.sh
+    ## flash other devices
+    else
+        bash ./flash.sh
+    fi
+
     ret=$?
     if ! [ ${ret} == 0 ]; then
         echo "Flash image failed."
