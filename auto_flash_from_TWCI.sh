@@ -12,6 +12,7 @@
 #   2013/08/14 Askeing: v1.1 Interaction GUI mode.
 #   2013/10/11 Askeing: updated -f|--flash to -f|--full.
 #   2013/11/13 Askeing: if flash gecko, then un-install com-ril. set KEEP_COMRIL=1 will skip this step.
+#   2013/11/13 Askeing: removed KEEP_COMRIL, set UNINSTALL_COMRIL=true to un-install com-ril.
 #
 #==========================================================================
 
@@ -39,8 +40,8 @@ TARGET_ID=-1
 
 ## Show usage
 function helper(){
-	echo -e "This script was written for download builds from TW-CI server.\n"
-	echo -e "Usage: ./auto_flash_from_TWCI.sh [parameters]"
+    echo -e "This script was written for download builds from TW-CI server.\n"
+    echo -e "Usage: ./auto_flash_from_TWCI.sh [parameters]"
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
@@ -49,14 +50,14 @@ function helper(){
     echo -e "  -G|--gecko\tshallow flash gecko into device."
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
-	echo -e "  -h|--help\tdisplay help."
+    echo -e "  -h|--help\tdisplay help."
     echo -e "Environment:"
-    echo -e "  KEEP_COMRIL=1 \tkeep the com-ril when shallow flash gecko."
-	echo -e "Example:"
-	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
-	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
-	echo -e "  Flash by interaction GUI mode\t./auto_flash_from_TWCI.sh -w"
-	exit 0
+    echo -e "  UNINSTALL_COMRIL=true \tuninstall the com-ril when shallow flash gecko. (Keep com-ril by default)"
+    echo -e "Example:"
+    echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
+    echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
+    echo -e "  Flash by interaction GUI mode\t./auto_flash_from_TWCI.sh -w"
+    exit 0
 }
 
 
@@ -123,7 +124,7 @@ function run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-	adb $ADB_FLAGS $@
+    adb $ADB_FLAGS $@
 }
 
 ## install dialog package for interaction GUI mode
@@ -212,7 +213,7 @@ function print_list() {
 function select_build() {
     print_list
     while [[ ${TARGET_ID} -lt 0 ]] || [[ ${TARGET_ID} -gt ${DL_SIZE} ]]; do
-	    read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
+        read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
         test ${TARGET_ID} == "q" || test ${TARGET_ID} == "Q" && echo "byebye." && exit 0
     done
 }
@@ -391,9 +392,8 @@ function do_shallow_flash() {
             "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
             "Darwin") SHALLOW_FLAG+=" -G ${TMP_DIR}/${GECKO_BASENAME}";;
         esac
-        ## if flash gecko, then un-install com-ril.
-        ## set KEEP_COMRIL=1 will skip this step.
-        if [ -e ./uninstall_comril.sh ] && [[ ${KEEP_COMRIL} != 1 ]]; then
+        ## if flash gecko and UNINSTALL_COMRIL=true, then un-install com-ril.
+        if [ -e ./uninstall_comril.sh ] && [[ ${UNINSTALL_COMRIL} == true ]]; then
             echo "Un-install com-ril..."
             bash ./uninstall_comril.sh -u -y
         fi
