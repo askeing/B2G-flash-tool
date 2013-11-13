@@ -11,6 +11,7 @@
 #   2013/08/13 Askeing: v1.0 First release.
 #   2013/08/14 Askeing: v1.1 Interaction GUI mode.
 #   2013/10/11 Askeing: updated -f|--flash to -f|--full.
+#   2013/11/13 Askeing: if flash gecko, then un-install com-ril. set KEEP_COMRIL=1 will skip this step.
 #
 #==========================================================================
 
@@ -49,6 +50,8 @@ function helper(){
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
 	echo -e "  -h|--help\tdisplay help."
+    echo -e "Environment:"
+    echo -e "  KEEP_COMRIL=1 \tkeep the com-ril when shallow flash gecko."
 	echo -e "Example:"
 	echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
 	echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
@@ -388,6 +391,12 @@ function do_shallow_flash() {
             "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
             "Darwin") SHALLOW_FLAG+=" -G ${TMP_DIR}/${GECKO_BASENAME}";;
         esac
+        ## if flash gecko, then un-install com-ril.
+        ## set KEEP_COMRIL=1 will skip this step.
+        if [ -e ./uninstall_comril.sh ] && [[ ${KEEP_COMRIL} != 1 ]]; then
+            echo "Un-install com-ril..."
+            bash ./uninstall_comril.sh -u -y
+        fi
     fi
     SHALLOW_FLAG+=" -y"
     if [ -e ./shallow_flash.sh ]; then

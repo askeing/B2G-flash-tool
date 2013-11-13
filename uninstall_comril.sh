@@ -58,6 +58,7 @@ function reboot_system(){
     echo "Rebooting"
     run_adb shell sync
     run_adb reboot
+    run_adb wait-for-device
 }
 
 #########################
