@@ -19,6 +19,8 @@
 #   2013/10/09 Askeing: rename -b|--build to -b|--buildid.
 #   2013/10/11 Askeing: updated -f|--flash to -f|--full.
 #   2013/10/11 Askeing: added check_build_id function.
+#   2013/11/13 Askeing: if flash gecko, then un-install com-ril. set KEEP_COMRIL=1 will skip this step.
+#   2013/11/13 Askeing: removed KEEP_COMRIL, set UNINSTALL_COMRIL=true to un-install com-ril.
 #
 #==========================================================================
 
@@ -53,10 +55,8 @@ FLASH_USER_ENG_DONE=false
 
 ## Show usage
 function helper(){
-	echo -e "This script was written for download builds from PVT server.\n"
-	echo -e "Usage: ./auto_flash_from_PVT.sh [parameters]"
-    echo -e "Environment: HTTP_USER={username} HTTP_PWD={pwd}"
-    echo -e "             or you can fill it into .ldap file."
+    echo -e "This script was written for download builds from PVT server.\n"
+    echo -e "Usage: ./auto_flash_from_PVT.sh [parameters]"
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
@@ -68,15 +68,19 @@ function helper(){
     echo -e "  -b|--buildid\tspecify target build YYYYMMDDhhmmss"
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
-	echo -e "  -h|--help\tdisplay help."
-	echo -e "Example:"
-	echo -e "  Flash unagi v1train image\t\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
-	echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v110 -dunagi --eng -f"
-	echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
-	echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari --usr -g -G"
+    echo -e "  -h|--help\tdisplay help."
+    echo -e "Environment:"
+    echo -e "  HTTP_USER={username} \tset LDAP account. (you can fill it into .ldap file)"
+    echo -e "  HTTP_PWD={password} \tset LDAP password. (you can fill it into .ldap file)"
+    echo -e "  UNINSTALL_COMRIL=true \tuninstall the com-ril when shallow flash gecko. (Keep com-ril by default)"
+    echo -e "Example:"
+    echo -e "  Flash unagi v1train image\t\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
+    echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v110 -dunagi --eng -f"
+    echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
+    echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari --usr -g -G"
     echo -e "  Flash buri v1.2 USR build 20131007004003 gaia/gecko\t./auto_flash_from_PVT.sh -v120 -dburi --usr -g -G -b20131007004003"
-	echo -e "  Flash by interaction GUI mode\t\t\t./auto_flash_from_PVT.sh -w"
-	exit 0
+    echo -e "  Flash by interaction GUI mode\t\t\t./auto_flash_from_PVT.sh -w"
+    exit 0
 }
 
 ## Show the available version info
@@ -219,7 +223,7 @@ function run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-	adb $ADB_FLAGS $@
+    adb $ADB_FLAGS $@
 }
 
 ## wget with flags
@@ -435,7 +439,7 @@ function print_list() {
 function select_build() {
     print_list
     while [[ ${TARGET_ID} -lt 0 ]] || [[ ${TARGET_ID} -gt ${DL_SIZE} ]]; do
-	    read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
+        read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
         test ${TARGET_ID} == "q" || test ${TARGET_ID} == "Q" && echo "byebye." && exit 0
     done
 }
@@ -712,6 +716,11 @@ function do_shallow_flash() {
             "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
             "Darwin") SHALLOW_FLAG+=" -G ${TMP_DIR}/${GECKO_BASENAME}";;
         esac
+        ## if flash gecko and UNINSTALL_COMRIL=true, then un-install com-ril.
+        if [ -e ./uninstall_comril.sh ] && [[ ${UNINSTALL_COMRIL} == true ]]; then
+            echo "Un-install com-ril..."
+            bash ./uninstall_comril.sh -u -y
+        fi
     fi
     SHALLOW_FLAG+=" -y"
     if [ -e ./shallow_flash.sh ]; then

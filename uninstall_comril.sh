@@ -22,20 +22,20 @@ RIL_CLEAN=false
 
 ## Show usage
 function helper(){
-	echo -e "This script was written for uninstall com-ril."
-	echo -e "Usage: ./uninstall_comril.sh [parameters]"
+    echo -e "This script was written for uninstall com-ril."
+    echo -e "Usage: ./uninstall_comril.sh [parameters]"
     echo -e "  -u|--uninstall\tuninstall the com-ril."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
-	echo -e "  -h|--help\tdisplay help."
-	exit 0
+    echo -e "  -h|--help\tdisplay help."
+    exit 0
 }
 
 ## adb with flags
 function run_adb(){
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-	adb $ADB_FLAGS $@
+    adb $ADB_FLAGS $@
 }
 
 function remount_system(){
@@ -58,6 +58,7 @@ function reboot_system(){
     echo "Rebooting"
     run_adb shell sync
     run_adb reboot
+    run_adb wait-for-device
 }
 
 #########################
