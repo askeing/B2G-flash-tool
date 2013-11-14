@@ -110,14 +110,13 @@ function version() {
 ## Show the available device info
 function device_info(){
     echo -e "Available device:"
-    echo -e "  otoro"
     echo -e "  unagi"
     echo -e "  hamachi"
     echo -e "  buri"
     echo -e "  inari"
     echo -e "  leo"
     echo -e "  helix"
-    #echo -e "  wasabi"
+#    echo -e "  wasabi"
     echo -e "  nexus4"
 }
 
@@ -125,7 +124,6 @@ function device_info(){
 function device() {
     local_ver=$1
     case "$local_ver" in
-        otoro) DEVICE_NAME="otoro";;
         unagi) DEVICE_NAME="unagi";;
         hamachi) DEVICE_NAME="hamachi";;
         buri) DEVICE_NAME="hamachi";;
@@ -141,7 +139,6 @@ function device() {
 function select_device_dialog() {
     dialog --backtitle "Select Device from PVT Server " --title "Device List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
     18 80 10 \
-    "otoro" "Otoro Device" \
     "unagi" "Unagi Device" \
     "hamachi" "Buri/Hamachi Device" \
     "inari" "Ikura/Inari Device" \
@@ -160,7 +157,7 @@ function select_device_dialog() {
 }
 
 function select_device_dialog_mac() {
-    device_option_list='{"otoro","unagi","hamachi","buri","inari","leo","helix","mako"}'
+    device_option_list='{"unagi","hamachi","buri","inari","leo","helix","mako"}'
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
     ret=${ret#*text returned:}
     ret=${ret%, button returned:*}
