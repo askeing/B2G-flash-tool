@@ -74,11 +74,11 @@ function helper(){
     echo -e "  HTTP_PWD={password} \tset LDAP password. (you can fill it into .ldap file)"
     echo -e "  UNINSTALL_COMRIL=true \tuninstall the com-ril when shallow flash gecko. (Keep com-ril by default)"
     echo -e "Example:"
-    echo -e "  Flash unagi v1train image\t\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
-    echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v110 -dunagi --eng -f"
-    echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
-    echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari --usr -g -G"
-    echo -e "  Flash buri v1.2 USR build 20131007004003 gaia/gecko\t./auto_flash_from_PVT.sh -v120 -dburi --usr -g -G -b20131007004003"
+    echo -e "  Flash unagi v1train image\t\t\t./auto_flash_from_PVT.sh -v 110 -d unagi -f"
+    echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v 110 -d unagi --eng -f"
+    echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v 101 -d inari -g -G"
+    echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v 101 -d inari --usr -g -G"
+    echo -e "  Flash buri v1.2 USR build 20131007004003 gaia/gecko\t./auto_flash_from_PVT.sh -v 120 -d buri --usr -g -G -b 20131007004003"
     echo -e "  Flash by interaction GUI mode\t\t\t./auto_flash_from_PVT.sh -w"
     exit 0
 }
