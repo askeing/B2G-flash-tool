@@ -74,12 +74,15 @@ function helper(){
     echo -e "  HTTP_PWD={password} \tset LDAP password. (you can fill it into .ldap file)"
     echo -e "  UNINSTALL_COMRIL=true \tuninstall the com-ril when shallow flash gecko. (Keep com-ril by default)"
     echo -e "Example:"
-    echo -e "  Flash unagi v1train image\t\t\t./auto_flash_from_PVT.sh -v110 -dunagi -f"
-    echo -e "  Flash unagi v1train ENG build image\t\t./auto_flash_from_PVT.sh -v110 -dunagi --eng -f"
-    echo -e "  Flash inari v1.0.1 gaia/gecko\t\t\t./auto_flash_from_PVT.sh -v101 -dinari -g -G"
-    echo -e "  Flash inari v1.0.1 USR build gaia/gecko\t./auto_flash_from_PVT.sh -v101 -dinari --usr -g -G"
-    echo -e "  Flash buri v1.2 USR build 20131007004003 gaia/gecko\t./auto_flash_from_PVT.sh -v120 -dburi --usr -g -G -b20131007004003"
-    echo -e "  Flash by interaction GUI mode\t\t\t./auto_flash_from_PVT.sh -w"
+    echo -e "  Flash by interaction GUI mode\t\t\t\t./auto_flash_from_PVT.sh -w"
+    case `uname` in
+        "Linux")
+            echo -e "  Flash inari v1.2.0 ENG image\t\t\t\t./auto_flash_from_PVT.sh --version=v1.2.0 --device=inari --full --eng"
+            echo -e "  Flash buri master USR build 20131116040201 gaia/gecko\t./auto_flash_from_PVT.sh -vmaster -dburi -b20131116040201 -g -G --usr";;
+        "Darwin")
+            echo -e "  Flash inari v1.2.0 ENG image\t\t\t\t./auto_flash_from_PVT.sh --version v1.2.0 --device inari --full --eng"
+            echo -e "  Flash buri master USR build 20131116040201 gaia/gecko\t./auto_flash_from_PVT.sh -v master -d buri -b 20131116040201 -g -G --usr";;
+    esac
     exit 0
 }
 
