@@ -54,9 +54,15 @@ function helper(){
     echo -e "Environment:"
     echo -e "  UNINSTALL_COMRIL=true \tuninstall the com-ril when shallow flash gecko. (Keep com-ril by default)"
     echo -e "Example:"
-    echo -e "  Flash unagi v1train image\t\t./auto_flash_from_TWCI.sh -vv1train -dunagi -f"
-    echo -e "  Flash wasabi master gaia/gecko\t./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G"
-    echo -e "  Flash by interaction GUI mode\t./auto_flash_from_TWCI.sh -w"
+    echo -e "  Flash by interaction GUI mode\t\t./auto_flash_from_TWCI.sh -w"
+    case `uname` in
+        "Linux")
+            echo -e "  Flash wasabi v1.2.0 image\t\t./auto_flash_from_TWCI.sh -vv1.2.0 -dwasabi -f"
+            echo -e "  Flash nexus4 master gaia/gecko\t./auto_flash_from_TWCI.sh --version=master --device=nexus4 -g -G";;
+        "Darwin")
+            echo -e "  Flash wasabi v1.2.0 image\t\t./auto_flash_from_TWCI.sh -v v1.2.0 -d wasabi -f"
+            echo -e "  Flash nexus4 master gaia/gecko\t./auto_flash_from_TWCI.sh --version master --device nexus4 --gaia --gecko";;
+    esac
     exit 0
 }
 
