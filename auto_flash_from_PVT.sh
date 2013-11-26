@@ -358,7 +358,7 @@ function check_build_id() {
 function replace_url_for_build_id() {
     ## Replace Target URL with BUILD ID
     if [[ ${BUILD_ID} != "" ]]; then
-        checko_build_id
+        check_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
 }
