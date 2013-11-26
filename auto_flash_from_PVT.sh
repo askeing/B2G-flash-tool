@@ -970,6 +970,12 @@ else
     fi
 fi
 
+#################################
+# Find gecko tar file name here #
+#################################
+SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g`
+TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
+
 ##################################
 # Flash full image OR gaia/gecko #
 ##################################
