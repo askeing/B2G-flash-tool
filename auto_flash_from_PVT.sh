@@ -361,6 +361,9 @@ function replace_url_for_build_id() {
         check_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
+    ## Find gecko tar file name here 
+    SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g`
+    TARGET_GECKO=`echo ${SOURCE} | sed 's/.*\(b2g.*\?gz\).*/\1/'`
 }
 
 ## make sure user want to flash/shallow flash
@@ -969,12 +972,6 @@ else
         esac
     fi
 fi
-
-#################################
-# Find gecko tar file name here #
-#################################
-SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g`
-TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
 
 ##################################
 # Flash full image OR gaia/gecko #

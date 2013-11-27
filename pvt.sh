@@ -1,1 +1,0 @@
-auto_flash_from_PVT.sh
