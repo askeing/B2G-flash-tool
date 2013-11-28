@@ -21,12 +21,16 @@
 #   2013/10/11 Askeing: added check_build_id function.
 #   2013/11/13 Askeing: if flash gecko, then un-install com-ril. set KEEP_COMRIL=1 will skip this step.
 #   2013/11/13 Askeing: removed KEEP_COMRIL, set UNINSTALL_COMRIL=true to un-install com-ril.
+#   2013/11/28 Askeing: DEBUG=1 will by pass auto checkout master and auto pull.
 #
 #==========================================================================
 
 ## Get the newest build
-git checkout master
-git pull --rebase
+if [ "$DEBUG" != "1" ]; then
+    echo "Auto checkout master and pull latest code..."
+    git checkout master
+    git pull --rebase
+fi
 
 ####################
 # Parameter Flags  #
