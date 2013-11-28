@@ -366,8 +366,8 @@ function replace_url_for_build_id() {
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
     ## Find gecko tar file name for --buildid option
-    SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g`
-    TARGET_GECKO=`echo ${SOURCE} | sed 's/.*\(b2g.*\?gz\).*/\1/'`
+    SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g-.*\.android-arm\.tar\.gz`
+    TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
 }
 
 ## make sure user want to flash/shallow flash
