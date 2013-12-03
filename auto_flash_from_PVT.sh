@@ -410,9 +410,10 @@ function make_sure_dialog_mac() {
     ret=$(osascript -e 'tell application "Terminal" to display dialog "Do you want to flash the latest build?\n Yes-Latest; No-Enter Build ID" buttons {"Cancel", "No", "Yes"} default button 3 with icon caution')
     if [ "${ret##*:}" == "No" ]; then
         ret=$(osascript -e 'tell application "Terminal" to display dialog "Enter the Build ID you want to flash (YYYYMMDDhhmmss)" default answer "" with title "Build Info"')
-        tmp=${ret%,*}
-        BUILD_ID=${tmp#*:}
-        
+        ret=${ret#*text returned:}
+        ret=${ret%, button returned:*}
+        BUILD_ID=${ret}
+
         replace_url_for_build_id
     elif [[ "${ret##*:}" != "Yes" ]]; then
         echo "" && echo "byebye" && exit 0
