@@ -27,8 +27,7 @@
 
 ## Get the newest build
 if [ "$DEBUG" != "1" ]; then
-    echo "Auto checkout master and pull latest code..."
-    git checkout master
+    echo "Auto pull latest code..."
     git pull --rebase
 fi
 
