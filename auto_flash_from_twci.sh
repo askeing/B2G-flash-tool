@@ -70,6 +70,7 @@ function helper(){
 ## Show the available version info
 function version_info(){
     echo -e "Available version:"
+    echo -e "  130|v1.3.0"
     echo -e "  120|v1.2.0"
     echo -e "  110hd|v1.1.0hd"
 #    echo -e "  110|v1train"
@@ -82,6 +83,7 @@ function version_info(){
 function version() {
     local_ver=$1
     case "$local_ver" in
+        130|v1.3.0) VERSION_NAME="v1.3.0";;
         120|v1.2.0) VERSION_NAME="v1.2.0";;
         110hd|v1.1.0hd) VERSION_NAME="v1.1.0hd";;
 #        110|v1train) VERSION_NAME="v1train";;
@@ -104,6 +106,7 @@ function device_info(){
     echo -e "  helix"
     echo -e "  wasabi"
     echo -e "  flatfish"
+    echo -e "  fugu"
     echo -e "  nexus4"
 }
 
@@ -119,6 +122,7 @@ function device() {
         helix) DEVICE_NAME="helix";;
         wasabi) DEVICE_NAME="wasabi";;
         flatfish) DEVICE_NAME="flatfish";;
+        fugu) DEVICE_NAME="fugu";;
         nexus4) DEVICE_NAME="nexus4";;
         *) device_info; exit -1;;
     esac
