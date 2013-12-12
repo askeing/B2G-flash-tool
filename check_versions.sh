@@ -74,7 +74,8 @@ if [ -f omni.ja ] && [ -f application.zip ] && [ -f application.ini ]; then
 	done
 fi
 
-adb shell cat /system/build.prop | grep "ro.build.version.incremental"
+adb shell cat /system/build.prop | grep 'ro.build.version.incremental'
+adb shell cat /system/build.prop | grep 'ro.build.date='
 
 rm -rf $dir
 
