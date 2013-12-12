@@ -144,6 +144,15 @@ function device() {
     esac
 }
 
+## Device List ##
+#  * unagi      #
+#  * hamachi    #
+#  * inari      #
+#  * leo        #
+#  * helix      #
+#  * nexus 4    #
+# ############# #
+
 function select_device_dialog() {
     dialog --backtitle "Select Device from PVT Server " --title "Device List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
     18 80 10 \
@@ -165,7 +174,7 @@ function select_device_dialog() {
 }
 
 function select_device_dialog_mac() {
-    device_option_list='{"unagi","hamachi","buri","inari","leo","helix","mako"}'
+    device_option_list='{"unagi","hamachi","inari","leo","helix","nexus4"}'
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
     ret=${ret#*text returned:}
     ret=${ret%, button returned:*}
@@ -176,6 +185,9 @@ function select_device_dialog_mac() {
         exit 0
     fi
 }
+
+## Version List ##
+#  Version list will load from .PVT_DL_LIST #
 
 function select_version_dialog() {
     MENU_VERSION_LIST=""
