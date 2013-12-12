@@ -445,7 +445,7 @@ function do_flash_image() {
         bash ./flash_flatfish.sh
     ## flash other devices
     else
-        bash ./flash.sh
+        bash ./flash.sh -f
     fi
 
     ret=$?
