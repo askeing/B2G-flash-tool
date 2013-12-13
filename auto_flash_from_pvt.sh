@@ -40,7 +40,6 @@ ADB_DEVICE="Device"
 DEVICE_NAME=""
 VERSION_NAME=""
 BUILD_ID=""
-FLASH_LOCAL=false
 FLASH_FULL=false
 FLASH_GAIA=false
 FLASH_GECKO=false
@@ -70,7 +69,6 @@ function helper(){
     echo -e "  --usr\tspecify User(USR) build."
     echo -e "  --eng\tspecify Engineer(ENG) build."
     echo -e "  -b|--buildid\tspecify target build YYYYMMDDhhmmss"
-    echo -e "  -l|--local\tspecify flash local build (work with --buildid option)"
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
     echo -e "  -h|--help\tdisplay help."
@@ -380,52 +378,9 @@ function replace_url_for_build_id() {
         check_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
-
-    # if no local gecko, latest build, or not FLASH_LOCAL, then check gecko name from website.
-    LOCAL_GECKO=`ls ${DL_DIR} | grep b2g-.*\.android-arm\.tar\.gz`
-    if [ ! -f ${DL_DIR}/${LOCAL_GECKO} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
-        ## Find gecko tar file name for --buildid option
-        SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g-.*\.android-arm\.tar\.gz`
-        TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
-    # there is local gecko, then replace TARGET_GECKO.
-    else
-        TARGET_GECKO=${LOCAL_GECKO}
-    fi
-}
-
-## Create Download Folder
-function create_download_folder() {
-    DL_DIR_USR_ENG="USR"
-    if [ "$FLASH_ENG" == true ]; then
-        DL_DIR_USR_ENG="ENG"
-    fi
-
-    DL_DIR=${TMP_DIR}
-    if [[ ${BUILD_ID} != "" ]]; then
-        DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/${BUILD_ID}
-        # remove files if not FLASH_LOCAL
-        if [ ${FLASH_LOCAL} != true ]; then
-            if [ ${FLASH_FULL} == true ]; then
-                rm -f ${DL_DIR}/${TARGET_IMG}
-            else
-                if [ ${FLASH_GAIA} == true ]; then
-                    rm -f ${DL_DIR}/${TARGET_GAIA}
-                fi
-                if [ ${FLASH_GECKO} == true ]; then
-                    rm -f ${DL_DIR}/${TARGET_GECKO}
-                fi
-            fi
-        fi
-        # mkdir if there is no folder
-        if [ ! -e ${DL_DIR} ]; then
-            mkdir -p ${DL_DIR}
-        fi
-    else
-        # always clear files for latest build
-        DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/latest
-        rm -rf ${DL_DIR}/*
-        mkdir -p ${DL_DIR}
-    fi
+    ## Find gecko tar file name for --buildid option
+    SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g-.*\.android-arm\.tar\.gz`
+    TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
 }
 
 ## make sure user want to flash/shallow flash
@@ -454,7 +409,6 @@ function make_sure_dialog() {
         fi
     fi
 
-    create_download_folder
     replace_url_for_build_id
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\nAre you sure you want to flash your device?"
@@ -473,12 +427,12 @@ function make_sure_dialog_mac() {
         ret=${ret%, button returned:*}
         BUILD_ID=${ret}
 
-        create_download_folder
         replace_url_for_build_id
     elif [[ "${ret##*:}" != "Yes" ]]; then
         echo "" && echo "byebye" && exit 0
     fi
 }
+
 
 ## Loading the download list
 function load_list() {
@@ -505,7 +459,7 @@ function print_list() {
 ## Select build
 function select_build() {
     print_list
-    while [[ ${TARGET_ID} -lt 0 ]] || [[ ${TARGET_ID} -ge ${DL_SIZE} ]]; do
+    while [[ ${TARGET_ID} -lt 0 ]] || [[ ${TARGET_ID} -gt ${DL_SIZE} ]]; do
         read -p "What do you want to flash into your device? [Q to exit]" TARGET_ID
         test ${TARGET_ID} == "q" || test ${TARGET_ID} == "Q" && echo "byebye." && exit 0
     done
@@ -549,6 +503,7 @@ function select_build_dialog_mac() {
         echo "" && echo "byebye." && exit 0
     fi
 }
+
 
 ## Select User or Eng build
 function if_has_eng_build() {
@@ -643,6 +598,9 @@ function select_flash_mode() {
 function select_flash_mode_dialog() {
     # if there are no flash flag, then ask
     if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
+#        dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
+#        18 80 10 1 "Flash Image" 2 "Shallow flash Gaia/Gecko" 3 "Shallow flash Gaia" 4 "Shallow flash Gecko" 2>${TMP_DIR}/menuitem_flash
+
         FLASH_MODE_FLAG=""
         GAIA_KEY=DL_${TARGET_ID}${ENG_FLAG}_GAIA
         eval GAIA_VALUE=\$$GAIA_KEY
@@ -758,34 +716,26 @@ function download_file_from_PVT() {
 ## Shallow flash gaia/gecko
 function do_shallow_flash() {
     SHALLOW_FLAG+=$ADB_FLAGS
-    # flash gaia
     if [ ${FLASH_GAIA} == true ]; then
         if [[ ${TARGET_GAIA} == "" ]]; then
             echo "No Gaia file at ${TARGET_URL}" && exit 0
         fi
-        GAIA_BASENAME=`basename ${DL_DIR}/${TARGET_GAIA}`
-        # if file do not exist, latest build, or not FLASH_LOCAL, then download it.
-        if [ ! -f ${DL_DIR}/${GAIA_BASENAME} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
-            download_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${DL_DIR}
-        fi
+        download_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
+        GAIA_BASENAME=`basename ${TMP_DIR}/${TARGET_GAIA}`
         case `uname` in
-            "Linux") SHALLOW_FLAG+=" -g${DL_DIR}/${GAIA_BASENAME}";;
-            "Darwin") SHALLOW_FLAG+=" -g ${DL_DIR}/${GAIA_BASENAME}";;
+            "Linux") SHALLOW_FLAG+=" -g${TMP_DIR}/${GAIA_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -g ${TMP_DIR}/${GAIA_BASENAME}";;
         esac
     fi
-    # flash gecko
     if [ ${FLASH_GECKO} == true ]; then
         if [[ ${TARGET_GECKO} == "" ]]; then
             echo "No Gecko file at ${TARGET_URL}" && exit 0
         fi
-        GECKO_BASENAME=`basename ${DL_DIR}/${TARGET_GECKO}`
-        # if file do not exist, latest build, or not FLASH_LOCAL, then download it.
-        if [ ! -f ${DL_DIR}/${GECKO_BASENAME} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
-            download_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${DL_DIR}
-        fi
+        download_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
+        GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
         case `uname` in
-            "Linux") SHALLOW_FLAG+=" -G${DL_DIR}/${GECKO_BASENAME}";;
-            "Darwin") SHALLOW_FLAG+=" -G ${DL_DIR}/${GECKO_BASENAME}";;
+            "Linux") SHALLOW_FLAG+=" -G${TMP_DIR}/${GECKO_BASENAME}";;
+            "Darwin") SHALLOW_FLAG+=" -G ${TMP_DIR}/${GECKO_BASENAME}";;
         esac
         ## if flash gecko and UNINSTALL_COMRIL=true, then un-install com-ril.
         if [ -e ./uninstall_comril.sh ] && [[ ${UNINSTALL_COMRIL} == true ]]; then
@@ -812,13 +762,9 @@ function do_flash_image() {
     if [[ ${TARGET_IMG} == "" ]]; then
         echo "No full image file at ${TARGET_URL}" && exit 0
     fi
-    IMG_BASENAME=`basename ${DL_DIR}/${TARGET_IMG}`
-    # if file do not exist, latest build, or not FLASH_LOCAL, then download it.
-    if [ ! -f ${DL_DIR}/${IMG_BASENAME} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
-        download_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${DL_DIR}
-    fi
-    # unzip and flash
-    unzip -d ${TMP_DIR} ${DL_DIR}/${IMG_BASENAME}
+    download_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${TMP_DIR}
+    IMG_BASENAME=`basename ${TMP_DIR}/${TARGET_IMG}`
+    unzip -d ${TMP_DIR} ${TMP_DIR}/${IMG_BASENAME}
     CURRENT_DIR=`pwd`
     cd ${TMP_DIR}/b2g-distro/
     bash ./flash.sh -f
@@ -863,7 +809,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::b::lgGfwyh --long version::,device::,buildid::,local,usr,eng,gaia,gecko,full,help \
+        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,buildid::,usr,eng,gaia,gecko,full,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -896,7 +842,6 @@ do
         -f|--full) FLASH_FULL=true; shift;;
         -g|--gaia) FLASH_GAIA=true; shift;;
         -G|--gecko) FLASH_GECKO=true; shift;;
-        -l|--local) FLASH_LOCAL=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;
         -y) VERY_SURE=true; shift;;
         -h|--help) helper; exit 0;;
@@ -956,7 +901,6 @@ do
     fi
 done
 
-
 ###########################################
 # If not select DEVICE, then list DEVICES #
 ###########################################
@@ -970,7 +914,6 @@ if [ ${INTERACTION_WINDOW} == true ] && [ -z $DEVICE_NAME ]; then
         FOUND=true
     fi
 fi
-
 
 ##########################################################################################
 # If can NOT find the target from user input parameters, list the download list to user. #
@@ -987,7 +930,6 @@ if [ ${FOUND} == false ]; then
         esac
     fi
 fi
-
 
 #########################
 # Select USER/ENG build #
@@ -1016,7 +958,6 @@ if [ "$FLASH_ENG" == true ]; then
     ENG_FLAG="_ENG"
 fi
 
-
 ###################################################################################
 # If can NOT find the flash mode from user input parameters, list the flash mode. #
 ###################################################################################
@@ -1034,14 +975,8 @@ fi
 # Find the name of download files. #
 ####################################
 find_download_files_name
-
-if [[ ${VERSION_NAME} == "" ]] || [[ ${DEVICE_NAME} == "" ]]; then
-    VER_DEV_NAME=${TARGET_NAME#PVT.*}
-    VERSION_NAME=${VER_DEV_NAME%.*}
-    DEVICE_NAME=${VER_DEV_NAME#*.}
-fi
 if [ ${INTERACTION_WINDOW} == false ]; then
-    create_download_folder
+    ## Build ID support
     replace_url_for_build_id
     print_flash_info
     if [ ${VERY_SURE} == false ]; then
@@ -1049,14 +984,12 @@ if [ ${INTERACTION_WINDOW} == false ]; then
     fi
 else
     if [ ${VERY_SURE} == false ]; then
-        # dialog function will call create_download_folder and replace_url_for_build_id
         case `uname` in
             "Linux") make_sure_dialog;;
             "Darwin") make_sure_dialog_mac;;
         esac
     fi
 fi
-
 
 ##################################
 # Flash full image OR gaia/gecko #
@@ -1068,7 +1001,6 @@ elif [ ${FLASH_GAIA} == true ] || [ ${FLASH_GECKO} == true ]; then
     echo "Shallow Flash..."
     do_shallow_flash
 fi
-
 
 ####################
 # Version          #
