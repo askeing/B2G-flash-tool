@@ -22,14 +22,10 @@
 #   2013/11/13 Askeing: if flash gecko, then un-install com-ril. set KEEP_COMRIL=1 will skip this step.
 #   2013/11/13 Askeing: removed KEEP_COMRIL, set UNINSTALL_COMRIL=true to un-install com-ril.
 #   2013/11/28 Askeing: DEBUG=1 will by pass auto checkout master and auto pull.
+#   2013/12/13 Askeing: remove DEBUG and auto pull.
 #
 #==========================================================================
 
-## Get the newest build
-if [ "$DEBUG" != "1" ]; then
-    echo "Auto pull latest code..."
-    git pull --rebase
-fi
 
 ####################
 # Parameter Flags  #
