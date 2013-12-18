@@ -16,3 +16,6 @@ echo "Pending crash reports" >> crashreports.txt
 adb shell ls -al /data/b2g/mozilla/Crash\ Reports/pending >> crashreports.txt
 
 cat crashreports.txt
+
+echo -e "\n### The links of submitted crash reports:"
+cat crashreports.txt | grep "bp-" | sed s/.*bp-/https:\\/\\/crash-stats\.mozilla\.com\\/report\\/index\\//g | sed s/\.txt//g
