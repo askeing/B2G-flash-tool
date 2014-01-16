@@ -13,3 +13,5 @@ sudo echo -e "\nfs1.mozilla.com.tw:/Public\t$DEST\tnfs" >> /etc/fstab
 # Mount fs1
 sudo mount -a
 
+# Show information of disk space
+df
