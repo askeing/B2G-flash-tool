@@ -60,22 +60,28 @@ run_adb pull /system/b2g/webapps/settings.gaiamobile.org/application.zip &> /dev
 run_adb pull /system/b2g/application.ini &> /dev/null || echo "Error pulling application.ini"
 
 if [ -f omni.ja ] && [ -f application.zip ] && [ -f application.ini ]; then
-	python optimizejars.py --deoptimize ./ ./ ./ &> /dev/null
-	unzip omni.ja chrome/toolkit/content/global/buildconfig.html > /dev/null
-	unzip application.zip resources/gaia_commit.txt > /dev/null
-	
+	# unzip application.zip to get gaia info
+	unzip application.zip resources/gaia_commit.txt > /dev/null && \
 	echo 'Gaia     ' $(head -n 1 resources/gaia_commit.txt)
 	# echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
-	
+
+    # de-optimize the ja file
+    mkdir -p deoptimize
+	python optimizejars.py --deoptimize ./ ./ ./deoptimize &> /dev/null || \
+	echo '#####    Deoptimize omni.ja failed, please run this script with sudo.'
+	# unzip omni.ja to get gecko info
+	unzip deoptimize/omni.ja chrome/toolkit/content/global/buildconfig.html > /dev/null && \
 	echo 'Gecko    ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
-	
+
+	# get BuildID from application.ini
 	for i in BuildID Version ; do
 	    echo $i ' ' $(grep "^ *$i" application.ini | sed "s,.*=,,g")
 	done
 fi
 
-adb shell cat /system/build.prop | grep 'ro.build.version.incremental'
-adb shell cat /system/build.prop | grep 'ro.build.date='
+# get OEM build info
+run_adb shell cat /system/build.prop | grep 'ro.build.version.incremental'
+run_adb shell cat /system/build.prop | grep 'ro.build.date='
 
 rm -rf $dir
 
