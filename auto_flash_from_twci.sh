@@ -390,6 +390,9 @@ function downlaod_file_from_TWCI() {
 function do_shallow_flash() {
     SHALLOW_FLAG+=$ADB_FLAGS
     if [ ${FLASH_GAIA} == true ]; then
+        if [[ ${TARGET_GAIA} == "" ]]; then
+            echo "No Gaia file at ${TARGET_URL}" && exit 0
+        fi
         downlaod_file_from_TWCI ${TARGET_URL} ${TARGET_GAIA} ${TMP_DIR}
         GAIA_BASENAME=`basename ${TMP_DIR}/${TARGET_GAIA}`
         case `uname` in
@@ -398,6 +401,9 @@ function do_shallow_flash() {
         esac
     fi
     if [ ${FLASH_GECKO} == true ]; then
+        if [[ ${TARGET_GECKO} == "" ]]; then
+            echo "No Gecko file at ${TARGET_URL}" && exit 0
+        fi
         downlaod_file_from_TWCI ${TARGET_URL} ${TARGET_GECKO} ${TMP_DIR}
         GECKO_BASENAME=`basename ${TMP_DIR}/${TARGET_GECKO}`
         case `uname` in
@@ -426,6 +432,9 @@ function do_shallow_flash() {
 
 ## Flash full image
 function do_flash_image() {
+    if [[ ${TARGET_IMG} == "" ]]; then
+        echo "No full image file at ${TARGET_URL}" && exit 0
+    fi
     downlaod_file_from_TWCI ${TARGET_URL} ${TARGET_IMG} ${TMP_DIR}
     IMG_BASENAME=`basename ${TMP_DIR}/${TARGET_IMG}`
     unzip -d ${TMP_DIR} ${TMP_DIR}/${IMG_BASENAME}
