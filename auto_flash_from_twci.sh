@@ -108,6 +108,7 @@ function device_info(){
     echo -e "  flatfish"
     echo -e "  fugu"
     echo -e "  nexus4"
+    echo -e "  openc"
 }
 
 ## Select the device
@@ -124,6 +125,7 @@ function device() {
         flatfish) DEVICE_NAME="flatfish";;
         fugu) DEVICE_NAME="fugu";;
         nexus4) DEVICE_NAME="nexus4";;
+        openc) DEVICE_NAME="openC";;
         *) device_info; exit -1;;
     esac
     
