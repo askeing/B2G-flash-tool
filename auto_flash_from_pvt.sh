@@ -47,7 +47,8 @@ TARGET_ID=-1
 FLASH_USR_IF_POSSIBLE=false
 FLASH_ENG_IF_POSSIBLE=false
 FLASH_USER_ENG_DONE=false
-
+BACKUPPROFILE=false
+RESTOREPROFILE=false
 
 ####################
 # Functions        #
@@ -70,6 +71,8 @@ function helper(){
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
     echo -e "  -h|--help\tdisplay help."
+    echo -e "  -p| back up profile before flashing"
+    echo -e "  -r| restore profile at the end"
     echo -e "Environment:"
     echo -e "  HTTP_USER={username} \tset LDAP account. (you can fill it into .ldap file)"
     echo -e "  HTTP_PWD={password} \tset LDAP password. (you can fill it into .ldap file)"
@@ -828,6 +831,38 @@ function do_flash_image() {
     cd ${CURRENT_DIR}
 }
 
+function do_backup_profile() {
+    if [ ! -d mozilla-profile ]; then
+        echo "no backup folder, creating..."
+        mkdir mozilla-profile
+    fi
+    echo -e "Backup your profiles..."
+    run_adb shell stop b2g 2> ./mozilla-profile/backup.log
+    rm -rf ./mozilla-profile/*
+
+    mkdir -p mozilla-profile/profile
+    run_adb pull /data/b2g/mozilla ./mozilla-profile/profile 2> ./mozilla-profile/backup.log
+    mkdir -p mozilla-profile/data-local
+    run_adb pull /data/local ./mozilla-profile/data-local 2> ./mozilla-profile/backup.log
+    rm -rf mozilla-profile/data-local/webapps
+    run_adb shell start b2g 2> ./mozilla-profile/backup.log
+    echo -e "Backup done."
+}
+
+function do_restore_profile() {
+    echo -e "Recover your profiles..."
+    if [ ! -d mozilla-profile/profile ] || [ ! -d mozilla-profile/data-local ]; then
+        echo "no recover files."
+        exit -1
+    fi
+    run_adb shell stop b2g 2> ./mozilla-profile/recover.log
+    run_adb shell rm -r /data/b2g/mozilla 2> ./mozilla-profile/recover.log
+    run_adb push ./mozilla-profile/profile /data/b2g/mozilla 2> ./mozilla-profile/recover.log
+    run_adb push ./mozilla-profile/data-local /data/local 2> ./mozilla-profile/recover.log
+    run_adb reboot
+    sleep 30
+    echo -e "Recover done."
+}
 
 #########################
 # Create TEMP Folder    #
@@ -896,6 +931,8 @@ do
         -G|--gecko) FLASH_GECKO=true; shift;;
         -l|--local) FLASH_LOCAL=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;
+        -p) BACKUPPROFILE=true; shift;;
+        -r) RESTOREPROFILE=true; shift;;
         -y) VERY_SURE=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
@@ -1055,6 +1092,12 @@ else
     fi
 fi
 
+##################################
+# Profile backup                 #
+##################################
+if [ ${BACKUPPROFILE} == true ]; then
+    do_backup_profile
+fi
 
 ##################################
 # Flash full image OR gaia/gecko #
@@ -1085,6 +1128,13 @@ else
         "Linux") print_flash_info_dialog;;
         "Darwin") print_flash_info;;
     esac
+fi
+
+##################################
+# Profile restore                 #
+##################################
+if [ ${RESTOREPROFILE} == true ]; then
+    do_restore_profile()
 fi
 
 
