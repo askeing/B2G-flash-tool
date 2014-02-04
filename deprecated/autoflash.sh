@@ -70,7 +70,7 @@ function helper(){
     # -f, --flash
     echo -e "-f|--flash\tFlash your device (unagi) after downlaod finish."
     echo -e "\t\tYou may have to input root password when you add this argument."
-    echo -e "\t\tYour PATH should has adb path, or you can setup the ADB_PATH."
+    echo -e "\t\tYour PATH should have adb path, or you can setup the ADB_PATH."
     # -F, --flash-local
     echo -e "-F|--flash-local\tFlash your device from local zipped build(ex: -F{file name}); default: use latest downloaded"
     # -s, --shallow
