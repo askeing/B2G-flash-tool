@@ -21,7 +21,7 @@ Environment is not a necessary condition. The script has an interaction mode if 
 ```
 -f|--flash      Flash your device (unagi) after downlaod finish.
                 You may have to input root password when you add this argument.
-                Your PATH should has adb path, or you can setup the ADB_PATH.
+                Your PATH should have adb path, or you can setup the ADB_PATH.
 -F|--flash-only Flash your device from local zipped build(ex: -F{file name}); default: use latest downloaded
 -s|--shallow    Shallow flash, download package only compiled binary and push into device, without modifying image
 -e|--eng        change the target build to engineer build.
