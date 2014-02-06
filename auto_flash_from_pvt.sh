@@ -47,6 +47,7 @@ TARGET_ID=-1
 FLASH_USR_IF_POSSIBLE=false
 FLASH_ENG_IF_POSSIBLE=false
 FLASH_USER_ENG_DONE=false
+DOWNLOAD_MOUNTED=false
 
 
 ####################
@@ -69,6 +70,7 @@ function helper(){
     echo -e "  -l|--local\tspecify flash local build (work with --buildid option)"
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
+    echo -e "  -q\tDownload folder is already mounted|Qanalyst should be using this"
     echo -e "  -h|--help\tdisplay help."
     echo -e "Environment:"
     echo -e "  HTTP_USER={username} \tset LDAP account. (you can fill it into .ldap file)"
@@ -397,33 +399,53 @@ function create_download_folder() {
     if [ "$FLASH_ENG" == true ]; then
         DL_DIR_USR_ENG="ENG"
     fi
-
-    DL_DIR=${TMP_DIR}
-    if [[ ${BUILD_ID} != "" ]]; then
-        DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/${BUILD_ID}
-        # remove files if not FLASH_LOCAL
-        if [ ${FLASH_LOCAL} != true ]; then
-            if [ ${FLASH_FULL} == true ]; then
-                rm -f ${DL_DIR}/${TARGET_IMG}
-            else
-                if [ ${FLASH_GAIA} == true ]; then
-                    rm -f ${DL_DIR}/${TARGET_GAIA}
-                fi
-                if [ ${FLASH_GECKO} == true ]; then
-                    rm -f ${DL_DIR}/${TARGET_GECKO}
+    if [ ${DOWNLOAD_MOUNTED} == false ]; then
+        DL_DIR=${TMP_DIR}
+        if [[ ${BUILD_ID} != "" ]]; then
+            DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/${BUILD_ID}
+            # remove files if not FLASH_LOCAL
+            if [ ${FLASH_LOCAL} != true ]; then
+                if [ ${FLASH_FULL} == true ]; then
+                    rm -f ${DL_DIR}/${TARGET_IMG}
+                 else
+                    if [ ${FLASH_GAIA} == true ]; then
+                        rm -f ${DL_DIR}/${TARGET_GAIA}
+                    fi
+                    if [ ${FLASH_GECKO} == true ]; then
+                        rm -f ${DL_DIR}/${TARGET_GECKO}
+                    fi
                 fi
             fi
-        fi
-        # mkdir if there is no folder
-        if [ ! -e ${DL_DIR} ]; then
-            mkdir -p ${DL_DIR}
+            # mkdir if there is no folder
+            if [ ! -e ${DL_DIR} ]; then
+                 mkdir -p ${DL_DIR}
+             fi
+        else
+             # always clear files for latest build
+             DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/latest
+             rm -rf ${DL_DIR}/*
+             mkdir -p ${DL_DIR}
         fi
     else
-        # always clear files for latest build
-        DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/latest
-        rm -rf ${DL_DIR}/*
-        mkdir -p ${DL_DIR}
-    fi
+        case "$VERSION_NAME" in
+            v130) GECKOVERSION="aurora";;
+            v120) GECKOVERSION="b2g26_v1_2";;
+            v110hd) GECKOVERSION="b2g18_v1_1_0_hd";;
+            v110) GECKOVERSION="b2g18";;
+            v101) GECKOVERSION="b2g18_v1_0_1";;
+            master) GECKOVERSION="master";;
+            *) version_info; exit -1;;
+        esac
+        DL_DIR=/mnt/mozilla.org/b2gotoro/nightly/mozilla-${GECKOVERSION}-${DEVICE_NAME}
+        if [ "$FLASH_ENG" == true ]; then
+           DL_DIR=${DL_DIR}-eng
+        fi
+        if [[ ${BUILD_ID} != "" ]]; then
+            DL_DIR=${DL_DIR}/${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
+        else
+            DL_DIR=${DL_DIR}/latest/
+        fi
+        cd $DL_DIR
 }
 
 ## make sure user want to flash/shallow flash
@@ -898,6 +920,7 @@ do
         -G|--gecko) FLASH_GECKO=true; shift;;
         -l|--local) FLASH_LOCAL=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;
+        -q) DOWNLOAD_MOUNTED=true; shift;;
         -y) VERY_SURE=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
@@ -921,34 +944,37 @@ fi
 #################################
 # Prepare the authn of web site #
 #################################
-source .ldap
-if [ "$HTTP_USER" != "" ]; then
-    echo -e "Load account [$HTTP_USER] from .ldap"
-fi
-if [ "$HTTP_PWD" != "" ]; then
-    echo -e "Load password from .ldap"
-fi
+if [ ${DOWNLOAD_MOUNTED} == false ]; then
+    source .ldap
+    if [ "$HTTP_USER" != "" ]; then
+        echo -e "Load account [$HTTP_USER] from .ldap"
+    fi
+    if [ "$HTTP_PWD" != "" ]; then
+        echo -e "Load password from .ldap"
+    fi
 
-if [ ${INTERACTION_WINDOW} == false ]; then
-    set_wget_acct_pwd
-else
-    case `uname` in
-        "Linux") set_wget_acct_pwd_dialog;;
-        "Darwin") set_wget_acct_pwd_dialog_mac;;
-    esac
+    if [ ${INTERACTION_WINDOW} == false ]; then
+        set_wget_acct_pwd
+    else
+        case `uname` in
+            "Linux") set_wget_acct_pwd_dialog;;
+            "Darwin") set_wget_acct_pwd_dialog_mac;;
+        esac
+    fi
 fi
 
 
 #############################################
 # Find the B2G.${VERSION}.${DEVICE} in list #
 #############################################
+
 FOUND=false
 TARGET_NAME=PVT.${VERSION_NAME}.${DEVICE_NAME}
 for (( COUNT=0 ; COUNT<${DL_SIZE} ; COUNT++ ))
 do
     KEY=DL_${COUNT}_NAME
     eval VALUE=\$$KEY
-    
+
     if [ ${TARGET_NAME} == ${VALUE} ]; then
         echo "${TARGET_NAME} is found!!"
         FOUND=true
@@ -1033,27 +1059,31 @@ fi
 ####################################
 # Find the name of download files. #
 ####################################
-find_download_files_name
-
-if [[ ${VERSION_NAME} == "" ]] || [[ ${DEVICE_NAME} == "" ]]; then
-    VER_DEV_NAME=${TARGET_NAME#PVT.*}
-    VERSION_NAME=${VER_DEV_NAME%.*}
-    DEVICE_NAME=${VER_DEV_NAME#*.}
-fi
-if [ ${INTERACTION_WINDOW} == false ]; then
+if [ ${DOWNLOAD_MOUNTED} == true ]; then
     create_download_folder
-    replace_url_for_build_id
-    print_flash_info
-    if [ ${VERY_SURE} == false ]; then
-        make_sure
-    fi
 else
-    if [ ${VERY_SURE} == false ]; then
-        # dialog function will call create_download_folder and replace_url_for_build_id
-        case `uname` in
-            "Linux") make_sure_dialog;;
-            "Darwin") make_sure_dialog_mac;;
-        esac
+    find_download_files_name
+
+    if [[ ${VERSION_NAME} == "" ]] || [[ ${DEVICE_NAME} == "" ]]; then
+        VER_DEV_NAME=${TARGET_NAME#PVT.*}
+        VERSION_NAME=${VER_DEV_NAME%.*}
+        DEVICE_NAME=${VER_DEV_NAME#*.}
+    fi
+    if [ ${INTERACTION_WINDOW} == false ]; then
+         create_download_folder
+         replace_url_for_build_id
+         print_flash_info
+         if [ ${VERY_SURE} == false ]; then
+             make_sure
+        fi
+    else
+        if [ ${VERY_SURE} == false ]; then
+            # dialog function will call create_download_folder and replace_url_for_build_id
+            case `uname` in
+                "Linux") make_sure_dialog;;
+                "Darwin") make_sure_dialog_mac;;
+            esac
+        fi
     fi
 fi
 
