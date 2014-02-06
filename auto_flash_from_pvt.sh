@@ -450,7 +450,6 @@ function make_sure_dialog() {
         fi
     fi
 
-    create_download_folder
     replace_url_for_build_id
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\nAre you sure you want to flash your device?"
@@ -459,6 +458,7 @@ function make_sure_dialog() {
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
     fi
+    create_download_folder
 }
 
 function make_sure_dialog_mac() {
@@ -916,27 +916,6 @@ if [ ${INTERACTION_WINDOW} == true ]; then
 fi
 
 
-#################################
-# Prepare the authn of web site #
-#################################
-source .ldap
-if [ "$HTTP_USER" != "" ]; then
-    echo -e "Load account [$HTTP_USER] from .ldap"
-fi
-if [ "$HTTP_PWD" != "" ]; then
-    echo -e "Load password from .ldap"
-fi
-
-if [ ${INTERACTION_WINDOW} == false ]; then
-    set_wget_acct_pwd
-else
-    case `uname` in
-        "Linux") set_wget_acct_pwd_dialog;;
-        "Darwin") set_wget_acct_pwd_dialog_mac;;
-    esac
-fi
-
-
 #############################################
 # Find the B2G.${VERSION}.${DEVICE} in list #
 #############################################
@@ -1038,6 +1017,35 @@ if [[ ${VERSION_NAME} == "" ]] || [[ ${DEVICE_NAME} == "" ]]; then
     VERSION_NAME=${VER_DEV_NAME%.*}
     DEVICE_NAME=${VER_DEV_NAME#*.}
 fi
+
+
+## TODO: print complete selection in a runnable command, in case user need to flash same option immediately
+
+
+#################################
+# Prepare the authn of web site #
+#################################
+source .ldap
+if [ "$HTTP_USER" != "" ]; then
+    echo -e "Load account [$HTTP_USER] from .ldap"
+fi
+if [ "$HTTP_PWD" != "" ]; then
+    echo -e "Load password from .ldap"
+fi
+
+if [ ${INTERACTION_WINDOW} == false ]; then
+    set_wget_acct_pwd
+else
+    case `uname` in
+        "Linux") set_wget_acct_pwd_dialog;;
+        "Darwin") set_wget_acct_pwd_dialog_mac;;
+    esac
+fi
+
+####################################################
+# Create download folder, replace url for build id #
+# Make sure w/ w/o dialog                          #
+####################################################
 if [ ${INTERACTION_WINDOW} == false ]; then
     create_download_folder
     replace_url_for_build_id
