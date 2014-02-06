@@ -23,6 +23,8 @@
 #   2013/11/13 Askeing: removed KEEP_COMRIL, set UNINSTALL_COMRIL=true to un-install com-ril.
 #   2013/11/28 Askeing: DEBUG=1 will by pass auto checkout master and auto pull.
 #   2013/12/13 Askeing: remove DEBUG and auto pull.
+#   2014/02/06 Askeing: enable local cache by default, USE_LOCAL=false to force download from pvt.
+#   2014/02/06 Askeing: added DL_HOME to specify download folder.
 #
 #==========================================================================
 
@@ -30,13 +32,18 @@
 ####################
 # Parameter Flags  #
 ####################
+## customize flags
+DL_HOME=${DL_HOME:="pvt"}
+USE_LOCAL=${USE_LOCAL:=true}
+USE_LOCAL_LATEST=${USE_LOCAL_LATEST:=false}
+## inside flags
 VERY_SURE=false
+WGET_AUTHN=false
 INTERACTION_WINDOW=false
 ADB_DEVICE="Device"
 DEVICE_NAME=""
 VERSION_NAME=""
 BUILD_ID=""
-FLASH_LOCAL=false
 FLASH_FULL=false
 FLASH_GAIA=false
 FLASH_GECKO=false
@@ -47,7 +54,6 @@ TARGET_ID=-1
 FLASH_USR_IF_POSSIBLE=false
 FLASH_ENG_IF_POSSIBLE=false
 FLASH_USER_ENG_DONE=false
-
 
 ####################
 # Functions        #
@@ -66,7 +72,6 @@ function helper(){
     echo -e "  --usr\tspecify User(USR) build."
     echo -e "  --eng\tspecify Engineer(ENG) build."
     echo -e "  -b|--buildid\tspecify target build YYYYMMDDhhmmss"
-    echo -e "  -l|--local\tspecify flash local build (work with --buildid option)"
     echo -e "  -w\t\tinteraction GUI mode."
     echo -e "  -y\t\tAssume \"yes\" to all questions"
     echo -e "  -h|--help\tdisplay help."
@@ -74,15 +79,18 @@ function helper(){
     echo -e "  HTTP_USER={username} \tset LDAP account. (you can fill it into .ldap file)"
     echo -e "  HTTP_PWD={password} \tset LDAP password. (you can fill it into .ldap file)"
     echo -e "  UNINSTALL_COMRIL=true \tuninstall the com-ril when shallow flash gecko. (Keep com-ril by default)"
+    echo -e "  DL_HOME={download_dir_home}\tspecify download folder. Default=./pvt"
+    echo -e "  USE_LOCAL=false \tforce download target builds (with Build ID) from PVT server. Default=true"
+    echo -e "  USE_LOCAL_LATEST=true\tdo not download Latest builds from PVT server. Default=false"
     echo -e "Example:"
-    echo -e "  Flash by interaction GUI mode\t\t\t\t./auto_flash_from_PVT.sh -w"
+    echo -e "  Flash by interaction GUI mode\t\t\t\t./auto_flash_from_pvt.sh -w"
     case `uname` in
         "Linux")
-            echo -e "  Flash inari v1.2.0 ENG image\t\t\t\t./auto_flash_from_PVT.sh --version=v1.2.0 --device=inari --full --eng"
-            echo -e "  Flash buri master USR build 20131116040201 gaia/gecko\t./auto_flash_from_PVT.sh -vmaster -dburi -b20131116040201 -g -G --usr";;
+            echo -e "  Flash inari v1.2.0 ENG image\t\t\t\t./auto_flash_from_pvt.sh --version=v1.2.0 --device=inari --full --eng"
+            echo -e "  Flash buri master USR build 20131116040201 gaia/gecko\t./auto_flash_from_pvt.sh -vmaster -dburi -b20131116040201 -g -G --usr";;
         "Darwin")
-            echo -e "  Flash inari v1.2.0 ENG image\t\t\t\t./auto_flash_from_PVT.sh --version v1.2.0 --device inari --full --eng"
-            echo -e "  Flash buri master USR build 20131116040201 gaia/gecko\t./auto_flash_from_PVT.sh -v master -d buri -b 20131116040201 -g -G --usr";;
+            echo -e "  Flash inari v1.2.0 ENG image\t\t\t\t./auto_flash_from_pvt.sh --version v1.2.0 --device inari --full --eng"
+            echo -e "  Flash buri master USR build 20131116040201 gaia/gecko\t./auto_flash_from_pvt.sh -v master -d buri -b 20131116040201 -g -G --usr";;
     esac
     exit 0
 }
@@ -245,6 +253,10 @@ function run_adb()
 
 ## wget with flags
 function run_wget() {
+    if [ ${WGET_AUTHN} != true ]; then
+        run_wget_authn
+    fi
+
     echo "WGET: " $@
     if [ "${HTTPUser}" != "" ] && [ "${HTTPPwd}" != "" ]; then
         wget --http-user="${HTTPUser}" --http-passwd="${HTTPPwd}" $@
@@ -323,6 +335,27 @@ function set_wget_acct_pwd_dialog_mac() {
     fi
 }
 
+## Prepare the authn of web site
+function run_wget_authn() {
+    source .ldap
+    if [ "$HTTP_USER" != "" ]; then
+        echo -e "Load account [$HTTP_USER] from .ldap"
+    fi
+    if [ "$HTTP_PWD" != "" ]; then
+        echo -e "Load password from .ldap"
+    fi
+
+    if [ ${INTERACTION_WINDOW} == false ]; then
+        set_wget_acct_pwd
+    else
+        case `uname` in
+            "Linux") set_wget_acct_pwd_dialog;;
+            "Darwin") set_wget_acct_pwd_dialog_mac;;
+        esac
+    fi
+    WGET_AUTHN=true
+}
+
 ## install dialog package for interaction GUI mode
 function check_install_dialog() {
     if ! which dialog > /dev/null; then
@@ -379,11 +412,12 @@ function replace_url_for_build_id() {
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
 
-    # if no local gecko, latest build, or not FLASH_LOCAL, then check gecko name from website.
-    LOCAL_GECKO=`ls ${DL_DIR} | grep b2g-.*\.android-arm\.tar\.gz`
-    if [ ! -f ${DL_DIR}/${LOCAL_GECKO} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
+    # if no local gecko, latest build, or not USE_LOCAL, then check gecko name from website.
+    LOCAL_GECKO=`ls ${DL_DIR} | grep b2g-.*\.android-arm\.tar\.gz` || echo "There is no local cache."
+    if [ ! -f ${DL_DIR}/${LOCAL_GECKO} ] || [[ ${DOWNLOAD_LATEST} == true ]] || [ ${USE_LOCAL} != true ]; then
         ## Find gecko tar file name for --buildid option
-        SOURCE=`run_wget -qO- ${TARGET_URL} | grep b2g-.*\.android-arm\.tar\.gz`
+        run_wget -qO ${TMP_DIR}/page ${TARGET_URL}
+        SOURCE=`cat ${TMP_DIR}/page | grep b2g-.*\.android-arm\.tar\.gz`
         TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
     # there is local gecko, then replace TARGET_GECKO.
     else
@@ -391,38 +425,42 @@ function replace_url_for_build_id() {
     fi
 }
 
-## Create Download Folder
-function create_download_folder() {
+## Prepare Download Folder
+function prepare_download_folder() {
     DL_DIR_USR_ENG="USR"
-    if [ "$FLASH_ENG" == true ]; then
+    if [[ "$FLASH_ENG" == true ]]; then
         DL_DIR_USR_ENG="ENG"
     fi
 
     DL_DIR=${TMP_DIR}
     if [[ ${BUILD_ID} != "" ]]; then
-        DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/${BUILD_ID}
-        # remove files if not FLASH_LOCAL
-        if [ ${FLASH_LOCAL} != true ]; then
-            if [ ${FLASH_FULL} == true ]; then
+        check_build_id
+        DL_DIR=${DL_HOME}/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/${BUILD_ID}
+        # mkdir if there is no folder
+        if [ ! -d ${DL_DIR} ]; then
+            mkdir -p ${DL_DIR}
+        fi
+        # remove files if not USE_LOCAL
+        if [[ ${USE_LOCAL} != true ]]; then
+            if [[ ${FLASH_FULL} == true ]]; then
                 rm -f ${DL_DIR}/${TARGET_IMG}
             else
-                if [ ${FLASH_GAIA} == true ]; then
+                if [[ ${FLASH_GAIA} == true ]]; then
                     rm -f ${DL_DIR}/${TARGET_GAIA}
                 fi
-                if [ ${FLASH_GECKO} == true ]; then
+                if [[ ${FLASH_GECKO} == true ]]; then
                     rm -f ${DL_DIR}/${TARGET_GECKO}
                 fi
             fi
         fi
-        # mkdir if there is no folder
-        if [ ! -e ${DL_DIR} ]; then
-            mkdir -p ${DL_DIR}
-        fi
     else
         # always clear files for latest build
-        DL_DIR=pvt/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/latest
-        rm -rf ${DL_DIR}/*
-        mkdir -p ${DL_DIR}
+        DL_DIR=${DL_HOME}/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/latest
+        if [[ ${USE_LOCAL_LATEST} != true ]]; then
+            rm -rf ${DL_DIR}/*
+            mkdir -p ${DL_DIR}
+            DOWNLOAD_LATEST=true
+        fi
     fi
 }
 
@@ -452,6 +490,7 @@ function make_sure_dialog() {
         fi
     fi
 
+    prepare_download_folder
     replace_url_for_build_id
     create_make_sure_msg
     MAKE_SURE_MSG+="\n\nAre you sure you want to flash your device?"
@@ -460,7 +499,6 @@ function make_sure_dialog() {
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
     fi
-    create_download_folder
 }
 
 function make_sure_dialog_mac() {
@@ -471,13 +509,13 @@ function make_sure_dialog_mac() {
         ret=${ret%, button returned:*}
         BUILD_ID=${ret}
         # create DL folder for builds with Build ID
-        create_download_folder
+        prepare_download_folder
         replace_url_for_build_id
     elif [[ "${ret##*:}" != "Yes" ]]; then
         echo "" && echo "byebye" && exit 0
     fi
     # latest build also need to create DL folder
-    create_download_folder
+    prepare_download_folder
 }
 
 ## Loading the download list
@@ -748,6 +786,7 @@ function download_file_from_PVT() {
     DEST_DIR=$3
     echo ""
     echo "Download file: ${DL_URL}${DL_FILE}"
+    rm -rf ${DEST_DIR}/${DL_FILE}
     run_wget -P ${DEST_DIR} ${DL_URL}${DL_FILE}
     ret=$?
     if [ ${ret} != 0 ]; then
@@ -764,8 +803,8 @@ function do_shallow_flash() {
             echo "No Gaia file at ${TARGET_URL}" && exit 0
         fi
         GAIA_BASENAME=`basename ${DL_DIR}/${TARGET_GAIA}`
-        # if file do not exist, latest build, or not FLASH_LOCAL, then download it.
-        if [ ! -f ${DL_DIR}/${GAIA_BASENAME} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
+        # if file do not exist, latest build, or not USE_LOCAL, then download it.
+        if [ ! -f ${DL_DIR}/${GAIA_BASENAME} ] || [[ ${DOWNLOAD_LATEST} == true ]] || [[ ${USE_LOCAL} != true ]]; then
             download_file_from_PVT ${TARGET_URL} ${TARGET_GAIA} ${DL_DIR}
         fi
         case `uname` in
@@ -779,8 +818,8 @@ function do_shallow_flash() {
             echo "No Gecko file at ${TARGET_URL}" && exit 0
         fi
         GECKO_BASENAME=`basename ${DL_DIR}/${TARGET_GECKO}`
-        # if file do not exist, latest build, or not FLASH_LOCAL, then download it.
-        if [ ! -f ${DL_DIR}/${GECKO_BASENAME} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
+        # if file do not exist, latest build, or not USE_LOCAL, then download it.
+        if [ ! -f ${DL_DIR}/${GECKO_BASENAME} ] || [[ ${DOWNLOAD_LATEST} == true ]] || [[ ${USE_LOCAL} != true ]]; then
             download_file_from_PVT ${TARGET_URL} ${TARGET_GECKO} ${DL_DIR}
         fi
         case `uname` in
@@ -813,8 +852,8 @@ function do_flash_image() {
         echo "No full image file at ${TARGET_URL}" && exit 0
     fi
     IMG_BASENAME=`basename ${DL_DIR}/${TARGET_IMG}`
-    # if file do not exist, latest build, or not FLASH_LOCAL, then download it.
-    if [ ! -f ${DL_DIR}/${IMG_BASENAME} ] || [[ ${BUILD_ID} == "" ]] || [ ${FLASH_LOCAL} != true ]; then
+    # if file do not exist, latest build, or not USE_LOCAL, then download it.
+    if [ ! -f ${DL_DIR}/${IMG_BASENAME} ] || [[ ${DOWNLOAD_LATEST} == true ]] || [[ ${USE_LOCAL} != true ]]; then
         download_file_from_PVT ${TARGET_URL} ${TARGET_IMG} ${DL_DIR}
     fi
     # unzip and flash
@@ -863,7 +902,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o v::d::s::b::lgGfwyh --long version::,device::,buildid::,local,usr,eng,gaia,gecko,full,help \
+        TEMP=`getopt -o v::d::s::b::gGfwyh --long version::,device::,buildid::,usr,eng,gaia,gecko,full,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -896,7 +935,6 @@ do
         -f|--full) FLASH_FULL=true; shift;;
         -g|--gaia) FLASH_GAIA=true; shift;;
         -G|--gecko) FLASH_GECKO=true; shift;;
-        -l|--local) FLASH_LOCAL=true; shift;;
         -w) INTERACTION_WINDOW=true; shift;;
         -y) VERY_SURE=true; shift;;
         -h|--help) helper; exit 0;;
@@ -1024,32 +1062,12 @@ fi
 ## TODO: print complete selection in a runnable command, in case user need to flash same option immediately
 
 
-#################################
-# Prepare the authn of web site #
-#################################
-source .ldap
-if [ "$HTTP_USER" != "" ]; then
-    echo -e "Load account [$HTTP_USER] from .ldap"
-fi
-if [ "$HTTP_PWD" != "" ]; then
-    echo -e "Load password from .ldap"
-fi
-
-if [ ${INTERACTION_WINDOW} == false ]; then
-    set_wget_acct_pwd
-else
-    case `uname` in
-        "Linux") set_wget_acct_pwd_dialog;;
-        "Darwin") set_wget_acct_pwd_dialog_mac;;
-    esac
-fi
-
 ####################################################
 # Create download folder, replace url for build id #
 # Make sure w/ w/o dialog                          #
 ####################################################
 if [ ${INTERACTION_WINDOW} == false ]; then
-    create_download_folder
+    prepare_download_folder
     replace_url_for_build_id
     print_flash_info
     if [ ${VERY_SURE} == false ]; then
@@ -1057,7 +1075,7 @@ if [ ${INTERACTION_WINDOW} == false ]; then
     fi
 else
     if [ ${VERY_SURE} == false ]; then
-        # dialog function will call create_download_folder and replace_url_for_build_id
+        # dialog function will call prepare_download_folder and replace_url_for_build_id
         case `uname` in
             "Linux") make_sure_dialog;;
             "Darwin") make_sure_dialog_mac;;
