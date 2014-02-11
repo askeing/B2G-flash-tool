@@ -187,7 +187,7 @@ function select_device_dialog_mac() {
     ret=${ret#*text returned:}
     ret=${ret%, button returned:*}
     device ${ret}
-    if [ ${ret} == false ]; then
+    if [[ ${ret} == false ]]; then
         echo ""
         echo "byebye"
         exit 0
@@ -236,7 +236,7 @@ function select_version_dialog_mac() {
     local_option_list=${option_list#,*}
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list \{$local_option_list\} with title \"Select Version\"\'\)
     TARGET_ID=${ret%%-*}
-    if [ ${ret} == false ]; then
+    if [[ ${ret} == false ]]; then
         echo ""
         echo "byebye"
         exit 0
@@ -244,11 +244,19 @@ function select_version_dialog_mac() {
 }
 
 ## adb with flags
-function run_adb()
-{
+function run_adb() {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
     adb $ADB_FLAGS $@
+}
+
+## Un-install Com-RIL
+function uninstall_comril() {
+    if [ -f ./install_comril.sh ]; then
+        echo "Un-install com-ril..."
+        bash ./install_comril.sh -u -y
+        run_adb wait-for-device # wait in this function, then goto next step.
+    fi
 }
 
 ## wget with flags
@@ -263,6 +271,27 @@ function run_wget() {
     else
         wget $@
     fi
+}
+
+## Prepare the authn of web site
+function run_wget_authn() {
+    source .ldap
+    if [ "$HTTP_USER" != "" ]; then
+        echo -e "Load account [$HTTP_USER] from .ldap"
+    fi
+    if [ "$HTTP_PWD" != "" ]; then
+        echo -e "Load password from .ldap"
+    fi
+
+    if [[ ${INTERACTION_WINDOW} == false ]]; then
+        set_wget_acct_pwd
+    else
+        case `uname` in
+            "Linux") set_wget_acct_pwd_dialog;;
+            "Darwin") set_wget_acct_pwd_dialog_mac;;
+        esac
+    fi
+    WGET_AUTHN=true
 }
 
 ## setup the http user account and passwd
@@ -335,27 +364,6 @@ function set_wget_acct_pwd_dialog_mac() {
     fi
 }
 
-## Prepare the authn of web site
-function run_wget_authn() {
-    source .ldap
-    if [ "$HTTP_USER" != "" ]; then
-        echo -e "Load account [$HTTP_USER] from .ldap"
-    fi
-    if [ "$HTTP_PWD" != "" ]; then
-        echo -e "Load password from .ldap"
-    fi
-
-    if [ ${INTERACTION_WINDOW} == false ]; then
-        set_wget_acct_pwd
-    else
-        case `uname` in
-            "Linux") set_wget_acct_pwd_dialog;;
-            "Darwin") set_wget_acct_pwd_dialog_mac;;
-        esac
-    fi
-    WGET_AUTHN=true
-}
-
 ## install dialog package for interaction GUI mode
 function check_install_dialog() {
     if ! which dialog > /dev/null; then
@@ -372,13 +380,13 @@ function create_make_sure_msg() {
     MAKE_SURE_MSG+="URL:  ${TARGET_URL}\n"
     MAKE_SURE_MSG+="ENG Ver: ${FLASH_ENG}\n"
     MAKE_SURE_MSG+="Flash: "
-    if [ ${FLASH_FULL} == true ]; then
+    if [[ ${FLASH_FULL} == true ]]; then
         MAKE_SURE_MSG+="Full Image."
     else
-        if [ ${FLASH_GAIA} == true ]; then
+        if [[ ${FLASH_GAIA} == true ]]; then
             MAKE_SURE_MSG+="Gaia, "
         fi
-        if [ ${FLASH_GECKO} == true ]; then
+        if [[ ${FLASH_GECKO} == true ]]; then
             MAKE_SURE_MSG+="Gecko, "
         fi
     fi
@@ -394,7 +402,7 @@ function check_build_id() {
 
     ## BUILD_ID only can contains [0-9]
     VERIFY_BUILDID=`echo "$BUILD_ID" | awk '$0 ~/[^0-9]/ { print "TRUE" }'`
-    if [[ $VERIFY_BUILDID == "TRUE" ]]; then
+    if [[ ${VERIFY_BUILDID} == "TRUE" ]]; then
         echo "BUILD_ID ($BUILD_ID) should be 14 digits" &&
         exit 0
     fi
@@ -412,16 +420,18 @@ function replace_url_for_build_id() {
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
 
-    # if no local gecko, latest build, or not USE_LOCAL, then check gecko name from website.
-    LOCAL_GECKO=`ls ${DL_DIR} | grep b2g-.*\.android-arm\.tar\.gz` || echo "There is no local cache."
-    if [ ! -f ${DL_DIR}/${LOCAL_GECKO} ] || [[ ${DOWNLOAD_LATEST} == true ]] || [ ${USE_LOCAL} != true ]; then
-        ## Find gecko tar file name for --buildid option
-        run_wget -qO ${TMP_DIR}/page ${TARGET_URL}
-        SOURCE=`cat ${TMP_DIR}/page | grep b2g-.*\.android-arm\.tar\.gz`
-        TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
-    # there is local gecko, then replace TARGET_GECKO.
-    else
-        TARGET_GECKO=${LOCAL_GECKO}
+    if [[ ${FLASH_GECKO} == true ]]; then
+        # if no local gecko, latest build, or not USE_LOCAL, then check gecko name from website.
+        LOCAL_GECKO=`ls ${DL_DIR} | grep b2g-.*\.android-arm\.tar\.gz` || echo "There is no local cache."
+        if [ ! -f ${DL_DIR}/${LOCAL_GECKO} ] || [[ ${DOWNLOAD_LATEST} == true ]] || [[ ${USE_LOCAL} != true ]]; then
+            ## Find gecko tar file name for --buildid option
+            run_wget -qO ${TMP_DIR}/page ${TARGET_URL}
+            SOURCE=`cat ${TMP_DIR}/page | grep b2g-.*\.android-arm\.tar\.gz`
+            TARGET_GECKO=`echo ${SOURCE} | sed 's/.*b2g-/b2g-/' | sed 's/gz.*/gz/'`
+        # there is local gecko, then replace TARGET_GECKO.
+        else
+            TARGET_GECKO=${LOCAL_GECKO}
+        fi
     fi
 }
 
@@ -593,13 +603,13 @@ function if_has_eng_build() {
     TARGET_HAS_ENG=false
     KEY=DL_${TARGET_ID}_ENG
     eval VALUE=\$$KEY
-    if [ $VALUE == true ]; then
+    if [[ $VALUE == true ]]; then
         TARGET_HAS_ENG=true
     fi
 }
 
 function select_user_eng_build() {
-    while [ ${FLASH_USER_ENG_DONE} == false ]; do
+    while [[ ${FLASH_USER_ENG_DONE} == false ]]; do
         echo "User or Eng build:"
         echo "  1) User build"
         echo "  2) Engineer build"
@@ -613,7 +623,7 @@ function select_user_eng_build() {
 }
 
 function select_user_eng_build_dialog() {
-    if [ ${FLASH_USER_ENG_DONE} == false ]; then
+    if [[ ${FLASH_USER_ENG_DONE} == false ]]; then
         dialog --backtitle "Select Build from PVT Server " --title "User or Engineer Build" --menu "Move using [UP] [DOWN],[Enter] to Select" \
         18 80 10 1 "User build" 2 "Engineer build" 2>${TMP_DIR}/menuitem_usereng
         ret=$?
@@ -630,7 +640,7 @@ function select_user_eng_build_dialog() {
 }
 
 function select_user_eng_build_dialog_mac() {
-    if [ $TARGET_HAS_ENG == true ]; then
+    if [[ ${TARGET_HAS_ENG} == true ]]; then
         ret=$(osascript -e 'tell application "Terminal" to choose from list {"1-User Build", "2-Engineer Build"} with title "Choose build type"')
         case ${ret%-*} in
             1) FLASH_ENG=false; FLASH_USER_ENG_DONE=true;;
@@ -649,7 +659,7 @@ function select_flash_mode() {
     eval GAIA_VALUE=\$$GAIA_KEY
     GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
     eval GECKO_VALUE=\$$GECKO_KEY
-    while [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; do
+    while [[ ${FLASH_FULL} == false ]] && [[ ${FLASH_GAIA} == false ]] && [[ ${FLASH_GECKO} == false ]]; do
         echo "Flash Mode:"
         if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
             echo "  1) Shallow flash Gaia/Gecko"
@@ -680,7 +690,7 @@ function select_flash_mode() {
 
 function select_flash_mode_dialog() {
     # if there are no flash flag, then ask
-    if [ ${FLASH_FULL} == false ] && [ ${FLASH_GAIA} == false ] && [ ${FLASH_GECKO} == false ]; then
+    if [[ ${FLASH_FULL} == false ]] && [[ ${FLASH_GAIA} == false ]] && [[ ${FLASH_GECKO} == false ]]; then
         FLASH_MODE_FLAG=""
         GAIA_KEY=DL_${TARGET_ID}${ENG_FLAG}_GAIA
         eval GAIA_VALUE=\$$GAIA_KEY
@@ -758,13 +768,13 @@ function print_flash_info() {
     echo -e "URL:  ${TARGET_URL}"
     echo -e "ENG Ver: ${FLASH_ENG}"
     echo -n "Flash: "
-    if [ ${FLASH_FULL} == true ]; then
+    if [[ ${FLASH_FULL} == true ]]; then
         echo -n "Full Image."
     else
-        if [ ${FLASH_GAIA} == true ]; then
+        if [[ ${FLASH_GAIA} == true ]]; then
             echo -n "Gaia, "
         fi
-        if [ ${FLASH_GECKO} == true ]; then
+        if [[ ${FLASH_GECKO} == true ]]; then
             echo -n "Gecko, "
         fi
     fi
@@ -798,7 +808,7 @@ function download_file_from_PVT() {
 function do_shallow_flash() {
     SHALLOW_FLAG+=$ADB_FLAGS
     # flash gaia
-    if [ ${FLASH_GAIA} == true ]; then
+    if [[ ${FLASH_GAIA} == true ]]; then
         if [[ ${TARGET_GAIA} == "" ]]; then
             echo "No Gaia file at ${TARGET_URL}" && exit 0
         fi
@@ -813,7 +823,7 @@ function do_shallow_flash() {
         esac
     fi
     # flash gecko
-    if [ ${FLASH_GECKO} == true ]; then
+    if [[ ${FLASH_GECKO} == true ]]; then
         if [[ ${TARGET_GECKO} == "" ]]; then
             echo "No Gecko file at ${TARGET_URL}" && exit 0
         fi
@@ -826,14 +836,9 @@ function do_shallow_flash() {
             "Linux") SHALLOW_FLAG+=" -G${DL_DIR}/${GECKO_BASENAME}";;
             "Darwin") SHALLOW_FLAG+=" -G ${DL_DIR}/${GECKO_BASENAME}";;
         esac
-        ## if flash gecko and UNINSTALL_COMRIL=true, then un-install com-ril.
-        if [ -e ./uninstall_comril.sh ] && [[ ${UNINSTALL_COMRIL} == true ]]; then
-            echo "Un-install com-ril..."
-            bash ./uninstall_comril.sh -u -y
-        fi
     fi
     SHALLOW_FLAG+=" -y"
-    if [ -e ./shallow_flash.sh ]; then
+    if [ -f ./shallow_flash.sh ]; then
         echo "./shallow_flash.sh ${SHALLOW_FLAG}"
         bash ./shallow_flash.sh ${SHALLOW_FLAG}
         ret=$?
@@ -843,6 +848,10 @@ function do_shallow_flash() {
         fi
     else
         echo -e "There is no shallow_flash.sh in your folder."
+    fi
+    ## if UNINSTALL_COMRIL=true, then un-install com-ril.
+    if [[ ${UNINSTALL_COMRIL} == true ]]; then
+        uninstall_comril
     fi
 }
 
@@ -948,7 +957,7 @@ done
 ##################################################
 # For interaction GUI mode, check dialog package #
 ##################################################
-if [ ${INTERACTION_WINDOW} == true ]; then
+if [[ ${INTERACTION_WINDOW} == true ]]; then
     case `uname` in
         "Linux") check_install_dialog;;
         "Darwin") ;;
@@ -977,7 +986,7 @@ done
 ###########################################
 # If not select DEVICE, then list DEVICES #
 ###########################################
-if [ ${INTERACTION_WINDOW} == true ] && [ -z $DEVICE_NAME ]; then
+if [[ ${INTERACTION_WINDOW} == true ]] && [ -z $DEVICE_NAME ]; then
     case `uname` in
         "Linux") select_device_dialog; select_version_dialog;;
         "Darwin") select_device_dialog_mac; select_version_dialog_mac;;
@@ -992,10 +1001,10 @@ fi
 ##########################################################################################
 # If can NOT find the target from user input parameters, list the download list to user. #
 ##########################################################################################
-if [ ${FOUND} == false ]; then
+if [[ ${FOUND} == false ]]; then
     echo "Can NOT found the ${TARGET_NAME}"
     echo "Please select one build from following list."
-    if [ ${INTERACTION_WINDOW} == false ]; then
+    if [[ ${INTERACTION_WINDOW} == false ]]; then
         select_build
     else
         case `uname` in
@@ -1011,13 +1020,13 @@ fi
 #########################
 ENG_FLAG=""
 if_has_eng_build
-if [ $TARGET_HAS_ENG == true ]; then
-    if [ ${FLASH_ENG_IF_POSSIBLE} == true ]; then
+if [[ ${TARGET_HAS_ENG} == true ]]; then
+    if [[ ${FLASH_ENG_IF_POSSIBLE} == true ]]; then
         FLASH_ENG=true
-    elif [ ${FLASH_USR_IF_POSSIBLE} == true ]; then
+    elif [[ ${FLASH_USR_IF_POSSIBLE} == true ]]; then
         FLASH_ENG=false
     else
-        if [ ${INTERACTION_WINDOW} == false ]; then
+        if [[ ${INTERACTION_WINDOW} == false ]]; then
             select_user_eng_build
         else
             case `uname` in
@@ -1029,7 +1038,7 @@ if [ $TARGET_HAS_ENG == true ]; then
 else
     FLASH_ENG=false
 fi
-if [ "$FLASH_ENG" == true ]; then
+if [[ ${FLASH_ENG} == true ]]; then
     ENG_FLAG="_ENG"
 fi
 
@@ -1037,7 +1046,7 @@ fi
 ###################################################################################
 # If can NOT find the flash mode from user input parameters, list the flash mode. #
 ###################################################################################
-if [ ${INTERACTION_WINDOW} == false ]; then
+if [[ ${INTERACTION_WINDOW} == false ]]; then
     select_flash_mode
 else
     case `uname` in
@@ -1066,15 +1075,15 @@ fi
 # Create download folder, replace url for build id #
 # Make sure w/ w/o dialog                          #
 ####################################################
-if [ ${INTERACTION_WINDOW} == false ]; then
+if [[ ${INTERACTION_WINDOW} == false ]]; then
     prepare_download_folder
     replace_url_for_build_id
     print_flash_info
-    if [ ${VERY_SURE} == false ]; then
+    if [[ ${VERY_SURE} == false ]]; then
         make_sure
     fi
 else
-    if [ ${VERY_SURE} == false ]; then
+    if [[ ${VERY_SURE} == false ]]; then
         # dialog function will call prepare_download_folder and replace_url_for_build_id
         case `uname` in
             "Linux") make_sure_dialog;;
@@ -1087,10 +1096,10 @@ fi
 ##################################
 # Flash full image OR gaia/gecko #
 ##################################
-if [ ${FLASH_FULL} == true ]; then
+if [[ ${FLASH_FULL} == true ]]; then
     echo "Flash Full Image..."
     do_flash_image
-elif [ ${FLASH_GAIA} == true ] || [ ${FLASH_GECKO} == true ]; then
+elif [[ ${FLASH_GAIA} == true ]] || [[ ${FLASH_GECKO} == true ]]; then
     echo "Shallow Flash..."
     do_shallow_flash
 fi
@@ -1102,7 +1111,7 @@ fi
 echo "================="
 echo "Flash Information"
 echo "================="
-if [ ${INTERACTION_WINDOW} == false ]; then
+if [[ ${INTERACTION_WINDOW} == false ]]; then
     print_flash_info
     if [ -e ./check_versions.sh ]; then
         bash ./check_versions.sh
