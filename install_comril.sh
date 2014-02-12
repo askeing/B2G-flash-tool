@@ -27,8 +27,8 @@ RIL_DEBUG=false
 
 ## Show usage
 function helper(){
-    echo -e "This script was written for clean or install com-ril."
-    echo -e "Usage: ./flash_ril.sh [parameters]"
+    echo -e "This script was written for uninstall/install com-ril."
+    echo -e "Usage: ./install_comril.sh [parameters]"
     echo -e "  -u|--uninstall\tuninstall the com-ril."
     echo -e "  -r|--ril\tinstall the com-ril from the file."
     echo -e "  -d|--ril-debug\tturn on ril debugging."
