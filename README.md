@@ -1,53 +1,42 @@
 # Script tools for B2G project
 
 
-## autoflash.sh
+## auto_flash_from_pvt.sh
 
-This script will download latest release build from pvt server. You'll need an LDAP account and accessibility to the folder to access it.
+This script was written for download builds from PVT server.
 
-**Usage: [Environment] ./autoflash.sh [--flash][--flash-only][--eng][-v=<version>][--backup][--backup-only][--recover-only][--device][-y][-h]**
+You'll need an LDAP account and accessibility to the folder to access it.
 
-
-### Environment:
-
-```
-HTTP_USER={username} HTTP_PWD={password} ADB_PATH=<adb_path>
-```
-
-Environment is not a necessary condition. The script has an interaction mode if you leave it blank.
-
-### Parameters:
+### Usage:
 
 ```
--f|--flash      Flash your device (unagi) after downlaod finish.
-                You may have to input root password when you add this argument.
-                Your PATH should have adb path, or you can setup the ADB_PATH.
--F|--flash-only Flash your device from local zipped build(ex: -F{file name}); default: use latest downloaded
--s|--shallow    Shallow flash, download package only compiled binary and push into device, without modifying image
--e|--eng        change the target build to engineer build.
--v|--version,   give the target build version, ex: -vtef == -v100; show available version if nothing specified.
---tef           change the target build to tef build v1.0.0.
---shira         change the target build to shira build v1.0.1.
---v1train       change the target build to v1train build.
---vmaster       change the target build to master build. (Currently, it's only for unagi)
--b|--backup     backup and recover the origin profile.
-                (it will work with -f anf -F)
--B|--backup-only:       backup the phone to local machine
--R|--recover-only:      recover the phone from local machine
--d|--device:    choose device, default for unagi
--y              Assume "yes" to all questions
--h|--help       Display help.
+Usage: ./auto_flash_from_pvt.sh [parameters]
+  -v|--version  the target build version.
+  -d|--device   the target device.
+  -s <serial number>    directs command to device with the given serial number.
+  -f|--full     flash full image into device.
+  -g|--gaia     shallow flash gaia into device.
+  -G|--gecko    shallow flash gecko into device.
+  --usr specify User(USR) build.
+  --eng specify Engineer(ENG) build.
+  -b|--buildid  specify target build YYYYMMDDhhmmss
+  -w            interaction GUI mode.
+  -y            Assume "yes" to all questions
+  -h|--help     display help.
+Environment:
+  HTTP_USER={username}  set LDAP account. (you can fill it into .ldap file)
+  HTTP_PWD={password}   set LDAP password. (you can fill it into .ldap file)
+  UNINSTALL_COMRIL=true         uninstall the com-ril when shallow flash gecko. (Keep com-ril by default)
+  DL_HOME={download_dir_home}   specify download folder. Default=./pvt
+  USE_LOCAL=false       force download target builds (with Build ID) from PVT server. Default=true
+  USE_LOCAL_LATEST=true do not download Latest builds from PVT server. Default=false
+Example:
+  Flash by interaction GUI mode                         ./auto_flash_from_pvt.sh -w
+  (Linux) Flash inari v1.2.0 ENG image                          ./auto_flash_from_pvt.sh --version=v1.2.0 --device=inari --full --eng
+  (Mac)   Flash inari v1.2.0 ENG image                          ./auto_flash_from_pvt.sh --version v1.2.0 --device inari --full --eng
+  (Linux) Flash buri master USR build 20131116040201 gaia/gecko ./auto_flash_from_pvt.sh -vmaster -dburi -b20131116040201 -g -G --usr
+  (Mac)   Flash buri master USR build 20131116040201 gaia/gecko ./auto_flash_from_pvt.sh -v master -d buri -b 20131116040201 -g -G --usr
 ```
-
-### Example:
-
-Download an unagi Engineer build and auto flash into the device without prompt
-
-    ./autoflash.sh -e -f -y
-
-Download an leo user build and auto flash
-
-    ./autoflash.sh -f -d=leo
 
 ### Note:
 
@@ -69,50 +58,75 @@ echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
 
 ----
 
-## auto_flash_from_TWCI.sh
+## auto_flash_from_twci.sh
 
 This script was written for download builds from TW-CI server.
 
-### Parameters:
+### Usage:
 
 ```
+Usage: ./auto_flash_from_twci.sh [parameters]
   -v|--version  the target build version.
   -d|--device   the target device.
   -s <serial number>    directs command to device with the given serial number.
-  -f|--flash    flash image into device.
+  -f|--full     flash full image into device.
   -g|--gaia     shallow flash gaia into device.
-  -G|--Gecko    shallow flash gecko into device.
+  -G|--gecko    shallow flash gecko into device.
   -w            interaction GUI mode.
   -y            Assume "yes" to all questions
   -h|--help     display help.
+Environment:
+  UNINSTALL_COMRIL=true         uninstall the com-ril when shallow flash gecko. (Keep com-ril by default)
+Example:
+  Flash by interaction GUI mode         ./auto_flash_from_twci.sh -w
+  (Linux) Flash wasabi v1.2.0 image             ./auto_flash_from_twci.sh -vv1.2.0 -dwasabi -f
+  (MAC)   Flash wasabi v1.2.0 image             ./auto_flash_from_twci.sh -v v1.2.0 -d wasabi -f
+  (Linux) Flash nexus4 master gaia/gecko        ./auto_flash_from_TWCI.sh --version=master --device=nexus4 -g -G
+  (MAC)   Flash nexus4 master gaia/gecko        ./auto_flash_from_TWCI.sh --version master --device nexus4 --gaia --gecko
 ```
-
-### Example:
-
-Flash unagi v1train image
-
-    ./auto_flash_from_TWCI.sh -vv1train -dunagi -f
-
-Flash wasabi master gaia/gecko
-
-    ./auto_flash_from_TWCI.sh -vmaster -dwasabi -g -G
-
-Flash by interaction GUI mode
-
-    ./auto_flash_from_TWCI.sh -w
 
 ----
 
-## change_OTA_URL.sh
+## backup_restore_profile.sh
+
+This script was written for backup and restore user profile.
+
+### Usage:
+
+```
+Usage:
+  -b|--backup   backup user profile.
+  -r|--restore  restore user profile.
+  -h|--help     display help.
+```
+
+----
+
+## change_ota_channel_pref.sh
+
+Setup a FxOS device for QA by forcing the 'nightly' update channel
+
+### Usage:
+
+```
+Help:
+     -d <device>  : specify a device (leo, hamachi, helix, inari) to update
+     -v <version> : version to update to ( 1.3.0, 1.2.0, 1.1.1)
+     -h : this help menu
+```
+
+----
+
+## change_ota_url.sh
 
 This script is used to change OTA update URL to a local or a specific URL.
 
-### Parameters:
+### Usage:
 
 ```
--u | --url <URL>              - set the following URL for OTA
--p                            - show current preference
--h | --help                   - print usage.
+-h, --help      Show usage.
+-p              Show prefs file of device.
+-u, --url       The update.xml URL.
 ```
 
 ### Example:
@@ -126,9 +140,10 @@ Change the OTA update URL to http://update.server/update.xml.
 ## check_versions.sh
 
 Checking the version of B2G on devices.
+
 Please make sure your devices can be detected by ADB tool.
 
-### Parameters:
+### Usage:
 
 ```
 -s <serial number>            - directs command to the USB device or emulator with
@@ -149,16 +164,6 @@ Check version with environment variable
 
 ----
 
-## enable_captiveportal.sh
-
-This script was written for enable Captive Portal detection for v1.0.1 and above.
-
-Please create the config file `.enable_captiveportal.conf` first.
-
-The [Bug 869394](https://bugzil.la/869394) turn on Captive Portal detection by default after 2013/05/09.
-
-----
-
 ## download_desktop_client.sh
 
 This script was written for download last desktop from server.
@@ -167,22 +172,22 @@ Visit [MDN: Using the B2G desktop client](https://developer.mozilla.org/en-US/do
 
 ### Parameters:
 
-There are two version `18` and `26`, three os platform `l32`, `l64` and `mac`.
+There are three os platform `l32` (linux 32bit), `l64` (linux 64bit) and `mac`.
+
+And you can run `./download_desktop_client.sh -v` to get the supported versions.
 
 ```
-This script was written for download last desktop from server.
-
 Usage: ./download_desktop_client.sh [parameters]
--o|--os         The target OS. Default: --os l64
+-o|--os         The target OS. Default: linux64
                 show available OS if nothing specified.
--v|--version    The target build version. Default: -v18
+-v|--version    The target build version. Default: master
                 show available version if nothing specified.
 -r|--run-once   Run once to get BuildID.
 -h|--help       Display help.
 Example:
-  B2G 26 Linux 32bit build.     ./download_desktop_client.sh --os=l32 -v26
-  B2G 18 Linux 64bit build.     ./download_desktop_client.sh --os=l64 -v18
-  B2G 18 Mac build.     ./download_desktop_client.sh -omac
+  B2G v1.2.0 Linux 32bit build. ./download_desktop_client.sh --os=l32 --version=120
+  B2G v1.1.0 Linux 64bit build. ./download_desktop_client.sh -ol64 -v110
+  B2G master Mac build. ./download_desktop_client.sh -omac
 ```
 
 ----
@@ -191,11 +196,26 @@ Example:
 
 This is to get the crash reports of submitted/pending.
 
+It will get reports under `/data/b2g/mozilla/Crash Reports/` on device.
+
 ----
 
-## grant_geo_permission.sh
+## install_comril.sh
 
-This script was written for grant the geolocation permission of unagi.
+This script was written for uninstall/install com-ril.
+
+### Usage:
+
+```
+Usage: ./install_comril.sh [parameters]
+  -u|--uninstall        uninstall the com-ril.
+  -r|--ril      install the com-ril from the file.
+  -d|--ril-debug        turn on ril debugging.
+  -s <serial number>    directs command to device with the given serial number.
+  -y            Assume "yes" to all questions
+  -h|--help     display help.
+
+```
 
 ----
 
@@ -203,29 +223,20 @@ This script was written for grant the geolocation permission of unagi.
 
 This script was written for shallow flash the gaia and/or gecko.
 
-### Parameters:
+### Usage:
 
 ```
+Usage: ./shallow_flash.sh [parameters]
 -g|--gaia       Flash the gaia (zip format) into your device.
 -G|--gecko      Flash the gecko (tar.gz format) into your device.
 -s <serial number>      directs command to device with the given serial number.
 -y              flash the file without asking askeing (it's a joke...)
 -h|--help       Display help.
+Example:
+  Flash gaia.           ./shallow_flash.sh --gaia=gaia.zip
+  Flash gecko.          ./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz
+  Flash gaia and gecko. ./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz
 ```
-
-### Example:
-
-Flash gaia.
-
-    ./autoflash.sh --gaia=gaia.zip
-
-Flash gecko.
-
-    ./autoflash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz
-
-Flash gaia and gecko.
-
-    ./autoflash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz
 
 ----
 

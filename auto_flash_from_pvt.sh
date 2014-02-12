@@ -62,7 +62,7 @@ FLASH_USER_ENG_DONE=false
 ## Show usage
 function helper(){
     echo -e "This script was written for download builds from PVT server.\n"
-    echo -e "Usage: ./auto_flash_from_PVT.sh [parameters]"
+    echo -e "Usage: ./auto_flash_from_pvt.sh [parameters]"
     echo -e "  -v|--version\tthe target build version."
     echo -e "  -d|--device\tthe target device."
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
