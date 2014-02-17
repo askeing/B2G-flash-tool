@@ -435,6 +435,25 @@ function replace_url_for_build_id() {
     fi
 }
 
+## Find build id for latest build
+## argument 1: source_url
+function find_latest_build_id() {
+    if [[ ${LATEST_BUILD_ID} != "" ]]; then
+        echo "Latest build id: ${LATEST_BUILD_ID}"
+        return 0
+    fi
+    if [[ $# == 1 ]]; then
+        SRC_URL=$1
+    else
+        SRC_URL=${TARGET_URL%/latest/}
+    fi
+    SOURCE=`run_wget -qO- ${SRC_URL} | grep ">[0-9-]*/" | sed 's|.*>\([0-9-]*\)/.*|\1|' | tail -n 1`
+    if [[ $SOURCE == *"-"* ]]; then
+        LATEST_BUILD_ID="${SOURCE//-/}"
+    fi
+    find_latest_build_id "${SRC_URL}/${SOURCE}"
+}
+
 ## Prepare Download Folder
 function prepare_download_folder() {
     DL_DIR_USR_ENG="USR"
