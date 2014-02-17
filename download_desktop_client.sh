@@ -4,7 +4,8 @@
 #   This script was written for download last desktop from server.
 #==========================================================================
 
-Run_Once_Flag=false
+DOWNLOAD_DIR="B2G_Desktop"
+Decompress_Flag=false
 Download_Flag=true
 OS_Flag="LINUX_64"
 Version_Flag="0"
@@ -17,17 +18,17 @@ function helper_config(){
 ## helper function
 ## no input arguments, simply print helper descirption to std out
 function helper(){
-	echo -e "This script was written for download last desktop from server.\n"
-	echo -e "Usage: ./download_desktop_client.sh [parameters]"
+    echo -e "This script was written for download last desktop from server.\n"
+    echo -e "Usage: ./download_desktop_client.sh [parameters]"
     echo -e "-o|--os \tThe target OS. Default: linux64\n\t\tshow available OS if nothing specified."
     echo -e "-v|--version\tThe target build version. Default: master\n\t\tshow available version if nothing specified."
-    echo -e "-r|--run-once\tRun once to get BuildID."
-	echo -e "-h|--help\tDisplay help."
-	echo -e "Example:"
-	echo -e "  B2G v1.2.0 Linux 32bit build.\t./download_desktop_client.sh --os=l32 --version=120"
-	echo -e "  B2G v1.1.0 Linux 64bit build.\t./download_desktop_client.sh -ol64 -v110"
-	echo -e "  B2G master Mac build.\t./download_desktop_client.sh -omac"
-	exit 0
+    echo -e "-d|--decompress\tDecompress the downloaded build."
+    echo -e "-h|--help\tDisplay help."
+    echo -e "Example:"
+    echo -e "  B2G v1.2.0 Linux 32bit build.\t./download_desktop_client.sh --os=l32 --version=120"
+    echo -e "  B2G v1.1.0 Linux 64bit build.\t./download_desktop_client.sh -ol64 -v110"
+    echo -e "  B2G master Mac build.\t./download_desktop_client.sh -omac"
+    exit 0
 }
 
 ## parameters parsing
@@ -71,8 +72,8 @@ function version_info(){
 # Load Config File (before load parameters)
 ####################
 CONFIG_FILE=.download_desktop_client.conf
-if [ -f $CONFIG_FILE ]; then
-    . $CONFIG_FILE
+if [[ -f ${CONFIG_FILE} ]]; then
+    . ${CONFIG_FILE}
 else
     helper_config
     exit -2
@@ -80,15 +81,15 @@ fi
 
 ## distinguish platform
 case `uname` in
-	"Linux")
-		## add getopt argument parsing
-		TEMP=`getopt -o hro::v:: --long help,run-once,os::,version:: \
-	    -n 'error occured' -- "$@"`
+    "Linux")
+        ## add getopt argument parsing
+        TEMP=`getopt -o hdo::v:: --long help,decompress,os::,version:: \
+        -n 'error occured' -- "$@"`
 
-		if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
+        if [ $? != 0 ]; then echo "Terminating..." >&2; exit 1; fi
 
-		eval set -- "$TEMP";;
-	"Darwin");;
+        eval set -- "$TEMP";;
+    "Darwin");;
 esac
 
 
@@ -105,7 +106,7 @@ do
             "") version_info; exit 0; shift 2;;
              *) version $2; shift 2;;
            esac;;
-        -r|--run-once) Run_Once_Flag=true; shift;;
+        -d|--decompress) Decompress_Flag=true; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
         "") shift;break;;
@@ -117,70 +118,69 @@ done
 # Parse URL
 ####################
 TARGET=CONF_B2G${Version_Flag}_${OS_Flag}_URL
-echo -e "Target: $TARGET"
-eval URL=\$$TARGET
-echo -e "DL URL: $URL"
+echo -e "Target: ${TARGET}"
+eval URL=\${$TARGET}
+echo -e "DL URL: ${URL}"
 DownloadFilename=$(basename ${URL})
 
 
 ####################
 # Download task
 ####################
-if [ $Download_Flag == true ]; then
-	# Clean file
-	echo -e "Clean downloaded build ($DownloadFilename)..."
-	rm -f $DownloadFilename
+BUILD_TXT_URL=${URL//tar.bz2/txt}
+BUILD_JSON_URL=${URL//tar.bz2/json}
 
-	# Download file
-	echo -e "Download latest desktop client build ($DownloadFilename)..."
-    wget $URL
+if [[ ! -d ${DOWNLOAD_DIR} ]]; then
+    mkdir -p ${DOWNLOAD_DIR}
+fi
 
-	# Check the download is okay
-	if [ $? -ne 0 ]; then
-		echo -e "Download $URL failed."
-		exit 1
-	fi
+## Get the Build ID of Build
+BUILD_ID=`wget -qO- ${BUILD_TXT_URL} | head -n 1`
+echo "BuildID: ${BUILD_ID}"
+# record Latest Build ID
+echo "BUILD_ID=${BUILD_ID}" > ${DOWNLOAD_DIR}/VERSION-DESKTOP
 
-	echo -e "Download latest desktop client build done."
+## Download B2G Desktop Build
+if [ ${Download_Flag} == true ]; then
+    ## Clean Folder
+    rm -rf ${DOWNLOAD_DIR}/${BUILD_ID}
+
+    # Download file
+    echo -e "Download latest desktop client build (${DownloadFilename})..."
+    wget -P ${DOWNLOAD_DIR}/${BUILD_ID}/ ${URL} &&
+    wget -P ${DOWNLOAD_DIR}/${BUILD_ID}/ ${BUILD_TXT_URL} &&
+    wget -P ${DOWNLOAD_DIR}/${BUILD_ID}/ ${BUILD_JSON_URL}
+
+    # Check the download is okay
+    if [ $? -ne 0 ]; then
+        echo -e "Download ${URL} failed."
+        exit 1
+    fi
+
+    echo -e "Download latest desktop client build done."
 fi
 
 ####################
 # Decompress task
 ####################
 
-if ! [ ${OS_Flag} == "mac" ] && [ $Run_Once_Flag == true ]; then
+if [[ ! ${OS_Flag} == "mac" ]] && [[ ${Decompress_Flag} == true ]]; then
     Filename=${DownloadFilename}
 
     # Check the file is exist
-    if ! [ -z $Filename ]; then
-        test ! -f $Filename && echo -e "The file $Filename DO NOT exist." && exit 1
+    if [[ ! -z ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} ]]; then
+        test ! -f ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} && echo -e "The file ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} DO NOT exist." && exit 1
     else
         echo -e "The file DO NOT exist." && exit 1
     fi
 
     # Delete folder
     echo -e "Delete old build folder: b2g"
-    rm -rf b2g/
+    rm -rf ${DOWNLOAD_DIR}/${BUILD_ID}/b2g/
 
     # Unzip file
-    echo -e "Unzip $Filename ..."
-    tar xvf $Filename > /dev/null || exit -1
-
-    # version info
-    echo -e "\nRunning b2g to get BuildID..."
-    echo "user_pref('marionette.force-local', true);" >> ./b2g/gaia/profile/user.js
-    ./b2g/b2g > /dev/null &
-    PID=$!
-    sleep 15
-    echo -e "Kill b2g..."
-    kill $PID
-    echo -e "\n=== VERSION ==="
-    grep "gecko.buildID" ./b2g/gaia/profile/prefs.js | sed "s/user_pref(\"//g" | sed "s/\");//g" | sed "s/\", \"/=/g" | sed "s/gecko.buildID=/GECKO_BUILD_ID=/g" > VERSION-DESKTOP
-    RET=$?
-    if ! [ $RET == 0 ]; then
-        echo "GECKO_BUILD_ID=None" > VERSION-DESKTOP
-    fi
-    cat VERSION-DESKTOP
+    echo -e "Unzip ${Filename} ..."
+    tar xvf ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} -C ${DOWNLOAD_DIR}/${BUILD_ID}/ > /dev/null || exit -1
 else
     echo "Mac desktop client, do not decompress."
 fi
