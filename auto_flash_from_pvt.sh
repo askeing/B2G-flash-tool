@@ -799,8 +799,21 @@ function download_file_from_PVT() {
     rm -rf ${DEST_DIR}/${DL_FILE}
     run_wget -P ${DEST_DIR} ${DL_URL}${DL_FILE}
     ret=$?
-    if [ ${ret} != 0 ]; then
+    if [[ ${ret} != 0 ]]; then
         echo "Download failed." && echo "byebye." && exit 0
+    fi
+
+    # find BuildID of Latest build, then copy Latest build into their own folder.
+    if [[ ${BUILD_ID} == "" ]]; then
+        find_latest_build_id
+        if [[ ${LATEST_BUILD_ID} != "" ]]; then
+            LATEST_BUILD_ID_DIR=${DL_HOME}/${DEVICE_NAME}/${VERSION_NAME}/${DL_DIR_USR_ENG}/${LATEST_BUILD_ID}
+            if [[ ! -f ${LATEST_BUILD_ID_DIR}/${DL_FILE} ]]; then
+                mkdir -p ${LATEST_BUILD_ID_DIR}
+                echo "Copy ${DEST_DIR}/${DL_FILE} to ${LATEST_BUILD_ID_DIR}/"
+                cp ${DEST_DIR}/${DL_FILE} ${LATEST_BUILD_ID_DIR}/
+            fi
+        fi
     fi
 }
 
@@ -878,6 +891,25 @@ function do_flash_image() {
     cd ${CURRENT_DIR}
 }
 
+## Find the BuildID of Latest builds.
+## If there is no parameter, then this function will set TARGET_URL as SRC_URL (remove "/latest/") by default.
+## $1: SRC_URL
+function find_latest_build_id() {
+    if [[ ${LATEST_BUILD_ID} != "" ]]; then
+        echo "Latest BuildID is ${LATEST_BUILD_ID}"
+        return 0
+    fi
+    if [[ $# == 1 ]]; then
+        SRC_URL=$1
+    else
+        SRC_URL=${TARGET_URL%/latest/}
+    fi
+    SOURCE=`run_wget -qO- ${SRC_URL} | grep ">[0-9-]*/" | sed 's|.*>\([0-9-]*\)/.*|\1|' | tail -n 1`
+    if [[ ${SOURCE} == *"-"* ]]; then
+        LATEST_BUILD_ID="${SOURCE//-/}"
+    fi
+    find_latest_build_id "${SRC_URL}/${SOURCE}"
+}
 
 #########################
 # Create TEMP Folder    #
