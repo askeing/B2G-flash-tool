@@ -182,7 +182,7 @@ Usage: ./download_desktop_client.sh [parameters]
                 show available OS if nothing specified.
 -v|--version    The target build version. Default: master
                 show available version if nothing specified.
--r|--run-once   Run once to get BuildID.
+-d|--decompress Decompress the downloaded build.
 -h|--help       Display help.
 Example:
   B2G v1.2.0 Linux 32bit build. ./download_desktop_client.sh --os=l32 --version=120
