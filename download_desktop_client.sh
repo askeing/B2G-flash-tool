@@ -139,17 +139,18 @@ BUILD_ID=`wget -qO- ${BUILD_TXT_URL} | head -n 1`
 echo "BuildID: ${BUILD_ID}"
 # record Latest Build ID
 echo "BUILD_ID=${BUILD_ID}" > ${DOWNLOAD_DIR}/VERSION-DESKTOP
+TARGET_DIR=${DOWNLOAD_DIR}/${Version_Flag}/${BUILD_ID}
 
 ## Download B2G Desktop Build
 if [ ${Download_Flag} == true ]; then
     ## Clean Folder
-    rm -rf ${DOWNLOAD_DIR}/${BUILD_ID}
+    rm -rf ${TARGET_DIR}
 
     # Download file
     echo -e "Download latest desktop client build (${DownloadFilename})..."
-    wget -P ${DOWNLOAD_DIR}/${BUILD_ID}/ ${URL} &&
-    wget -P ${DOWNLOAD_DIR}/${BUILD_ID}/ ${BUILD_TXT_URL} &&
-    wget -P ${DOWNLOAD_DIR}/${BUILD_ID}/ ${BUILD_JSON_URL}
+    wget -P ${TARGET_DIR}/ ${URL} &&
+    wget -P ${TARGET_DIR}/ ${BUILD_TXT_URL} &&
+    wget -P ${TARGET_DIR}/ ${BUILD_JSON_URL}
 
     # Check the download is okay
     if [ $? -ne 0 ]; then
@@ -168,19 +169,19 @@ if [[ ! ${OS_Flag} == "mac" ]] && [[ ${Decompress_Flag} == true ]]; then
     Filename=${DownloadFilename}
 
     # Check the file is exist
-    if [[ ! -z ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} ]]; then
-        test ! -f ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} && echo -e "The file ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} DO NOT exist." && exit 1
+    if [[ ! -z ${TARGET_DIR}/${Filename} ]]; then
+        test ! -f ${TARGET_DIR}/${Filename} && echo -e "The file ${TARGET_DIR}/${Filename} DO NOT exist." && exit 1
     else
         echo -e "The file DO NOT exist." && exit 1
     fi
 
     # Delete folder
-    echo -e "Delete old build folder: b2g"
-    rm -rf ${DOWNLOAD_DIR}/${BUILD_ID}/b2g/
+    echo -e "Delete folder: ${TARGET_DIR}/b2g"
+    rm -rf ${TARGET_DIR}/b2g/
 
     # Unzip file
     echo -e "Unzip ${Filename} ..."
-    tar xvf ${DOWNLOAD_DIR}/${BUILD_ID}/${Filename} -C ${DOWNLOAD_DIR}/${BUILD_ID}/ > /dev/null || exit -1
+    tar xvf ${TARGET_DIR}/${Filename} -C ${TARGET_DIR}/ > /dev/null || exit -1
 else
     echo "Mac desktop client, do not decompress."
 fi
