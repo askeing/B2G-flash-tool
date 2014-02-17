@@ -131,14 +131,14 @@ BUILD_TXT_URL=${URL//tar.bz2/txt}
 BUILD_JSON_URL=${URL//tar.bz2/json}
 
 if [[ ! -d ${DOWNLOAD_DIR} ]]; then
-    mkdir -p ${DOWNLOAD_DIR}
+    mkdir -p ${DOWNLOAD_DIR}/${Version_Flag}/
 fi
 
 ## Get the Build ID of Build
 BUILD_ID=`wget -qO- ${BUILD_TXT_URL} | head -n 1`
 echo "BuildID: ${BUILD_ID}"
 # record Latest Build ID
-echo "BUILD_ID=${BUILD_ID}" > ${DOWNLOAD_DIR}/VERSION-DESKTOP
+echo "BUILD_ID=${BUILD_ID}" > ${DOWNLOAD_DIR}/${Version_Flag}/VERSION-DESKTOP
 TARGET_DIR=${DOWNLOAD_DIR}/${Version_Flag}/${BUILD_ID}
 
 ## Download B2G Desktop Build
