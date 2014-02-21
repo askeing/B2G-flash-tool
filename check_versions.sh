@@ -14,30 +14,30 @@ run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-	adb $ADB_FLAGS $@
+    adb $ADB_FLAGS $@
 }
 
 
 # argument parsing
 while [ $# -gt 0 ]; do
-	case "$1" in
-	"-s")
-		ADB_FLAGS+="-s $2"
-		shift
-		;;
-	"-h"|"--help")
-	    helper
-	    exit 0
-	    ;;
-	esac
-	shift
+    case "$1" in
+    "-s")
+        ADB_FLAGS+="-s $2"
+        shift
+        ;;
+    "-h"|"--help")
+        helper
+        exit 0
+        ;;
+    esac
+    shift
 done
 
 
 if [ 'unknown' == $(run_adb get-state) ]; then
-	echo "Unknown command..."
-	adb devices
-	exit -1
+    echo "Unknown command..."
+    adb devices
+    exit -1
 fi
 
 
@@ -59,24 +59,30 @@ run_adb pull /data/local/webapps/settings.gaiamobile.org/application.zip &> /dev
 run_adb pull /system/b2g/webapps/settings.gaiamobile.org/application.zip &> /dev/null || echo "Error pulling gaia file"
 run_adb pull /system/b2g/application.ini &> /dev/null || echo "Error pulling application.ini"
 
-if [ -f omni.ja ] && [ -f application.zip ] && [ -f application.ini ]; then
-	# unzip application.zip to get gaia info
-	unzip application.zip resources/gaia_commit.txt > /dev/null && \
-	echo 'Gaia     ' $(head -n 1 resources/gaia_commit.txt)
-	# echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
+if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; then
+    # unzip application.zip to get gaia info
+    unzip application.zip resources/gaia_commit.txt > /dev/null || \
+    echo '#####    Unzip application.zip error.'
+    if [[ -f resources/gaia_commit.txt ]]; then
+        echo 'Gaia     ' $(head -n 1 resources/gaia_commit.txt)
+        # echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
+    fi
 
     # de-optimize the ja file
     mkdir -p deoptimize
-	python optimizejars.py --deoptimize ./ ./ ./deoptimize &> /dev/null || \
-	echo '#####    Deoptimize omni.ja failed, please run this script with sudo.'
-	# unzip omni.ja to get gecko info
-	unzip deoptimize/omni.ja chrome/toolkit/content/global/buildconfig.html > /dev/null && \
-	echo 'Gecko    ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
+    python optimizejars.py --deoptimize ./ ./ ./deoptimize &> /dev/null || \
+    echo '#####    Deoptimize omni.ja failed, please run this script with sudo.'
+    # unzip omni.ja to get gecko info
+    unzip deoptimize/omni.ja chrome/toolkit/content/global/buildconfig.html > /dev/null || \
+    echo '#####    Unzip deoptimized omni.ja error.'
+    if [[ -f chrome/toolkit/content/global/buildconfig.html ]]; then
+        echo 'Gecko    ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
+    fi
 
-	# get BuildID from application.ini
-	for i in BuildID Version ; do
-	    echo $i ' ' $(grep "^ *$i" application.ini | sed "s,.*=,,g")
-	done
+    # get BuildID from application.ini
+    for i in BuildID Version ; do
+        echo $i ' ' $(grep "^ *$i" application.ini | sed "s,.*=,,g")
+    done
 fi
 
 # get OEM build info
