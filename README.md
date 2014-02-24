@@ -97,6 +97,7 @@ This script was written for backup and restore user profile.
 Usage:
   -b|--backup   backup user profile.
   -r|--restore  restore user profile.
+  -p|--profile-dir      specify the profile folder. Default=./mozilla-profile
   -h|--help     display help.
 ```
 
