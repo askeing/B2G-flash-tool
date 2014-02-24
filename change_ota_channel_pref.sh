@@ -16,7 +16,7 @@ while [ $# -gt 0 ]; do
       echo "
       Help:
           -d <device>  : specify a device (leo, hamachi, helix, inari) to update
-          -v <version> : version to update to ( 1.3.0, 1.2.0, 1.1.1)
+          -v <version> : version to update to (1.4.0, 1.3.0, 1.2.0, 1.1.1)
           -h : this help menu
       "
       ;;
