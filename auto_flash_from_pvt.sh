@@ -98,6 +98,7 @@ function helper(){
 ## Show the available version info
 function version_info(){
     echo -e "Available version:"
+    echo -e "  140|v1.4.0"
     echo -e "  130|v1.3.0"
     echo -e "  120|v1.2.0"
     echo -e "  110hd|v1.1.0hd"
@@ -110,6 +111,7 @@ function version_info(){
 function version() {
     local_ver=$1
     case "$local_ver" in
+        140|v1.4.0) VERSION_NAME="v140";;
         130|v1.3.0) VERSION_NAME="v130";;
         120|v1.2.0) VERSION_NAME="v120";;
         110hd|v1.1.0hd) VERSION_NAME="v110hd";;
@@ -163,7 +165,7 @@ function device() {
 function select_device_dialog() {
     dialog --backtitle "Select Device from PVT Server " --title "Device List" --menu "Move using [UP] [DOWN],[Enter] to Select" \
     18 80 10 \
-    "unagi" "Unagi Device" \
+    "unagi" "Unagi Device (Not Supported)" \
     "hamachi" "Buri/Hamachi Device" \
     "inari" "Ikura/Inari Device" \
     "leo" "Leo Device" \
