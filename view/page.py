@@ -52,37 +52,45 @@ class ListPage(BasePage):
             self.engList.curselection()[0])
         self.controller.doFlash(params)
 
-    def setDeviceList(self, list=[]):
+    def setDeviceList(self, list=[], default=0):
         self.deviceLabel = Label(self, text="Select Device", font=TITLE_FONT)
         self.deviceLabel.grid(row=1, column=0)
         self.deviceList = Listbox(self, exportselection=0)
+        if len(list) > 0:
+            self.deviceList.select_set(default)
         for l in list:
             self.deviceList.insert(END, l)
         self.deviceList.grid(row=2, column=0)
 
-    def setVersionList(self, list=[]):
+    def setVersionList(self, list=[], default=0):
         self.versionLabel = Label(self, text="Select Version", font=TITLE_FONT)
         self.versionLabel.grid(row=1, column=1)
         self.versionList = Listbox(self, exportselection=0)
+        if len(list) > 0:
+            self.deviceList.select_set(default)
         for l in list:
             self.versionList.insert(END, l)
         self.versionList.grid(row=2, column=1)
 
-    def setPackageList(self, list=[]):
+    def setPackageList(self, list=[], default=0):
         self.packageLabel = Label(
             self,
             text="Gecko/Gaia/Full",
             font=TITLE_FONT)
         self.packageLabel.grid(row=1, column=2)
         self.packageList = Listbox(self, exportselection=0)
+        if len(list) > 0:
+            self.deviceList.select_set(default)
         for l in list:
             self.packageList.insert(END, l)
         self.packageList.grid(row=2, column=2)
 
-    def setEngList(self, list=[]):
+    def setEngList(self, list=[], default=0):
         self.engLabel = Label(self, text="Build Type", font=TITLE_FONT)
         self.engLabel.grid(row=1, column=3)
         self.engList = Listbox(self, exportselection=0)
+        if len(list) > 0:
+            self.deviceList.select_set(default)
         for l in list:
             self.engList.insert(END, l)
         self.engList.grid(row=2, column=3)

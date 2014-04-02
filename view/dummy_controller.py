@@ -18,8 +18,17 @@ class FlashApp():
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
         container.pack(side="top", fill="x", expand=False)
+        self.container = container
 
-        listPage = ListPage(parent=container, controller=self)
+    def setFrameList(self, list):
+        self.frames = list
+        for idx, val in enumerate(self.frames):
+            val.index = idx
+            val.grid(row=0, column=0, sticky="nsew")
+
+    def setupView(self):
+        #  NOTE: Please overwrite this function to provide custom view
+        listPage = ListPage(parent=self.container, controller=self)
         listPage.setupView()
         listPage.setDeviceList([
             "hamachi",
@@ -45,21 +54,17 @@ class FlashApp():
             "Eng",
             "user",
             ])
-        authPage = AuthPage(parent=container, controller=self)
+        authPage = AuthPage(parent=self.container, controller=self)
         authPage.setupView(
             "Account Info",
             '',
             '')
 
-        self.frames = [
+        self.setFrameList([
             authPage,
             listPage,
-            ]
-        for idx, val in enumerate(self.frames):
-            val.index = idx
-            val.grid(row=0, column=0, sticky="nsew")
+            ])
         self.transition()
-        self.container = container
 
     def setAuth(self, page, user, pwd):
         ## pass auth parameters
@@ -84,7 +89,9 @@ class FlashApp():
 
 
 if __name__ == '__main__':
-    app = FlashApp().container
+    prog = FlashApp()
+    app = prog.container
+    prog.setupView()
     from sys import platform as _platform
     if _platform == 'darwin':
         os.system("/usr/bin/osascript -e \'tell app \"Find\
