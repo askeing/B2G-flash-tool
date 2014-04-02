@@ -26,34 +26,10 @@ class FlashApp():
             val.index = idx
             val.grid(row=0, column=0, sticky="nsew")
 
-    def setupView(self):
-        #  NOTE: Please overwrite this function to provide custom view
+    def setupView(self, data):
+        #NOTE: Please overwrite this function to provide custom view
         listPage = ListPage(parent=self.container, controller=self)
-        listPage.setupView()
-        listPage.setDeviceList([
-            "hamachi",
-            "leo",
-            "helix",
-            "nexus4",
-            "tarako"
-            ])
-        listPage.setVersionList([
-            "master",
-            "aurora",
-            "1.2",
-            "1.3",
-            "1.4"
-            ])
-        listPage.setPackageList([
-            "Gecko/gaia",
-            "Gecko",
-            "gaia",
-            "full flash"
-            ])
-        listPage.setEngList([
-            "Eng",
-            "user",
-            ])
+        listPage.setupView(data=data)
         authPage = AuthPage(parent=self.container, controller=self)
         authPage.setupView(
             "Account Info",
@@ -89,9 +65,12 @@ class FlashApp():
 
 
 if __name__ == '__main__':
+    data = {}
+    with open('../test/flash_info.data') as f:
+        data = eval(f.read())
     prog = FlashApp()
     app = prog.container
-    prog.setupView()
+    prog.setupView(data)
     from sys import platform as _platform
     if _platform == 'darwin':
         os.system("/usr/bin/osascript -e \'tell app \"Find\

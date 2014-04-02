@@ -2,7 +2,7 @@
 
 import os
 from view.page import ListPage, AuthPage
-from view.dummy_controller import FlashApp
+from view.base_controller import FlashApp
 
 
 def setupTempFolder():

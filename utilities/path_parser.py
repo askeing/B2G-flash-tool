@@ -22,17 +22,23 @@ class PathParser(object):
         return build_and_time_list
 
     def _parse_device_version_and_time_from_list(self, build_and_time_list):
-        device_build_version_and_time_list = []
+        root_dict = {}
         for build_and_time in build_and_time_list:
             splited_build_info = build_and_time[0].split('-')
-            item = {}
-            item['device'] = splited_build_info[2]
-            item['branch'] = splited_build_info[1]
+            device_name = splited_build_info[2]
+            branch_name = splited_build_info[1]
             if len(splited_build_info) == 4:
-                item['engineer'] = True
+                engineer_build = True
             else:
-                item['engineer'] = False
-            item['src'] = build_and_time[0]
-            item['time'] = build_and_time[1]
-            device_build_version_and_time_list.append(item)
-        return device_build_version_and_time_list
+                engineer_build = False
+            src_name = build_and_time[0]
+            last_modify_time = build_and_time[1]
+            build = 'Engineer' if engineer_build else 'User'
+            build_item = {build: {'src': src_name, 'last_modify_time': last_modify_time}}
+
+            if root_dict.get(device_name) == None:
+                root_dict[device_name] = {}
+            if root_dict[device_name].get(branch_name) == None:
+                root_dict[device_name][branch_name] = {}
+            root_dict[device_name][branch_name].update(build_item)
+        return root_dict
