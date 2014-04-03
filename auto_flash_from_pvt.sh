@@ -133,6 +133,7 @@ function device_info(){
     echo -e "  leo"
     echo -e "  helix"
     echo -e "  wasabi"
+    echo -e "  tarako"
     echo -e "  nexus4"
 }
 
@@ -147,6 +148,7 @@ function device() {
         leo) DEVICE_NAME="leo";;
         helix) DEVICE_NAME="helix";;
         wasabi) DEVICE_NAME="wasabi";;
+        tarako) DEVICE_NAME="tarako";;
         nexus4) DEVICE_NAME="nexus4";;
         *) device_info; exit -1;;
     esac
@@ -171,6 +173,7 @@ function select_device_dialog() {
     "leo" "Leo Device" \
     "helix" "Helix Device" \
     "wasabi" "Wasabi Device" \
+    "tarako" "Tarako Device" \
     "nexus4" "Nexus 4 Device" 2>${TMP_DIR}/menuitem_device
     ret=$?
     if [ ${ret} == 1 ]; then
@@ -184,7 +187,7 @@ function select_device_dialog() {
 }
 
 function select_device_dialog_mac() {
-    device_option_list='{"unagi","hamachi","inari","leo","helix","wasabi","nexus4"}'
+    device_option_list='{"unagi","hamachi","inari","leo","helix","wasabi","tarako","nexus4"}'
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
     ret=${ret#*text returned:}
     ret=${ret%, button returned:*}
