@@ -2,7 +2,7 @@
 
 from Tkinter import Frame, Label, Button,\
     Radiobutton, StringVar, IntVar,\
-    Entry, Listbox, END
+    Entry, Listbox, ACTIVE, END
 
 TITLE_FONT = ("Helvetica", 18, "bold")
 
@@ -27,7 +27,12 @@ class ListPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
 
-    def setupView(self, title="AllinOne"):
+    def setData(self, data):
+        self.data = data
+
+    def setupView(self, title="AllinOne", data=None):
+        if(data):
+            self.setData(data)
         self.desc = Label(self, text=title, font=TITLE_FONT)
         self.desc.grid(row=0, column=0, columnspan=2)
         self.ok = Button(self,
@@ -39,8 +44,66 @@ class ListPage(BasePage):
                              text='Exit',
                              command=lambda: self.controller.quit())
         self.cancel.grid(row=4, column=0, sticky="E")
+        self.deviceLabel = Label(self, text="Select Device", font=TITLE_FONT)
+        self.deviceLabel.grid(row=1, column=0)
+        self.deviceList = Listbox(self, exportselection=0)
+        self.deviceList.grid(row=2, column=0)
+        self.deviceList.bind('<<ListboxSelect>>', self.deviceOnSelect)
+        self.versionLabel = Label(self, text="Select Version", font=TITLE_FONT)
+        self.versionLabel.grid(row=1, column=1)
+        self.versionList = Listbox(self, exportselection=0)
+        self.versionList.grid(row=2, column=1)
+        self.versionList.config(state="disabled")
+        self.versionList.bind('<<ListboxSelect>>', self.versionOnSelect)
+        self.engLabel = Label(self, text="Build Type", font=TITLE_FONT)
+        self.engLabel.grid(row=1, column=2)
+        self.engList = Listbox(self, exportselection=0)
+        self.engList.grid(row=2, column=2)
+        self.engList.config(state="disabled")
+        self.engList.bind('<<ListboxSelect>>', self.engOnSelect)
+        self.packageLabel = Label(
+            self,
+            text="Gecko/Gaia/Full",
+            font=TITLE_FONT)
+        self.packageLabel.grid(row=1, column=3)
+        self.packageList = Listbox(self, exportselection=0)
+        self.packageList.grid(row=2, column=3)
+        self.packageList.config(state="disabled")
+        self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
+        self._setDeviceList(list=self.data.keys())
+
+    def deviceOnSelect(self, evt):
+        version = self.data[
+            evt.widget.get(evt.widget.curselection())
+            ]
+        self.versionList.config(state="normal")
+        self.engList.config(state="disabled")
+        self.packageList.config(state="disabled")
+        self.ok.config(state="disabled")
+        self._setVersionList(version)
+
+    def versionOnSelect(self, evt):
+        device = self.deviceList.get(ACTIVE)
+        version = self.versionList.get(ACTIVE)
+        eng = self.data[device][version]
+        self.engList.config(state="normal")
+        self.packageList.config(state="disabled")
+        self.ok.config(state="disabled")
+        self._setEngList(eng)
+
+    def engOnSelect(self, evt):
+        device = self.deviceList.get(ACTIVE)
+        version = self.versionList.get(ACTIVE)
+        eng = self.engList.get(ACTIVE)
+        self.packageList.config(state="normal")
+        self.ok.config(state="normal")
+        self._setPackageList() # hard coded right now
+
+    def packageOnSelect(self, evt):
+        self.ok.config(state="normal")
 
     def confirm(self):
+        # TODO:  verify if all options are selected
         params = {}
         params['device'] = self.deviceList.get(
             self.deviceList.curselection()[0])
@@ -52,40 +115,34 @@ class ListPage(BasePage):
             self.engList.curselection()[0])
         self.controller.doFlash(params)
 
-    def setDeviceList(self, list=[]):
-        self.deviceLabel = Label(self, text="Select Device", font=TITLE_FONT)
-        self.deviceLabel.grid(row=1, column=0)
-        self.deviceList = Listbox(self, exportselection=0)
-        for l in list:
-            self.deviceList.insert(END, l)
-        self.deviceList.grid(row=2, column=0)
+    def _setDeviceList(self, list=[], default=None):
+        for li in list:
+            self.deviceList.insert(END, li)
+        if default:
+            self.deviceList.select_set(default)
 
-    def setVersionList(self, list=[]):
-        self.versionLabel = Label(self, text="Select Version", font=TITLE_FONT)
-        self.versionLabel.grid(row=1, column=1)
-        self.versionList = Listbox(self, exportselection=0)
-        for l in list:
-            self.versionList.insert(END, l)
-        self.versionList.grid(row=2, column=1)
+    def _setVersionList(self, list=[], default=None):
+        self.versionList.delete(0, END)
+        for li in list:
+            self.versionList.insert(END, li)
+        if default:
+            self.versionList.select_set(default)
 
-    def setPackageList(self, list=[]):
-        self.packageLabel = Label(
-            self,
-            text="Gecko/Gaia/Full",
-            font=TITLE_FONT)
-        self.packageLabel.grid(row=1, column=2)
-        self.packageList = Listbox(self, exportselection=0)
-        for l in list:
-            self.packageList.insert(END, l)
-        self.packageList.grid(row=2, column=2)
+    def _setEngList(self, list=[], default=None):
+        self.engList.delete(0, END)
+        for li in list:
+            self.engList.insert(END, li)
+        if default:
+            self.engList.select_set(default)
 
-    def setEngList(self, list=[]):
-        self.engLabel = Label(self, text="Build Type", font=TITLE_FONT)
-        self.engLabel.grid(row=1, column=3)
-        self.engList = Listbox(self, exportselection=0)
-        for l in list:
-            self.engList.insert(END, l)
-        self.engList.grid(row=2, column=3)
+    def _setPackageList(self, list=[], default=None):
+        self.packageList.delete(0, END)
+        if len(list) == 0:
+            list = ['gaia/gecko', 'gaia', 'gecko', 'full']
+        for li in list:
+            self.packageList.insert(END, li)
+        if default:
+            self.packageList.select_set(default)
 
 
 class AuthPage(BasePage):
