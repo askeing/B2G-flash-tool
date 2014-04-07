@@ -1,7 +1,6 @@
 import argparse
-import sys
 
-def pvtArgParse():
+def pvtArgParse(args):
     parser = argparse.ArgumentParser(description='B2G Flash Tool by TWQA')
     parser.add_argument('-v', '--version', help='target build version')
     parser.add_argument('-d', '--device', help='target device codename')
@@ -17,9 +16,15 @@ def pvtArgParse():
     parser.add_argument('-p', '--password', help='LDAP password (will load from .ldap file if exists)')
     parser.add_argument('--uninstall_comril', help='uninstall com-ril when shallow flash gecko')
     parser.add_argument('--dl_home', help='specify download forlder')
-    options = parser.parse_args(sys.argv[1:])
+    options = parser.parse_args(args)
     return options
 
 
 if __name__ == "__main__":
-    print pvtArgParse()
+    import sys
+    if len(sys.argv) == 1:
+        test_str = "-v v2.0 -d Flame -g -G --eng -b=20140401000000 -u=God -p test'"
+        print "Input Sample: " + test_str
+        print pvtArgParse(test_str.split())
+    else:
+        print pvtArgParse(sys.argv[1:])

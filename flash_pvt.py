@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import os
+import os, sys
+from utilities.argParse import pvtArgParse
 from view.page import ListPage, AuthPage
 from view.base_controller import FlashApp
 
@@ -11,10 +12,8 @@ def setupTempFolder():
     ###
 
 
-def parseArgument():
-    ### parse input argument here
-    pass
-    ###
+def parseArgument(args):
+    return pvtArgParse(args)
 
 
 class PvtFlashApp(FlashApp):
@@ -42,6 +41,9 @@ class PvtFlashApp(FlashApp):
 
 
 def main():
+    # get input arguments
+    parseArgument(sys.argv[1:])
+    # main flow of UI
     prog = FlashApp()
     app = prog.container
     prog.setupView()
