@@ -10,8 +10,8 @@ class PathParser(object):
         return self._parse_device_version_and_time_from_list(build_and_time_list)
 
     def get_available_packages_from_url(self, base_url, build_src):
-        html = self._open_url(base_url + build_src + '/latest')
-        return self._parse_available_packages(build_src, html)
+        content = self._open_url(base_url + build_src + '/latest')
+        return self._parse_available_packages(build_src, content)
 
     def _parse_available_packages(self, build_src, html_content):
         packages_dict = {}
