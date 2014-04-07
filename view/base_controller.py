@@ -63,6 +63,10 @@ class FlashApp():
         print(params)
         self.quit()
 
+    def getPackages(self, src):
+        return []
+        pass
+
 
 if __name__ == '__main__':
     data = {}

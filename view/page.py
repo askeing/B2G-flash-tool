@@ -70,34 +70,16 @@ class ListPage(BasePage):
         self.packageList.grid(row=2, column=3)
         self.packageList.config(state="disabled")
         self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
-        self._setDeviceList(list=self.data.keys())
+        self.setDeviceList(device=self.data.keys())
 
     def deviceOnSelect(self, evt):
-        version = self.data[
-            evt.widget.get(evt.widget.curselection())
-            ]
-        self.versionList.config(state="normal")
-        self.engList.config(state="disabled")
-        self.packageList.config(state="disabled")
-        self.ok.config(state="disabled")
-        self._setVersionList(version)
+        self.setVersionList()
 
     def versionOnSelect(self, evt):
-        device = self.deviceList.get(ACTIVE)
-        version = self.versionList.get(ACTIVE)
-        eng = self.data[device][version]
-        self.engList.config(state="normal")
-        self.packageList.config(state="disabled")
-        self.ok.config(state="disabled")
-        self._setEngList(eng)
+        self.setEngList()
 
     def engOnSelect(self, evt):
-        device = self.deviceList.get(ACTIVE)
-        version = self.versionList.get(ACTIVE)
-        eng = self.engList.get(ACTIVE)
-        self.packageList.config(state="normal")
-        self.ok.config(state="normal")
-        self._setPackageList() # hard coded right now
+        self.refreshPackageList()  # hard coded right now
 
     def packageOnSelect(self, evt):
         self.ok.config(state="normal")
@@ -115,34 +97,49 @@ class ListPage(BasePage):
             self.engList.curselection()[0])
         self.controller.doFlash(params)
 
-    def _setDeviceList(self, list=[], default=None):
-        for li in list:
+    def setDeviceList(self, device=[]):
+        for li in device:
             self.deviceList.insert(END, li)
-        if default:
-            self.deviceList.select_set(default)
 
-    def _setVersionList(self, list=[], default=None):
+    def setVersionList(self, version=[]):
+        if len(version) == 0:
+            version = self.data[
+                self.deviceList.get(self.deviceList.curselection())
+                ]
+        self.versionList.config(state="normal")
+        self.engList.config(state="disabled")
+        self.packageList.config(state="disabled")
+        self.ok.config(state="disabled")
         self.versionList.delete(0, END)
-        for li in list:
+        for li in version:
             self.versionList.insert(END, li)
-        if default:
-            self.versionList.select_set(default)
 
-    def _setEngList(self, list=[], default=None):
+    def setEngList(self, eng=[]):
+        if len(eng) == 0:
+            device = self.deviceList.get(ACTIVE)
+            version = self.versionList.get(ACTIVE)
+            eng = self.data[device][version]
+        self.engList.config(state="normal")
+        self.packageList.config(state="disabled")
+        self.ok.config(state="disabled")
         self.engList.delete(0, END)
-        for li in list:
+        for li in eng:
             self.engList.insert(END, li)
-        if default:
-            self.engList.select_set(default)
 
-    def _setPackageList(self, list=[], default=None):
+    def refreshPackageList(self):
+        self.packageList.config(state="normal")
+        self.ok.config(state="normal")
         self.packageList.delete(0, END)
-        if len(list) == 0:
-            list = ['gaia/gecko', 'gaia', 'gecko', 'full']
-        for li in list:
+        device = self.deviceList.get(ACTIVE)
+        version = self.versionList.get(ACTIVE)
+        eng = self.engList.get(ACTIVE)
+        package = self.controller.getPackages(
+            self.data[device][version][eng]['src']
+            )
+        if len(package) == 0:
+            package = ['gaia/gecko', 'gaia', 'gecko', 'full']
+        for li in package:
             self.packageList.insert(END, li)
-        if default:
-            self.packageList.select_set(default)
 
 
 class AuthPage(BasePage):
