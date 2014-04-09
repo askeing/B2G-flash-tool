@@ -664,6 +664,8 @@ function select_flash_mode() {
     eval GAIA_VALUE=\$$GAIA_KEY
     GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
     eval GECKO_VALUE=\$$GECKO_KEY
+    IMAGE_KEY=DL_${TARGET_ID}${ENG_FLAG}_IMG
+    eval IMAGE_VALUE=\$$IMAGE_KEY
     while [[ ${FLASH_FULL} == false ]] && [[ ${FLASH_GAIA} == false ]] && [[ ${FLASH_GECKO} == false ]]; do
         echo "Flash Mode:"
         if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
@@ -675,7 +677,9 @@ function select_flash_mode() {
         if ! [ -z $GECKO_VALUE ]; then
             echo "  3) Shallow flash Gecko"
         fi
-        echo "  4) Flash Full Image"
+        if ! [ -z $IMAGE_VALUE ]; then
+            echo "  4) Flash Full Image"
+        fi
         read -p "What do you want to flash? [Q to exit]" FLASH_INPUT
         test ${FLASH_INPUT} == "q" || test ${FLASH_INPUT} == "Q" && echo "byebye." && exit 0
         case ${FLASH_INPUT} in
@@ -688,7 +692,9 @@ function select_flash_mode() {
             3)  if ! [ -z $GECKO_VALUE ]; then
                     FLASH_GECKO=true
                 fi;;
-            4) FLASH_FULL=true;;
+            4)  if ! [ -z $IMAGE_VALUE ]; then
+                    FLASH_FULL=true
+                fi;;
         esac
     done
 }
@@ -701,6 +707,8 @@ function select_flash_mode_dialog() {
         eval GAIA_VALUE=\$$GAIA_KEY
         GECKO_KEY=DL_${TARGET_ID}${ENG_FLAG}_GECKO
         eval GECKO_VALUE=\$$GECKO_KEY
+        IMAGE_KEY=DL_${TARGET_ID}${ENG_FLAG}_IMG
+        eval IMAGE_VALUE=\$$IMAGE_KEY
         if ! [ -z $GAIA_VALUE ] && ! [ -z $GECKO_VALUE ]; then
             COUNT=1
             FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gaia/Gecko"
@@ -713,8 +721,10 @@ function select_flash_mode_dialog() {
             COUNT=3
             FLASH_MODE_FLAG+=" $COUNT Shallow_flash_Gecko"
         fi
-        COUNT=4
-        FLASH_MODE_FLAG+=" $COUNT Flash_Full_Image"
+        if ! [ -z $IMAGE_VALUE ]; then
+            COUNT=4
+            FLASH_MODE_FLAG+=" $COUNT Flash_Full_Image"
+        fi
 
         dialog --backtitle "Select Build from PVT Server " --title "Flash Mode" --menu "Move using [UP] [DOWN],[Enter] to Select" \
         18 80 10 ${FLASH_MODE_FLAG} 2>${TMP_DIR}/menuitem_flash
