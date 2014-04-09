@@ -69,14 +69,6 @@ def main():
         os.system("/usr/bin/osascript -e \'tell app \"Find\
 er\" to set frontmost of process \"Pyt\
 hon\" to true\'")
-    prog.setDefault(
-        prog.frames[1],
-        {
-            'device': 0,
-            'version': 0,
-            'eng': 0,
-            'package': 0,
-        })
     app.mainloop()
 
 
