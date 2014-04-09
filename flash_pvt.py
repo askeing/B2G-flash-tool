@@ -3,6 +3,8 @@
 import os
 from view.page import ListPage, AuthPage
 from view.base_controller import FlashApp
+from utilities.arg_parse import Parser
+from utilities.path_parser import PathParser
 
 
 def setupTempFolder():
@@ -41,6 +43,38 @@ class PvtFlashApp(FlashApp):
 
     def quit(self):
         pass
+
+    def loadOptions(self, data):
+        options = Parser.pvtArgParse(sys.argv[1:])
+        default = {}
+        listHandler = data.keys()
+        if options.device in listHandler:
+            default['device'] = listHandler.index(options.device)
+            listHandler = listHandler[options.device].keys()
+            if options.version in listHandler:
+                default['version'] = listHandler.index(options.version)
+                listHandler = listHandler[options.version].keys()
+                if options.eng and 'Engineer' in listHandler:
+                    default['eng'] = listHandler.index('Engineer')
+                    listHandler = listHandler.keys()
+                elif options.usr and 'User' in listHandler:
+                    default['eng'] = listHandler.index('User')
+                    listHandler = listHandler.keys()
+                else:
+                    return default
+
+                # peak packages here
+
+                if options.gaia and options.gecko:
+                    default['package'] = 0
+                elif options.gaia:
+                    default['package'] = 1
+                elif options.gecko:
+                    default['package'] = 2
+                elif options.full_flash:
+                    default['package'] = 3
+
+
 
     def setDefault(self, listPage, default):
         if 'device' in default:
