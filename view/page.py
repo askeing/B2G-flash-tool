@@ -70,7 +70,6 @@ class ListPage(BasePage):
         self.packageList.grid(row=2, column=3)
         self.packageList.config(state="disabled")
         self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
-        self.setDeviceList(device=self.data.keys())
 
     def deviceOnSelect(self, evt):
         self.setVersionList()

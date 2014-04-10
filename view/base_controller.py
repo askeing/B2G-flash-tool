@@ -2,7 +2,11 @@
 
 from Tkinter import Tk, Frame
 import os
+import sys
 from page import ListPage, AuthPage
+from utilities.path_parser import PathParser
+from utilities.authenticator import Authenticator
+from utilities.arg_parse import Parser
 
 TITLE_FONT = ("Helvetica", 18, "bold")
 
@@ -12,6 +16,7 @@ class FlashApp():
         '''
         Generate base frame and each page, bind them in a list
         '''
+        self.baseUrl = ""  # NOTE: Need to be overwritten
         self.root = Tk()
         self.frames = []
         container = Frame(master=self.root)
@@ -26,16 +31,20 @@ class FlashApp():
             val.index = idx
             val.grid(row=0, column=0, sticky="nsew")
 
-    def setupView(self, data):
+    def setData(self, data=None):
+        if data is None:
+            data = self.pathParser.get_builds_list_from_url(self.baseUrl)
+        self.data = data
+
+    def setupView(self):
         #NOTE: Please overwrite this function to provide custom view
         listPage = ListPage(parent=self.container, controller=self)
-        listPage.setupView(data=data)
+        listPage.setupView()
         authPage = AuthPage(parent=self.container, controller=self)
         authPage.setupView(
             "Account Info",
             '',
             '')
-
         self.setFrameList([
             authPage,
             listPage,
@@ -44,6 +53,17 @@ class FlashApp():
 
     def setAuth(self, page, user, pwd):
         ## pass auth parameters
+        self.auth = Authenticator()
+        self.auth.authenticate(self.baseUrl, user, pwd)
+        if not self.auth.is_authenticated:
+            #TODO: Print error message then return
+            return
+        self.pathParser = PathParser()
+        self.setData()
+        listPage = self.frames[1]
+        listPage.setData(self.data)
+        listPage.setDeviceList(self.data.keys())
+        self.setDefault(listPage, self.loadOptions())
         self.transition(page)
 
     def transition(self, page=None):
@@ -64,8 +84,73 @@ class FlashApp():
         self.quit()
 
     def getPackages(self, src):
-        return []
-        pass
+        #TODO: Async request?
+        query = self.pathParser.get_available_packages_from_url(
+            self.baseUrl,
+            src
+            )
+        package = []
+        if 'gaia' in query and 'gecko' in query:
+            package.append('gaia + gecko')
+        if 'gaia' in query:
+            package.append('gaia')
+        if 'gecko' in query:
+            package.append('gecko')
+        if 'image' in query:
+            package.append('full image')
+        return package
+
+    def loadOptions(self):
+        data = self.data
+        if not data:
+            return
+        options = Parser.pvtArgParse(sys.argv[1:])
+        default = {}
+        deviceList = data.keys()
+        if options.device in deviceList:
+            default['device'] = deviceList.index(options.device)
+            versionList = data[options.device].keys()
+            if options.version in versionList:
+                default['version'] = versionList.index(options.version)
+                engList = data[options.device][options.version].keys()
+                if options.eng and 'Engineer' in engList:
+                    default['eng'] = engList.index('Engineer')
+                elif options.usr and 'User' in engList:
+                    default['eng'] = engList.index('User')
+                else:
+                    return default
+                if default['eng']:
+                    package = self.getPackages(
+                        data[options.device][
+                            options.version][
+                            engList[default['eng']]][
+                            'src']
+                        )
+                    if options.gaia and options.gecko:
+                        package[0:0] = 'gecko + gaia'
+                        if 'gaia' in package and 'gecko' in package:
+                            default['package'] = 0
+                    elif options.gaia and 'gaia' in package:
+                        default['package'] = package.index('gaia')
+                    elif options.gecko:
+                        default['package'] = package.index('gecko')
+                    elif options.full_flash:
+                        default['package'] = package.index('full image')
+        return default
+
+    def setDefault(self, listPage, default):
+        if 'device' in default:
+            listPage.deviceList.selection_set(default['device'])
+            listPage.setVersionList()
+            if 'version' in default:
+                listPage.versionList.selection_set(default['version'])
+                listPage.setEngList()
+                if 'eng' in default:
+                    listPage.engList.selection_set(default['eng'])
+                    listPage.refreshPackageList()
+                    if 'package' in default:
+                        listPage.packageList.selection_set(default['package'])
+                        listPage.ok.config(state='normal')
 
 
 if __name__ == '__main__':
@@ -74,7 +159,8 @@ if __name__ == '__main__':
         data = eval(f.read())
     prog = FlashApp()
     app = prog.container
-    prog.setupView(data)
+    prog.setData(data)
+    prog.setupView()
     from sys import platform as _platform
     if _platform == 'darwin':
         os.system("/usr/bin/osascript -e \'tell app \"Find\

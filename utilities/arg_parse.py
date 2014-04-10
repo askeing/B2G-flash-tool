@@ -3,6 +3,7 @@ import sys
 
 class Parser(object):
 
+    @staticmethod
     def pvtArgParse(input):
         parser = argparse.ArgumentParser(description='B2G Flash Tool by TWQA')
         parser.add_argument('-v', '--version', help='target build version')
