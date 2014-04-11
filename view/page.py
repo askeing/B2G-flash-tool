@@ -3,6 +3,7 @@
 from Tkinter import Frame, Label, Button,\
     Radiobutton, StringVar, IntVar,\
     Entry, Listbox, ACTIVE, END
+import sys
 
 TITLE_FONT = ("Helvetica", 18, "bold")
 
@@ -85,15 +86,15 @@ class ListPage(BasePage):
 
     def confirm(self):
         # TODO:  verify if all options are selected
-        params = {}
-        params['device'] = self.deviceList.get(
-            self.deviceList.curselection()[0])
-        params['version'] = self.versionList.get(
-            self.versionList.curselection()[0])
-        params['package'] = self.packageList.get(
+        params = []
+        package = self.packageList.get(
             self.packageList.curselection()[0])
-        params['eng'] = self.engList.get(
-            self.engList.curselection()[0])
+        if('image' in package):
+            params.append('image')
+        if('gaia' in package):
+            params.append('gaia')
+        if('gecko' in package):
+            params.append('gecko')
         self.controller.doFlash(params)
 
     def setDeviceList(self, device=[]):
@@ -223,7 +224,7 @@ class AuthPage(BasePage):
         self.ok.grid(row=4, column=1, sticky="W")
         self.cancel = Button(self,
                              text='Exit',
-                             command=lambda: self.controller.quit())
+                             command=lambda: sys.exit(0))
         self.cancel.grid(row=4, column=0, sticky="E")
 
 
@@ -247,11 +248,10 @@ class buildIdPage(BasePage):
         self.ok.grid(row=2, column=1, sticky="W")
         self.cancel = Button(self,
                              text='Cancel',
-                             command=lambda: self.controller.quit())
+                             command=lambda: sys.exit(0))
         self.cancel.grid(row=2, column=0, sticky="E")
 
 
 if __name__ == '__main__':
     print("Not executable")
-    import sys
     sys.exit(1)
