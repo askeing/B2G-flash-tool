@@ -11,7 +11,7 @@ class PathParser(object):
         return self._parse_device_version_and_time_from_list(build_and_time_list)
 
     def get_available_packages_from_url(self, base_url, build_src, build_id=None):
-        path = '/latest'
+        path = '/latest/'
         if not build_id == None:
             # TODO handle build_id
             pass
