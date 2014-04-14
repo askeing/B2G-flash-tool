@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os
-from view.base_controller import FlashApp
+from controller.base_controller import FlashApp
 
 
 def setupTempFolder():
@@ -21,10 +21,7 @@ class PvtFlashApp(FlashApp):
         FlashApp.__init__(self, *args, **kwargs)
         self.baseUrl = "https://pvtbuilds.mozilla.org\
 /pvt/mozilla.org/b2gotoro/nightly/"
-
-    def doFlash(self, params):
-        print(params)
-        pass
+        self.destFolder = "pvt"
 
     def quit(self):
         pass

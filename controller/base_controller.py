@@ -3,10 +3,13 @@
 from Tkinter import Tk, Frame
 import os
 import sys
-from page import ListPage, AuthPage
+from sys import platform as _platform
+from view.page import ListPage, AuthPage
 from utilities.path_parser import PathParser
 from utilities.authenticator import Authenticator
 from utilities.arg_parse import Parser
+from utilities.downloader import Downloader
+from utilities.decompressor import Decompressor
 
 TITLE_FONT = ("Helvetica", 18, "bold")
 
@@ -17,6 +20,7 @@ class FlashApp():
         Generate base frame and each page, bind them in a list
         '''
         self.baseUrl = ""  # NOTE: Need to be overwritten
+        self.destFolder = ""  # NOTE: Need to be overwritten
         self.root = Tk()
         self.frames = []
         container = Frame(master=self.root)
@@ -76,12 +80,41 @@ class FlashApp():
         '''
         Halt the program
         '''
-        pass
+        print("### quit function invoked")
+        sys.exit(0)
 
-    def doFlash(self, params):
-        #TODO: run flash here
-        print(params)
-        self.quit()
+    def doFlash(self, targets):
+        download = Downloader()
+        archives = {}
+        cmd = './shallow_flash.sh -y'
+        sp = ''
+        if _platform == 'darwin':
+            sp = ' '
+        for target in targets:
+            archives[target] = download.download(
+                self.paths[target],
+                self.destFolder,
+                self.printErr
+                )
+        if 'image' in targets:
+            Decompressor().unzip(
+                archives['image'],
+                self.destFolder,
+                self.printErr
+                )
+            os.system(self.destFolder + "/flash.sh -f")
+            return
+        if 'gaia' in targets:
+            cmd = cmd + ' -g' + sp + archives['gaia']
+        if 'gecko' in targets:
+            cmd = cmd + ' -G' + sp + archives['gecko']
+        print("run command: " + cmd)
+        os.system(cmd)
+        print(targets)
+        sys.exit(0)
+
+    def printErr(self, message):
+        pass
 
     def getPackages(self, src):
         #TODO: Async request?
@@ -89,15 +122,20 @@ class FlashApp():
             self.baseUrl,
             src
             )
+        baseUrl = self.baseUrl + src + '/latest/'
+        self.paths = {}
         package = []
         if 'gaia' in query and 'gecko' in query:
             package.append('gaia + gecko')
         if 'gaia' in query:
             package.append('gaia')
+            self.paths['gaia'] = baseUrl + query['gaia']
         if 'gecko' in query:
             package.append('gecko')
+            self.paths['gecko'] = baseUrl + query['gecko']
         if 'image' in query:
             package.append('full image')
+            self.paths['image'] = baseUrl + query['image']
         return package
 
     def loadOptions(self):
@@ -161,7 +199,6 @@ if __name__ == '__main__':
     app = prog.container
     prog.setData(data)
     prog.setupView()
-    from sys import platform as _platform
     if _platform == 'darwin':
         os.system("/usr/bin/osascript -e \'tell app \"Find\
 er\" to set frontmost of process \"Pyt\
