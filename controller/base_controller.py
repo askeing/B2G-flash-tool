@@ -44,11 +44,12 @@ class FlashApp():
         #NOTE: Please overwrite this function to provide custom view
         listPage = ListPage(parent=self.container, controller=self)
         listPage.setupView()
+        account, password = self.loadAccountInfo()
         authPage = AuthPage(parent=self.container, controller=self)
         authPage.setupView(
             "Account Info",
-            '',
-            '')
+            account,
+            password)
         self.setFrameList([
             authPage,
             listPage,
@@ -175,6 +176,16 @@ class FlashApp():
                     elif options.full_flash:
                         default['package'] = package.index('full image')
         return default
+
+    def loadAccountInfo(self):
+        account = {}
+        with open('.ldap') as f:
+            account = eval(f.read())
+        if 'account' not in account:
+            account['account'] = ''
+        if 'password' not in account:
+            account['password'] = ''
+        return account['account'], account['password']
 
     def setDefault(self, listPage, default):
         if 'device' in default:
