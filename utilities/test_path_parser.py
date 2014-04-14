@@ -88,5 +88,17 @@ class testPathParser(unittest.TestCase):
         result = path_parser._parse_available_packages(self.test_html_packages_src_all, self.test_html_packages_all)
         self.assertEqual(result, self.expect_result_packages_all)
 
+    def test_verify_build_id(self):
+        path_parser = PathParser()
+        self.assertTrue(path_parser._verify_build_id('20140408160201'))
+        self.assertTrue(path_parser._verify_build_id('2014-04-08-16-02-01'))
+        self.assertFalse(path_parser._verify_build_id('2014-04-08-16-02-01-0000'))
+        self.assertFalse(path_parser._verify_build_id('This is not build id'))
+
+    def test_get_path_of_build_id(self):
+        path_parser = PathParser()
+        self.assertEqual('/2014/04/2014-04-08-16-02-01/', path_parser._get_path_of_build_id('2014-04-08-16-02-01'))
+        self.assertEqual('/2014/04/2014-04-13-16-02-02/', path_parser._get_path_of_build_id('2014-04-13-16-02-02'))
+
 if __name__ == '__main__':
     unittest.main()
