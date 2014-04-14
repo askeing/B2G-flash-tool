@@ -1,5 +1,6 @@
 import urllib2
 import re
+import urlparse
 
 
 class PathParser(object):
@@ -14,8 +15,13 @@ class PathParser(object):
         if not build_id == None:
             # TODO handle build_id
             pass
-        content = self._open_url(base_url + build_src + path)
-        return self._parse_available_packages(build_src, content)
+        target_url = base_url + build_src + path
+        content = self._open_url(target_url)
+        packages = self._parse_available_packages(build_src, content)
+        # join the target_url and packages' basename
+        for package_name, package_basename in packages.items():
+            packages[package_name] = urlparse.urljoin(target_url, package_basename)
+        return packages
 
     def _parse_available_packages(self, build_src, html_content):
         packages_dict = {}
