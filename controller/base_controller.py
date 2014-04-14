@@ -123,20 +123,19 @@ class FlashApp():
             self.baseUrl,
             src
             )
-        baseUrl = self.baseUrl + src + '/latest/'
         self.paths = {}
         package = []
         if 'gaia' in query and 'gecko' in query:
             package.append('gaia + gecko')
         if 'gaia' in query:
             package.append('gaia')
-            self.paths['gaia'] = baseUrl + query['gaia']
+            self.paths['gaia'] = query['gaia']
         if 'gecko' in query:
             package.append('gecko')
-            self.paths['gecko'] = baseUrl + query['gecko']
+            self.paths['gecko'] = query['gecko']
         if 'image' in query:
             package.append('full image')
-            self.paths['image'] = baseUrl + query['image']
+            self.paths['image'] = query['image']
         return package
 
     def loadOptions(self):

@@ -20,9 +20,9 @@ class Downloader(object):
             self.logger.log('Download to ' + filename_with_path, status_callback)
             return filename_with_path
         except urllib2.HTTPError as e:
-            self.logger.log('HTTP Error: ' + e.code + e.msg, status_callback)
+            self.logger.log('HTTP Error: ' + str(e.code) + ' ' + e.msg + ' of ' + source_url, status_callback)
         except urllib2.URLError as e:
-            self.logger.log('URL Error: ' + e.code + e.msg, status_callback)
+            self.logger.log('URL Error: ' + str(e.code) + ' ' + e.msg + ' of ' + source_url, status_callback)
 
     def ensure_folder(self, folder):
         if not os.path.isdir(folder):
