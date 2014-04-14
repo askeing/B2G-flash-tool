@@ -1,26 +1,47 @@
 import urllib2
 import re
 import urlparse
+from logger import Logger
 
 
 class PathParser(object):
 
-    def get_builds_list_from_url(self, url):
-        content = self._open_url(url)
-        build_and_time_list = self._parse_build_and_time_from_html(content)
-        return self._parse_device_version_and_time_from_list(build_and_time_list)
+    def __init__(self):
+        self.logger = Logger()
 
-    def get_available_packages_from_url(self, base_url, build_src, build_id=None):
+    def get_builds_list_from_url(self, url, status_callback=None):
+        try:
+            content = self._open_url(url)
+            build_and_time_list = self._parse_build_and_time_from_html(content)
+            return self._parse_device_version_and_time_from_list(build_and_time_list)
+        except urllib2.HTTPError as e:
+            self.logger.log('HTTP Error: ' + str(e.code) + ' ' + e.msg + ' of ' + url, status_callback)
+        except urllib2.URLError as e:
+            self.logger.log('URL Error: ' + str(e.code) + ' ' + e.msg + ' of ' + url, status_callback)
+
+    def get_available_packages_from_url(self, base_url, build_src, build_id='', status_callback=None):
+        packages = {}
         path = '/latest/'
-        if not build_id == None:
-            # TODO handle build_id
-            pass
+        build_id = build_id.strip()
+        if not build_id == '':
+            if self._verify_build_id(build_id, status_callback):
+                path = self._get_path_of_build_id(build_id, status_callback)
+            else:
+                self.logger.log('The build id [' + build_id + '] is not not valid.')
+                return packages
         target_url = base_url + build_src + path
-        content = self._open_url(target_url)
-        packages = self._parse_available_packages(build_src, content)
-        # join the target_url and packages' basename
-        for package_name, package_basename in packages.items():
-            packages[package_name] = urlparse.urljoin(target_url, package_basename)
+        self.logger.log('Get available packages list from ' + target_url, status_callback)
+
+        try:
+            content = self._open_url(target_url)
+            packages = self._parse_available_packages(build_src, content)
+            # join the target_url and packages' basename
+            for package_name, package_basename in packages.items():
+                packages[package_name] = urlparse.urljoin(target_url, package_basename)
+        except urllib2.HTTPError as e:
+            self.logger.log('HTTP Error: ' + str(e.code) + ' ' + e.msg, status_callback)
+        except urllib2.URLError as e:
+            self.logger.log('URL Error: ' + str(e.code) + ' ' + e.msg, status_callback)
         return packages
 
     def _parse_available_packages(self, build_src, html_content):
@@ -85,3 +106,22 @@ class PathParser(object):
                 root_dict[device_name][branch_name] = {}
             root_dict[device_name][branch_name].update(build_item)
         return root_dict
+
+    def _verify_build_id(self, build_id, status_callback=None):
+        build_id_without_dash = re.sub(r'\D', '', build_id)
+        if not len(build_id_without_dash) == 14:
+            return False
+        else:
+            return True
+
+    def _get_path_of_build_id(self, build_id, status_callback=None):
+        build_id_without_dash = re.sub(r'\D', '', build_id)
+        year = build_id_without_dash[0:4]
+        month = build_id_without_dash[4:6]
+        day = build_id_without_dash[6:8]
+        hour = build_id_without_dash[8:10]
+        min = build_id_without_dash[10:12]
+        sec = build_id_without_dash[12:14]
+        path_of_build_id = '/' + year + '/' + month + '/' + year + '-' + month + '-' + day + '-' + hour + '-' + min + '-' + sec + '/'
+        self.logger.log('The path of build id is: ' + path_of_build_id)
+        return path_of_build_id
