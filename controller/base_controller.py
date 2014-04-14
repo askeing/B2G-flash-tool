@@ -60,7 +60,8 @@ class FlashApp():
         self.auth = Authenticator()
         self.auth.authenticate(self.baseUrl, user, pwd)
         if not self.auth.is_authenticated:
-            #TODO: Print error message then return
+            authPage = self.frames[0]
+            authPage.printErr("Auththentication failed")
             return
         self.pathParser = PathParser()
         self.setData()
@@ -113,8 +114,8 @@ class FlashApp():
         print(targets)
         sys.exit(0)
 
-    def printErr(self, message):
-        pass
+    def printErr(self, curPage, message):
+        curPage.printErr(message)
 
     def getPackages(self, src):
         #TODO: Async request?
