@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import os
-from controller.base_controller import FlashApp
+from controller.tk_controller import FlashApp
 
 
 def setupTempFolder():

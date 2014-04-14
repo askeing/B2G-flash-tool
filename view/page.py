@@ -41,18 +41,14 @@ class ListPage(BasePage):
         if(data):
             self.setData(data)
         self.errLog = Label(self, text="")
-        self.errLog.grid(row=2, column=3, columnspan=3, sticky="NWSE")
+        self.errLog.grid(row=4, column=1, columnspan=3, sticky="NWSE")
         self.desc = Label(self, text=title, font=TITLE_FONT)
         self.desc.grid(row=0, column=0, columnspan=2)
         self.ok = Button(self,
                          text='Next',
                          command=lambda: self.
                          confirm())
-        self.ok.grid(row=4, column=1, sticky="W")
-        self.cancel = Button(self,
-                             text='Exit',
-                             command=lambda: self.controller.quit())
-        self.cancel.grid(row=4, column=0, sticky="E")
+        self.ok.grid(row=4, column=3, sticky="E")
         self.deviceLabel = Label(self, text="Select Device", font=TITLE_FONT)
         self.deviceLabel.grid(row=1, column=0)
         self.deviceList = Listbox(self, exportselection=0)
@@ -97,8 +93,8 @@ class ListPage(BasePage):
         params = []
         package = self.packageList.get(
             self.packageList.curselection()[0])
-        if('image' in package):
-            params.append('image')
+        if('images' in package):
+            params.append('images')
         if('gaia' in package):
             params.append('gaia')
         if('gecko' in package):
@@ -176,21 +172,22 @@ class AuthPage(BasePage):
             pass
 
     def setupView(self, title="Test Auth Page", user='', pwd_ori=''):
+        Label(self, width=25).grid(row=1, column=0, columnspan=2)
         self.errLog = Label(self, text="")
-        self.errLog.grid(row=2, column=3, columnspan=3, sticky="NWSE")
+        self.errLog.grid(row=4, column=1, columnspan=3, rowspan=3, sticky="NWSE")
         userVar = StringVar()
         pwdVar = StringVar()
-        Label(self, text="Account").grid(row=2, column=0, sticky='E')
+        Label(self, text="Account").grid(row=2, column=1, sticky='E')
         userInput = Entry(
             self,
             textvariable=userVar,
             width="30")
         userInput.grid(
             row=2,
-            column=1,
+            column=2,
             columnspan=2,
             sticky="W")
-        Label(self, text="Password").grid(row=3, column=0, sticky='E')
+        Label(self, text="Password").grid(row=3, column=1, sticky='E')
         pwdInput = Entry(
             self,
             textvariable=pwdVar,
@@ -198,47 +195,46 @@ class AuthPage(BasePage):
             width="30")
         pwdInput.grid(
             row=3,
-            column=1,
+            column=2,
             columnspan=2,
             sticky="W")
         userVar.set(user)
         pwdVar.set(pwd_ori)
         Label(
             self,
-            text='Welcome to fxos flash tool',
+            text='    Welcome to fxos flash tool',
             font=TITLE_FONT
             ).grid(
             row=0,
+            column=1,
             columnspan=3,
             sticky="WE")
         mode = IntVar()
         mode.set(1)
         Radiobutton(self,
+                    state='disabled',
                     text='Download build from pvt',
                     variable=mode,
                     value=1,
                     command=lambda: self.entryToggle(
                         True,
                         [userInput, pwdInput])
-                    ).grid(row=1, column=0, columnspan=2, sticky="E")
+                    ).grid(row=1, column=2, columnspan=2, sticky="E")
         Radiobutton(self,
+                    state='disabled',
                     text='Flash build from local',
                     variable=mode,
                     value=2,
                     command=lambda: self.entryToggle(
                         False,
                         [userInput, pwdInput])
-                    ).grid(row=1, column=2, sticky="W")
+                    ).grid(row=1, column=4, sticky="W")
 
         self.ok = Button(self,
                          text='Next',
                          command=lambda: self.
                          confirm(mode.get(), userVar.get(), pwdVar.get()))
-        self.ok.grid(row=4, column=1, sticky="W")
-        self.cancel = Button(self,
-                             text='Exit',
-                             command=lambda: sys.exit(0))
-        self.cancel.grid(row=4, column=0, sticky="E")
+        self.ok.grid(row=4, column=4, sticky="W")
 
 
 class buildIdPage(BasePage):
@@ -259,10 +255,6 @@ class buildIdPage(BasePage):
                                              )
                          )
         self.ok.grid(row=2, column=1, sticky="W")
-        self.cancel = Button(self,
-                             text='Cancel',
-                             command=lambda: sys.exit(0))
-        self.cancel.grid(row=2, column=0, sticky="E")
 
 
 if __name__ == '__main__':
