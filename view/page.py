@@ -23,10 +23,16 @@ class BasePage(Frame):
     def setupView(self):
         raise NotImplementedError
 
+    def printErr(self, message):
+        raise NotImplementedError
+
 
 class ListPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
+
+    def printErr(self, message):
+        self.errLog.config(text=message)
 
     def setData(self, data):
         self.data = data
@@ -34,6 +40,8 @@ class ListPage(BasePage):
     def setupView(self, title="AllinOne", data=None):
         if(data):
             self.setData(data)
+        self.errLog = Label(self, text="")
+        self.errLog.grid(row=2, column=3, columnspan=3, sticky="NWSE")
         self.desc = Label(self, text=title, font=TITLE_FONT)
         self.desc.grid(row=0, column=0, columnspan=2)
         self.ok = Button(self,
@@ -146,6 +154,9 @@ class AuthPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
 
+    def printErr(self, message):
+        self.errLog.config(text=message)
+
     def entryToggle(self, toggle, target):
         if(toggle):
             for t in target:
@@ -165,6 +176,8 @@ class AuthPage(BasePage):
             pass
 
     def setupView(self, title="Test Auth Page", user='', pwd_ori=''):
+        self.errLog = Label(self, text="")
+        self.errLog.grid(row=2, column=3, columnspan=3, sticky="NWSE")
         userVar = StringVar()
         pwdVar = StringVar()
         Label(self, text="Account").grid(row=2, column=0, sticky='E')
