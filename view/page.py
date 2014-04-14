@@ -172,9 +172,17 @@ class AuthPage(BasePage):
             pass
 
     def setupView(self, title="Test Auth Page", user='', pwd_ori=''):
+        mode = IntVar()
+        mode.set(1)
         Label(self, width=25).grid(row=1, column=0, columnspan=2)
         self.errLog = Label(self, text="")
-        self.errLog.grid(row=4, column=1, columnspan=3, rowspan=3, sticky="NWSE")
+        self.errLog.grid(
+            row=4,
+            column=1,
+            columnspan=3,
+            rowspan=3,
+            sticky="NWSE"
+            )
         userVar = StringVar()
         pwdVar = StringVar()
         Label(self, text="Account").grid(row=2, column=1, sticky='E')
@@ -193,6 +201,10 @@ class AuthPage(BasePage):
             textvariable=pwdVar,
             show="*",
             width="30")
+        self.bind(
+            '<Return>',
+            lambda: self.confirm(mode.get(), userVar.get(), pwdVar.get())
+            )
         pwdInput.grid(
             row=3,
             column=2,
@@ -209,8 +221,6 @@ class AuthPage(BasePage):
             column=1,
             columnspan=3,
             sticky="WE")
-        mode = IntVar()
-        mode.set(1)
         Radiobutton(self,
                     state='disabled',
                     text='Download build from pvt',
@@ -235,6 +245,7 @@ class AuthPage(BasePage):
                          command=lambda: self.
                          confirm(mode.get(), userVar.get(), pwdVar.get()))
         self.ok.grid(row=4, column=4, sticky="W")
+        userInput.focus_set()
 
 
 class buildIdPage(BasePage):
