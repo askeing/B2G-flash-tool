@@ -46,15 +46,17 @@ class FlashApp():
         listPage.setupView()
         account, password = self.loadAccountInfo()
         authPage = AuthPage(parent=self.container, controller=self)
-        authPage.setupView(
-            "Account Info",
-            account,
-            password)
         self.setFrameList([
             authPage,
             listPage,
             ])
+        authPage.setupView(
+            "Account Info",
+            account,
+            password)
         self.transition()
+        if account and password:
+            self.setAuth(authPage, account, password)
 
     def setAuth(self, page, user, pwd):
         ## pass auth parameters
@@ -63,7 +65,7 @@ class FlashApp():
         if not self.auth.is_authenticated:
             authPage = self.frames[0]
             authPage.printErr("Auththentication failed")
-            return
+            return False
         self.pathParser = PathParser()
         self.setData()
         listPage = self.frames[1]
@@ -71,12 +73,19 @@ class FlashApp():
         listPage.setDeviceList(self.data.keys())
         self.setDefault(listPage, self.loadOptions())
         self.transition(page)
+        return True
 
     def transition(self, page=None):
+        nextPage = None
         if page is None:
-            self.frames[0].lift()
+            nextPage = self.frames[0]
+            self.frames[0]
         elif page.index < len(self.frames) - 1:
-            self.frames[page.index + 1].lift()
+            nextPage = self.frames[page.index + 1]
+        else:
+            return
+        nextPage.lift()
+        nextPage.focus_set()
 
     def quit(self):
         '''
