@@ -2,7 +2,7 @@
 
 from Tkinter import Frame, Label, Button,\
     Radiobutton, StringVar, IntVar,\
-    Entry, Listbox, ACTIVE, END
+    Entry, Listbox, END
 import sys
 
 TITLE_FONT = ("Helvetica", 18, "bold")
@@ -120,8 +120,8 @@ class ListPage(BasePage):
 
     def setEngList(self, eng=[]):
         if len(eng) == 0:
-            device = self.deviceList.get(ACTIVE)
-            version = self.versionList.get(ACTIVE)
+            device = self.deviceList.get(self.deviceList.curselection())
+            version = self.versionList.get(self.versionList.curselection())
             eng = self.data[device][version]
         self.engList.config(state="normal")
         self.packageList.config(state="disabled")
@@ -134,9 +134,9 @@ class ListPage(BasePage):
         self.packageList.config(state="normal")
         self.ok.config(state="normal")
         self.packageList.delete(0, END)
-        device = self.deviceList.get(ACTIVE)
-        version = self.versionList.get(ACTIVE)
-        eng = self.engList.get(ACTIVE)
+        device = self.deviceList.get(self.deviceList.curselection())
+        version = self.versionList.get(self.versionList.curselection())
+        eng = self.engList.get(self.engList.curselection())
         package = self.controller.getPackages(
             self.data[device][version][eng]['src']
             )
