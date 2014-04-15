@@ -4,6 +4,7 @@ from Tkinter import Frame, Label, Button,\
     Radiobutton, StringVar, IntVar,\
     Entry, Listbox, END
 import sys
+from utilities.logger import Logger
 
 TITLE_FONT = ("Helvetica", 18, "bold")
 
@@ -11,6 +12,7 @@ TITLE_FONT = ("Helvetica", 18, "bold")
 class BasePage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
+        self.logger = Logger()
         self.grid()
         self.controller = controller
 
@@ -164,16 +166,26 @@ class AuthPage(BasePage):
     def confirm(self, mode, user, pwd):
         if(mode == 1):
             # mode:1 flash from pvt
-            self.controller.setAuth(self,
-                                    user,
-                                    pwd)
+            # TODO: the GUI do not updated due to the correct way to update the UI in tk is to use the after method.
+            self.logger.log('Logging into server...', status_callback=self.printErr)
+            self.controller.setAuth(self, user, pwd)
         else:
             # mode:2, flash from local
             pass
 
+    def pressReturnKey(self, event=None):
+        if len(self.userVar.get()) > 0 and len(self.pwdVar.get()) > 0:
+            self.confirm(self.mode.get(), self.userVar.get(), self.pwdVar.get())
+        elif len(self.userVar.get()) == 0:
+            self.logger.log('Please enter username.', status_callback=self.printErr)
+            self.userInput.focus_set()
+        else:
+            self.logger.log('Please enter password.', status_callback=self.printErr)
+            self.pwdInput.focus_set()
+
     def setupView(self, title="Test Auth Page", user='', pwd_ori=''):
-        mode = IntVar()
-        mode.set(1)
+        self.mode = IntVar()
+        self.mode.set(1)
         Label(self, width=25).grid(row=1, column=0, columnspan=2)
         self.errLog = Label(self, text="")
         self.errLog.grid(
@@ -183,35 +195,31 @@ class AuthPage(BasePage):
             rowspan=3,
             sticky="NWSE"
             )
-        userVar = StringVar()
-        pwdVar = StringVar()
+        self.userVar = StringVar()
+        self.pwdVar = StringVar()
         Label(self, text="Account").grid(row=2, column=1, sticky='E')
-        userInput = Entry(
+        self.userInput = Entry(
             self,
-            textvariable=userVar,
+            textvariable=self.userVar,
             width="30")
-        userInput.grid(
+        self.userInput.grid(
             row=2,
             column=2,
             columnspan=2,
             sticky="W")
         Label(self, text="Password").grid(row=3, column=1, sticky='E')
-        pwdInput = Entry(
+        self.pwdInput = Entry(
             self,
-            textvariable=pwdVar,
+            textvariable=self.pwdVar,
             show="*",
             width="30")
-        self.bind(
-            '<Return>',
-            lambda: self.confirm(mode.get(), userVar.get(), pwdVar.get())
-            )
-        pwdInput.grid(
+        self.pwdInput.grid(
             row=3,
             column=2,
             columnspan=2,
             sticky="W")
-        userVar.set(user)
-        pwdVar.set(pwd_ori)
+        self.userVar.set(user)
+        self.pwdVar.set(pwd_ori)
         Label(
             self,
             text='    Welcome to fxos flash tool',
@@ -224,28 +232,31 @@ class AuthPage(BasePage):
         Radiobutton(self,
                     state='disabled',
                     text='Download build from pvt',
-                    variable=mode,
+                    variable=self.mode,
                     value=1,
                     command=lambda: self.entryToggle(
                         True,
-                        [userInput, pwdInput])
+                        [self.userInput, self.pwdInput])
                     ).grid(row=1, column=2, columnspan=2, sticky="E")
         Radiobutton(self,
                     state='disabled',
                     text='Flash build from local',
-                    variable=mode,
+                    variable=self.mode,
                     value=2,
                     command=lambda: self.entryToggle(
                         False,
-                        [userInput, pwdInput])
+                        [self.userInput, self.pwdInput])
                     ).grid(row=1, column=4, sticky="W")
 
         self.ok = Button(self,
                          text='Next',
                          command=lambda: self.
-                         confirm(mode.get(), userVar.get(), pwdVar.get()))
+                         confirm(self.mode.get(), self.userVar.get(), self.pwdVar.get()))
         self.ok.grid(row=4, column=4, sticky="W")
-        userInput.focus_set()
+        self.userInput.bind('<Return>', self.pressReturnKey)
+        self.pwdInput.bind('<Return>', self.pressReturnKey)
+        self.ok.bind('<Return>', self.pressReturnKey)
+        self.userInput.focus_set()
 
 
 class buildIdPage(BasePage):
