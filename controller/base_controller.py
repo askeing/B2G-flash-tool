@@ -1,82 +1,40 @@
 #!/usr/bin/python
 
-from Tkinter import Tk, Frame
 import os
 import sys
 from sys import platform as _platform
-from view.page import ListPage, AuthPage
 from utilities.path_parser import PathParser
 from utilities.authenticator import Authenticator
 from utilities.arg_parse import Parser
 from utilities.downloader import Downloader
 from utilities.decompressor import Decompressor
 
-TITLE_FONT = ("Helvetica", 18, "bold")
 
-
-class FlashApp():
+class BaseController(object):
     def __init__(self, *args, **kwargs):
         '''
         Generate base frame and each page, bind them in a list
         '''
         self.baseUrl = ""  # NOTE: Need to be overwritten
         self.destFolder = ""  # NOTE: Need to be overwritten
-        self.root = Tk()
-        self.frames = []
-        container = Frame(master=self.root)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-        container.pack(side="top", fill="x", expand=False)
-        self.container = container
-
-    def setFrameList(self, list):
-        self.frames = list
-        for idx, val in enumerate(self.frames):
-            val.index = idx
-            val.grid(row=0, column=0, sticky="nsew")
+        account, password = self.loadAccountInfo()
+        self.account = account
+        self.password = password
 
     def setData(self, data=None):
         if data is None:
             data = self.pathParser.get_builds_list_from_url(self.baseUrl)
         self.data = data
 
-    def setupView(self):
-        #NOTE: Please overwrite this function to provide custom view
-        listPage = ListPage(parent=self.container, controller=self)
-        listPage.setupView()
-        account, password = self.loadAccountInfo()
-        authPage = AuthPage(parent=self.container, controller=self)
-        authPage.setupView(
-            "Account Info",
-            account,
-            password)
-        self.setFrameList([
-            authPage,
-            listPage,
-            ])
-        self.transition()
-
-    def setAuth(self, page, user, pwd):
+    def setAuth(self, user, pwd):
         ## pass auth parameters
         self.auth = Authenticator()
         self.auth.authenticate(self.baseUrl, user, pwd)
         if not self.auth.is_authenticated:
-            authPage = self.frames[0]
-            authPage.printErr("Auththentication failed")
-            return
+            return False
         self.pathParser = PathParser()
         self.setData()
-        listPage = self.frames[1]
-        listPage.setData(self.data)
-        listPage.setDeviceList(self.data.keys())
-        self.setDefault(listPage, self.loadOptions())
-        self.transition(page)
-
-    def transition(self, page=None):
-        if page is None:
-            self.frames[0].lift()
-        elif page.index < len(self.frames) - 1:
-            self.frames[page.index + 1].lift()
+        return True
 
     def quit(self):
         '''
@@ -187,31 +145,10 @@ class FlashApp():
             account['password'] = ''
         return account['account'], account['password']
 
-    def setDefault(self, listPage, default):
-        if 'device' in default:
-            listPage.deviceList.selection_set(default['device'])
-            listPage.setVersionList()
-            if 'version' in default:
-                listPage.versionList.selection_set(default['version'])
-                listPage.setEngList()
-                if 'eng' in default:
-                    listPage.engList.selection_set(default['eng'])
-                    listPage.refreshPackageList()
-                    if 'package' in default:
-                        listPage.packageList.selection_set(default['package'])
-                        listPage.ok.config(state='normal')
-
 
 if __name__ == '__main__':
     data = {}
     with open('../test/flash_info.data') as f:
         data = eval(f.read())
-    prog = FlashApp()
-    app = prog.container
+    prog = BaseController()
     prog.setData(data)
-    prog.setupView()
-    if _platform == 'darwin':
-        os.system("/usr/bin/osascript -e \'tell app \"Find\
-er\" to set frontmost of process \"Pyt\
-hon\" to true\'")
-    app.mainloop()

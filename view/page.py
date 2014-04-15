@@ -16,6 +16,9 @@ class BasePage(Frame):
         self.grid()
         self.controller = controller
 
+    def prepare(self):
+        pass
+
     def setName(self, value):
         self.name = value
 
@@ -33,13 +36,18 @@ class ListPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
 
+    def prepare(self):
+        self.setData(self.controller.data)
+        self.setDeviceList(self.data.keys())
+        self.controller.setDefault(self, self.controller.loadOptions())
+
     def printErr(self, message):
         self.errLog.config(text=message)
 
     def setData(self, data):
         self.data = data
 
-    def setupView(self, title="AllinOne", data=None):
+    def setupView(self, title="Select your flash(?)", data=None):
         if(data):
             self.setData(data)
         self.errLog = Label(self, text="")
@@ -102,6 +110,7 @@ class ListPage(BasePage):
         if('gecko' in package):
             params.append('gecko')
         self.controller.doFlash(params)
+        self.transition(self)
 
     def setDeviceList(self, device=[]):
         for li in device:
@@ -168,7 +177,10 @@ class AuthPage(BasePage):
             # mode:1 flash from pvt
             # TODO: the GUI do not updated due to the correct way to update the UI in tk is to use the after method.
             self.logger.log('Logging into server...', status_callback=self.printErr)
-            self.controller.setAuth(self, user, pwd)
+            if self.controller.setAuth(user, pwd):
+                self.controller.transition(self)
+            else:
+                self.printErr("Auththentication failed")
         else:
             # mode:2, flash from local
             pass
@@ -257,6 +269,8 @@ class AuthPage(BasePage):
         self.pwdInput.bind('<Return>', self.pressReturnKey)
         self.ok.bind('<Return>', self.pressReturnKey)
         self.userInput.focus_set()
+        if user and pwd_ori:
+            self.confirm(self.mode.get(), self.userVar.get(), self.pwdVar.get())
 
 
 class buildIdPage(BasePage):
