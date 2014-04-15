@@ -14,6 +14,9 @@ class BasePage(Frame):
         self.grid()
         self.controller = controller
 
+    def prepare(self):
+        pass
+
     def setName(self, value):
         self.name = value
 
@@ -31,13 +34,18 @@ class ListPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
 
+    def prepare(self):
+        self.setData(self.controller.data)
+        self.setDeviceList(self.data.keys())
+        self.controller.setDefault(self, self.controller.loadOptions())
+
     def printErr(self, message):
         self.errLog.config(text=message)
 
     def setData(self, data):
         self.data = data
 
-    def setupView(self, title="AllinOne", data=None):
+    def setupView(self, title="Select your flash(?)", data=None):
         if(data):
             self.setData(data)
         self.errLog = Label(self, text="")
@@ -100,6 +108,7 @@ class ListPage(BasePage):
         if('gecko' in package):
             params.append('gecko')
         self.controller.doFlash(params)
+        self.transition(self)
 
     def setDeviceList(self, device=[]):
         for li in device:
@@ -164,9 +173,10 @@ class AuthPage(BasePage):
     def confirm(self, mode, user, pwd):
         if(mode == 1):
             # mode:1 flash from pvt
-            self.controller.setAuth(self,
-                                    user,
-                                    pwd)
+            if self.controller.setAuth(user, pwd):
+                self.controller.transition(self)
+            else:
+                self.printErr("Auththentication failed")
         else:
             # mode:2, flash from local
             pass
@@ -246,6 +256,8 @@ class AuthPage(BasePage):
                          confirm(mode.get(), userVar.get(), pwdVar.get()))
         self.ok.grid(row=4, column=4, sticky="W")
         userInput.focus_set()
+        if user and pwd_ori:
+            self.confirm(mode.get(), userVar.get(), pwdVar.get())
 
 
 class buildIdPage(BasePage):
