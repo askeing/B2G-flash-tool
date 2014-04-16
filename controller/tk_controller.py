@@ -61,9 +61,10 @@ class FlashApp(BaseController):
         nextPage.prepare()
         nextPage.lift()
         nextPage.focus_set()
+        self.curPage = nextPage
 
-    def printErr(self, curPage, message):
-        curPage.printErr(message)
+    def printErr(self, message):
+        self.curPage.printErr(message)
 
     def setDefault(self, listPage, default):
         if 'device' in default:

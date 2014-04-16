@@ -73,8 +73,8 @@ class BaseController(object):
         print(targets)
         sys.exit(0)
 
-    def printErr(self, curPage, message):
-        curPage.printErr(message)
+    def printErr(self, message):
+        raise NotImplementedError
 
     def getPackages(self, src):
         #TODO: Async request?
