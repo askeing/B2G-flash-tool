@@ -70,8 +70,11 @@ class BaseController(object):
             cmd = cmd + ' -G' + sp + archives['gecko']
         print("run command: " + cmd)
         os.system(cmd)
+        self.after_flash_action()
+        self.quit()
+
+    def after_flash_action(self):
         print(targets)
-        sys.exit(0)
 
     def printErr(self, message):
         raise NotImplementedError
