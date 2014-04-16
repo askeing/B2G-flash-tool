@@ -5,6 +5,7 @@ from path_parser import PathParser
 class testPathParser(unittest.TestCase):
 
     def setUp(self):
+        self.path_parser = PathParser()
         # For test_parser_root()
         self.test_html_root = """
         <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
@@ -74,31 +75,41 @@ class testPathParser(unittest.TestCase):
         self.expect_result_packages_all = {'images': 'nexus-4.zip', 'gaia': 'gaia.zip', 'gecko': 'b2g-31.0a1.en-US.android-arm.tar.gz'}
 
     def test_parser_root(self):
-        path_parser = PathParser()
-        result = path_parser._parse_device_version_and_time_from_list(path_parser._parse_build_and_time_from_html(self.test_html_root))
+        '''
+        Test parsing the HTML page which contains the builds list.
+        '''
+        result = self.path_parser._parse_device_version_and_time_from_list(self.path_parser._parse_build_and_time_from_html(self.test_html_root))
         self.assertEqual(result, self.expect_result_root)
 
     def test_parser_packages_gaia_gecko(self):
-        path_parser = PathParser()
-        result = path_parser._parse_available_packages(self.test_html_packages_src_gaia_gecko, self.test_html_packages_gaia_gecko)
+        '''
+        Test parsing the gaia/gecko from Builds page.
+        '''
+        result = self.path_parser._parse_available_packages(self.test_html_packages_src_gaia_gecko, self.test_html_packages_gaia_gecko)
         self.assertEqual(result, self.expect_result_packages_gaia_gecko)
 
     def test_parser_packages_all(self):
-        path_parser = PathParser()
-        result = path_parser._parse_available_packages(self.test_html_packages_src_all, self.test_html_packages_all)
+        '''
+        Test parsing the gaia/gecko/images from Builds page.
+        '''
+        result = self.path_parser._parse_available_packages(self.test_html_packages_src_all, self.test_html_packages_all)
         self.assertEqual(result, self.expect_result_packages_all)
 
     def test_verify_build_id(self):
-        path_parser = PathParser()
-        self.assertTrue(path_parser._verify_build_id('20140408160201'))
-        self.assertTrue(path_parser._verify_build_id('2014-04-08-16-02-01'))
-        self.assertFalse(path_parser._verify_build_id('2014-04-08-16-02-01-0000'))
-        self.assertFalse(path_parser._verify_build_id('This is not build id'))
+        '''
+        Test verifying the build id.
+        '''
+        self.assertTrue(self.path_parser._verify_build_id('20140408160201'))
+        self.assertTrue(self.path_parser._verify_build_id('2014-04-08-16-02-01'))
+        self.assertFalse(self.path_parser._verify_build_id('2014-04-08-16-02-01-0000'))
+        self.assertFalse(self.path_parser._verify_build_id('This is not build id'))
 
     def test_get_path_of_build_id(self):
-        path_parser = PathParser()
-        self.assertEqual('/2014/04/2014-04-08-16-02-01/', path_parser._get_path_of_build_id('2014-04-08-16-02-01'))
-        self.assertEqual('/2014/04/2014-04-13-16-02-02/', path_parser._get_path_of_build_id('2014-04-13-16-02-02'))
+        '''
+        Test the build id translation.
+        '''
+        self.assertEqual('/2014/04/2014-04-08-16-02-01/', self.path_parser._get_path_of_build_id('2014-04-08-16-02-01'))
+        self.assertEqual('/2014/04/2014-04-13-16-02-02/', self.path_parser._get_path_of_build_id('2014-04-13-16-02-02'))
 
 if __name__ == '__main__':
     unittest.main()
