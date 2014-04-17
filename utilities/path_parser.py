@@ -6,6 +6,9 @@ from logger import Logger
 
 class PathParser(object):
 
+    _ENGINEER_BUILD_NAME = 'Engineer'
+    _USER_BUILD_NAME = 'User'
+
     def __init__(self):
         self.logger = Logger()
 
@@ -96,7 +99,7 @@ class PathParser(object):
             device_name = splited_build_info[2]
             branch_name = splited_build_info[1]
             src_name = build_and_time[0]
-            build = 'Engineer' if engineer_build else 'User'
+            build = self._ENGINEER_BUILD_NAME if engineer_build else self._USER_BUILD_NAME
             last_modify_time = build_and_time[1]
             build_item = {build: {'src': src_name, 'last_modify_time': last_modify_time}}
 

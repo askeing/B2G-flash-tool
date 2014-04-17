@@ -20,6 +20,8 @@ class BaseController(object):
         account, password = self.loadAccountInfo()
         self.account = account
         self.password = password
+        self.auth = Authenticator()
+        self.pathParser = PathParser()
 
     def setData(self, data=None):
         if data is None:
@@ -28,11 +30,9 @@ class BaseController(object):
 
     def setAuth(self, user, pwd):
         ## pass auth parameters
-        self.auth = Authenticator()
         self.auth.authenticate(self.baseUrl, user, pwd)
         if not self.auth.is_authenticated:
             return False
-        self.pathParser = PathParser()
         self.setData()
         return True
 
@@ -70,8 +70,11 @@ class BaseController(object):
             cmd = cmd + ' -G' + sp + archives['gecko']
         print("run command: " + cmd)
         os.system(cmd)
+        self.after_flash_action()
+        self.quit()
+
+    def after_flash_action(self):
         print(targets)
-        sys.exit(0)
 
     def printErr(self, message):
         raise NotImplementedError
