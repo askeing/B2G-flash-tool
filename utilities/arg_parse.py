@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+
 class Parser(object):
 
     @staticmethod
@@ -14,11 +15,11 @@ class Parser(object):
         parser.add_argument('-G', '--gecko', action='store_true', help='shallow flash gaia into device')
         parser.add_argument('--usr', action='store_true', help='specify user build')
         parser.add_argument('--eng', action='store_true', help='specify engineer build')
-        parser.add_argument('-b', '--build', help='specify target build YYYYMMDDhhmmss')
-        parser.add_argument('-w', help='interaction GUI mode')
+        parser.add_argument('-b', '--build_id', help='specify target build YYYYMMDDhhmmss')
+        parser.add_argument('-w', '--window', action='store_true', help='interaction GUI mode')
         parser.add_argument('-u', '--username', help='LDAP account (will load from .ldap file if exists)')
         parser.add_argument('-p', '--password', help='LDAP password (will load from .ldap file if exists)')
-        parser.add_argument('--uninstall_comril', help='uninstall com-ril when shallow flash gecko')
+        parser.add_argument('--uninstall_comril', action='store_true', help='uninstall com-ril when shallow flash gecko')
         parser.add_argument('--dl_home', help='specify download forlder')
         options = parser.parse_args(input)
         return options
@@ -27,5 +28,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         print Parser.pvtArgParse(sys.argv[1:])
     else:
-        testSample = ["-v", "v2.0", "-d=buri", "-g", "-G"];
+        testSample = ["-v", "v2.0", "-d=buri", "-g", "-G"]
         print Parser.pvtArgParse(testSample)

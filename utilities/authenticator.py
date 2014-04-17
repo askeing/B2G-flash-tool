@@ -12,6 +12,7 @@ class Authenticator(object):
 
     def authenticate(self, top_level_url, username, password, status_callback=None):
         try:
+            self.logger.log('Log in ' + username + ' ...', status_callback)
             _authn_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
             _authn_manager.add_password(None, top_level_url, username, password)
             _handler = urllib2.HTTPBasicAuthHandler(_authn_manager)

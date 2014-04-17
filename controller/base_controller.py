@@ -20,6 +20,8 @@ class BaseController(object):
         account, password = self.loadAccountInfo()
         self.account = account
         self.password = password
+        self.auth = Authenticator()
+        self.pathParser = PathParser()
 
     def setData(self, data=None):
         if data is None:
@@ -28,11 +30,9 @@ class BaseController(object):
 
     def setAuth(self, user, pwd):
         ## pass auth parameters
-        self.auth = Authenticator()
         self.auth.authenticate(self.baseUrl, user, pwd)
         if not self.auth.is_authenticated:
             return False
-        self.pathParser = PathParser()
         self.setData()
         return True
 
