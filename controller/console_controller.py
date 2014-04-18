@@ -1,9 +1,11 @@
 #!/usr/bin/python
 import os
 import sys
+import re
 from sys import platform as _platform
-from utilities.path_parser import PathParser
+from utilities.logger import Logger
 from utilities.arg_parse import Parser
+from utilities.path_parser import PathParser
 from utilities.console_dialog import ConsoleDialog
 from base_controller import BaseController
 
@@ -15,10 +17,16 @@ class ConsoleApp(BaseController):
         init
         '''
         BaseController.__init__(self, *args, **kwargs)
+        # Setup Default value
         self.flash_params = []
         self.dialog = ConsoleDialog()
         self.baseUrl = 'https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
         self.destFolder = 'pvt'
+        self.target_device = ''
+        self.target_branch = ''
+        self.target_build = ''
+        self.target_build_id = ''
+        # Load options from input argvs
         self.options = Parser.pvtArgParse(sys.argv[1:])
         self._load_options()
 
@@ -37,53 +45,139 @@ class ConsoleApp(BaseController):
 
         # get target device
         devices = self.data.keys()
-        if len(devices) > 1:
-            ret_obj = self.dialog.menu('Device List', 'Select Device from PVT Server', devices)
-            if ret_obj['SELECT'] == 'q':
-                self.quit()
-            self.target_device = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+        # check device from load options
+        if not self.target_device == '' and self.target_device not in devices:
+            self.logger.log('The device [' + self.target_device + '] do not exist.', level=Logger._LEVEL_WARNING)
+            self.target_device = ''
         else:
-            self.target_device = devices[0]
+            self.logger.log('The device [' + self.target_device + '] exist.')
+        # user input
+        if self.target_device == '':
+            if len(devices) > 1:
+                ret_obj = self.dialog.menu('Device List', 'Select Device from PVT Server', devices)
+                if ret_obj['SELECT'] == ConsoleDialog._QUIT_CMD_INDEX:
+                    self.quit()
+                self.target_device = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+            elif len(devices) == 1:
+                self.target_device = devices[0]
+            else:
+                self.logger.log('There is no device in packages list.', level=Logger._LEVEL_WARNING)
+                self.quit()
 
         # get target branch
         branchs = self.data[self.target_device].keys()
-        if len(branchs) > 1:
-            ret_obj = self.dialog.menu('Branch List', 'Select Branch of [' + self.target_device + '] device', branchs)
-            if ret_obj['SELECT'] == 'q':
-                self.quit()
-            self.target_branch = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+        # check branch from load options
+        if not self.target_branch == '' and self.target_branch not in branchs:
+            self.logger.log('The branch [' + self.target_branch + '] of [' + self.target_device + '] do not exist.', level=Logger._LEVEL_WARNING)
+            self.target_branch = ''
         else:
-            self.target_branch = branchs[0]
+            self.logger.log('The branch [' + self.target_branch + '] of [' + self.target_device + '] exist.')
+        # user input
+        if self.target_branch == '':
+            if len(branchs) > 1:
+                ret_obj = self.dialog.menu('Branch List', 'Select Branch of [' + self.target_device + '] device', branchs)
+                if ret_obj['SELECT'] == ConsoleDialog._QUIT_CMD_INDEX:
+                    self.quit()
+                self.target_branch = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+            elif len(branchs) == 1:
+                self.target_branch = branchs[0]
+            else:
+                self.logger.log('There is no branch of ['+ self.target_device +'].', level=Logger._LEVEL_WARNING)
+                self.quit()
 
         # get target build
         builds = self.data[self.target_device][self.target_branch].keys()
-        if len(builds) > 1:
-            ret_obj = self.dialog.menu('Build List', 'Select Build of [' + self.target_device + '] [' + self.target_branch + '] Branch', builds)
-            if ret_obj['SELECT'] == 'q':
-                self.quit()
-            self.target_build = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+        # check engineer/user build from load options
+        if not self.target_build == '' and self.target_build not in builds:
+            self.logger.log('The [' + self.target_build + '] build of ['+ self.target_device +'] ['+ self.target_branch +'] do not exist.', level=Logger._LEVEL_WARNING)
+            self.target_build = ''
         else:
-            self.target_build = builds[0]
+            self.logger.log('The [' + self.target_build + '] build of ['+ self.target_device +'] ['+ self.target_branch +'] exist.')
+        # user input
+        if self.target_build == '':
+            if len(builds) > 1:
+                ret_obj = self.dialog.menu('Build List', 'Select Build of [' + self.target_device + '] [' + self.target_branch + '] Branch', builds)
+                if ret_obj['SELECT'] == ConsoleDialog._QUIT_CMD_INDEX:
+                    self.quit()
+                self.target_build = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+            elif len(builds) == 1:
+                self.target_build = builds[0]
+            else:
+                self.logger.log('There is no build of ['+ self.target_device +'] ['+ self.target_branch +'].', level=Logger._LEVEL_WARNING)
+                self.quit()
+
+        # Get the target build's information
         self.target_build_info = self.data[self.target_device][self.target_branch][self.target_build]
 
-        # get available packages
-        packages = self.getPackages(self.target_build_info['src'])
-        if len(packages) > 1:
-            ret_obj = self.dialog.menu('Flash List', 'Select Flash Type of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] Build', packages)
-            if ret_obj['SELECT'] == 'q':
+        # TODO: build id part, not sure do we have to ask user? or only input build id from options?
+        #ret_obj = self.dialog.yes_no('Latest or Build ID', 'Do you want to flash the latest build', ConsoleDialog._YES_CMD_INDEX)
+        self.latest_or_buildid = 'Latest'
+        if not self.target_build_id == '':
+            if self.pathParser.verify_build_id(self.target_build_id):
+                self.latest_or_buildid = self.target_build_id
+                self.logger.log('Set up the build ID [' + self.target_build_id + '] of ['+ self.target_device +'] ['+ self.target_branch +'].')
+            else:
+                self.logger.log('The build id [' + self.target_build_id + '] is not not valid.', level=Logger._LEVEL_WARNING)
                 self.quit()
-            self.target_package = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
         else:
-            self.target_package = packages[0]
+            self.logger.log('Set up the latest build of ['+ self.target_device +'] ['+ self.target_branch +'].')
 
-        if 'images' in self.target_package:
-            self.flash_params.append('images')
-        else:
-            if 'gaia' in self.target_package:
-                self.flash_params.append('gaia')
-            if 'gecko' in self.target_package:
-                self.flash_params.append('gecko')
+        # get available packages
+        packages = self.getPackages(self.target_build_info['src'], build_id=self.target_build_id)
+        if len(packages) <= 0:
+            self.logger.log('There is no flash package of ['+ self.target_device +'] ['+ self.target_branch +'] [' + self.target_build + '] [' + self.latest_or_buildid + ']  Build.', level=Logger._LEVEL_WARNING)
+            self.quit()
+
+        # check flash build from load options
+        select_flash = True
+        # if there are flash params from options
+        if len(self.flash_params) > 0:
+            # do not ask user
+            select_flash = False
+            # but if there is any param do not exist, then ask user.
+            for flash_param in self.flash_params:
+                if flash_param not in packages:
+                    self.logger.log('The [' + flash_param + '] of flash options ' + str(self.flash_params) + ' do not exist.', level=Logger._LEVEL_WARNING)
+                    self.flash_params = []
+                    select_flash = True
+                    break
+        # user input
+        if select_flash:
+            if len(packages) > 1:
+                ret_obj = self.dialog.menu('Flash List', 'Select Flash Type of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build', packages)
+                if ret_obj['SELECT'] == ConsoleDialog._QUIT_CMD_INDEX:
+                    self.quit()
+                self.target_package = ret_obj['ITEMS'][ret_obj['SELECT']]['NAME']
+            else:
+                self.target_package = packages[0]
+            # setup the flash params from user selection
+            if 'images' in self.target_package:
+                self.flash_params.append('images')
+            else:
+                if 'gaia' in self.target_package:
+                    self.flash_params.append('gaia')
+                if 'gecko' in self.target_package:
+                    self.flash_params.append('gecko')
+
+        # flash
+        self.logger.log('Flash' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build ...')
+        self.destFolder = self._get_dest_folder_from_build_id(self.destFolder, self.target_build_info['src'], self.target_build_id)
         self.doFlash(self.flash_params)
+
+    # TODO: after refine the root_folder and dest_folder, this method should be move to base_controller
+    def _get_dest_folder_from_build_id(self, root_folder, build_src, build_id):
+        target_folder = ''
+        if not build_id == '':
+            if self.pathParser.verify_build_id(build_id):
+                sub_folder = re.sub(r'^/', '', self.pathParser.get_path_of_build_id(build_id))
+                target_folder = os.path.join(root_folder, build_src, sub_folder)
+            else:
+                self.logger.log('The build id [' + self.target_build_id + '] is not not valid.', level=Logger._LEVEL_WARNING)
+                self.quit()
+        else:
+            target_folder = os.path.join(root_folder, build_src, 'latest')
+        self.logger.log('Set up dest folder to [' + target_folder + '].')
+        return target_folder
 
     def _load_options(self):
         # Settings
@@ -127,7 +221,7 @@ class ConsoleApp(BaseController):
                 self.flash_params.append('gecko')
 
     def after_flash_action(self):
-        self.dialog.msg_box('Flash Information', 'Flash ' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] Done.')
+        self.dialog.msg_box('Flash Information', 'Flash ' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Done.')
 
     def printErr(self, message):
         pass

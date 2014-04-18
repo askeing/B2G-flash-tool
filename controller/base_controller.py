@@ -3,6 +3,7 @@
 import os
 import sys
 from sys import platform as _platform
+from utilities.logger import Logger
 from utilities.path_parser import PathParser
 from utilities.authenticator import Authenticator
 from utilities.arg_parse import Parser
@@ -15,6 +16,7 @@ class BaseController(object):
         '''
         Generate base frame and each page, bind them in a list
         '''
+        self.logger = Logger()
         self.baseUrl = ""  # NOTE: Need to be overwritten
         self.destFolder = ""  # NOTE: Need to be overwritten
         account, password = self.loadAccountInfo()
@@ -79,12 +81,9 @@ class BaseController(object):
     def printErr(self, message):
         raise NotImplementedError
 
-    def getPackages(self, src):
+    def getPackages(self, src, build_id=''):
         #TODO: Async request?
-        query = self.pathParser.get_available_packages_from_url(
-            self.baseUrl,
-            src
-            )
+        query = self.pathParser.get_available_packages_from_url(self.baseUrl, src, build_id=build_id)
         self.paths = {}
         package = []
         if 'gaia' in query and 'gecko' in query:

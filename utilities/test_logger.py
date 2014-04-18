@@ -12,7 +12,7 @@ class testPathParser(unittest.TestCase):
         Test the status callback of logger.
         '''
         test_message = 'TEST MESSAGE'
-        self.logger.log(test_message, self.mock_callback)
+        self.logger.log(test_message, status_callback=self.mock_callback)
         print 'cb result', self.callback_message
         self.assertEqual(test_message, self.callback_message)
 

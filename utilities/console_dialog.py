@@ -13,6 +13,8 @@ class ConsoleDialog(object):
     _ITEM_TYPE = 'ITEM'
     _QUIT_CMD_INDEX = 'q'
     _QUIT_CMD_NAME = 'QUIT'
+    _YES_CMD_INDEX = 'y'
+    _NO_CMD_INDEX ='n'
 
     def __init__(self):
         try:
@@ -48,12 +50,34 @@ class ConsoleDialog(object):
             response = self._get_dialog_input_with_desc(description)
         return response
 
-    def msg_box(self, title, description, dialog_width=80):
+    def msg_box(self, title, description, press_enter_to_next=False, dialog_width=80):
         # print title
         self._print_title(title)
         print '> ' + description
         self._print_horizontal_lines()
         print ''
+        if press_enter_to_next:
+            raw_input("Press Enter to continue...")
+
+    def yes_no(self, title, description, default_value='', dialog_width=80):
+        default = default_value.lower()
+        if default_value not in [self._YES_CMD_INDEX, self._NO_CMD_INDEX]:
+            default = ''
+        question_mark = ' (y/n) '
+        if default_value == self._YES_CMD_INDEX:
+            question_mark = ' (Y/n) '
+        elif default_value == self._NO_CMD_INDEX:
+            question_mark = ' (y/N) '
+        # print title
+        self._print_title(title)
+        # get response from raw input
+        response = ''
+        while response not in [self._YES_CMD_INDEX, self._NO_CMD_INDEX]:
+            response = self._get_dialog_input_with_desc(description + question_mark).lower()
+            if len(default_value) > 0 and response not in [self._YES_CMD_INDEX, self._NO_CMD_INDEX]:
+                response = default_value
+        answer = True if response == self._YES_CMD_INDEX else False
+        return answer
 
     def _create_items_dict(self, items_list, alternative_cmds_dict={}):
         items_dict = {self._QUIT_CMD_INDEX: {self._NAME: self._QUIT_CMD_NAME, self._TYPE: self._COMMAND_TYPE}}
