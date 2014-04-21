@@ -135,6 +135,7 @@ function device_info(){
     echo -e "  wasabi"
     echo -e "  tarako"
     echo -e "  nexus4"
+    echo -e "  flame"
 }
 
 ## Select the device
@@ -150,6 +151,7 @@ function device() {
         wasabi) DEVICE_NAME="wasabi";;
         tarako) DEVICE_NAME="tarako";;
         nexus4) DEVICE_NAME="nexus4";;
+        flame) DEVICE_NAME="flame";;
         *) device_info; exit -1;;
     esac
 }
@@ -162,6 +164,7 @@ function device() {
 #  * helix      #
 #  * wasabi     #
 #  * nexus 4    #
+#  * flame      #
 # ############# #
 
 function select_device_dialog() {
@@ -174,7 +177,8 @@ function select_device_dialog() {
     "helix" "Helix Device" \
     "wasabi" "Wasabi Device" \
     "tarako" "Tarako Device" \
-    "nexus4" "Nexus 4 Device" 2>${TMP_DIR}/menuitem_device
+    "nexus4" "Nexus 4 Device" \
+    "flame" "Flame/OpenC Device" 2>${TMP_DIR}/menuitem_device
     ret=$?
     if [ ${ret} == 1 ]; then
         echo "" && echo "byebye." && exit 0
@@ -187,7 +191,7 @@ function select_device_dialog() {
 }
 
 function select_device_dialog_mac() {
-    device_option_list='{"unagi","hamachi","inari","leo","helix","wasabi","tarako","nexus4"}'
+    device_option_list='{"unagi","hamachi","inari","leo","helix","wasabi","tarako","nexus4","flame"}'
     eval ret=\$\(osascript -e \'tell application \"Terminal\" to choose from list $device_option_list with title \"Choose Device\"\'\)
     ret=${ret#*text returned:}
     ret=${ret%, button returned:*}
