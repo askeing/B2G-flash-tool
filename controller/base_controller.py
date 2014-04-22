@@ -76,14 +76,17 @@ class BaseController(object):
         self.quit()
 
     def after_flash_action(self):
-        print(targets)
+        pass
 
     def printErr(self, message):
         raise NotImplementedError
 
     def getPackages(self, src, build_id=''):
         #TODO: Async request?
-        query = self.pathParser.get_available_packages_from_url(self.baseUrl, src, build_id=build_id)
+        query = self.pathParser.\
+            get_available_packages_from_url(
+                self.baseUrl, src, build_id=build_id
+                )
         self.paths = {}
         package = []
         if 'gaia' in query and 'gecko' in query:
@@ -98,6 +101,11 @@ class BaseController(object):
             package.append('full image')
             self.paths['images'] = query['images']
         return package
+
+    def getLatestBuildId(self, src):
+        # TODO: Get from remote and Use in local flash;
+        #       should be an async request?
+        pass
 
     def loadOptions(self):
         data = self.data
