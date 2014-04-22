@@ -21,7 +21,8 @@ class ConsoleApp(BaseController):
         self.flash_params = []
         self.dialog = ConsoleDialog()
         self.baseUrl = 'https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
-        self.destFolder = 'pvt'
+        self.destRootFolder = 'pvt'
+        self.destFolder = ''
         self.target_device = ''
         self.target_branch = ''
         self.target_build = ''
@@ -161,29 +162,13 @@ class ConsoleApp(BaseController):
 
         # flash
         self.logger.log('Flash' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build ...')
-        self.destFolder = self._get_dest_folder_from_build_id(self.destFolder, self.target_build_info['src'], self.target_build_id)
         self.doFlash(self.flash_params)
-
-    # TODO: after refine the root_folder and dest_folder, this method should be move to base_controller
-    def _get_dest_folder_from_build_id(self, root_folder, build_src, build_id):
-        target_folder = ''
-        if not build_id == '':
-            if self.pathParser.verify_build_id(build_id):
-                sub_folder = re.sub(r'^/', '', self.pathParser.get_path_of_build_id(build_id))
-                target_folder = os.path.join(root_folder, build_src, sub_folder)
-            else:
-                self.logger.log('The build id [' + self.target_build_id + '] is not not valid.', level=Logger._LEVEL_WARNING)
-                self.quit()
-        else:
-            target_folder = os.path.join(root_folder, build_src, 'latest')
-        self.logger.log('Set up dest folder to [' + target_folder + '].')
-        return target_folder
 
     def _load_options(self):
         # Settings
         target = self.options.dl_home
         if target is not None and len(target) > 0:
-            self.destFolder = target
+            self.destRootFolder = target
 
         # Account Info
         target = self.options.username

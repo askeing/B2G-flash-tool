@@ -23,7 +23,7 @@ class PvtFlashApp(FlashApp):
     def __init__(self, *args, **kwargs):
         FlashApp.__init__(self, *args, **kwargs)
         self.baseUrl = "https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/"
-        self.destFolder = "pvt"
+        self.destRootFolder = "pvt"
 
     def quit(self):
         pass

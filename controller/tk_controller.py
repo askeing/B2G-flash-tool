@@ -80,6 +80,43 @@ class FlashApp(BaseController):
                         listPage.packageList.selection_set(default['package'])
                         listPage.ok.config(state='normal')
 
+    def loadOptions(self):
+        data = self.data
+        if not data:
+            return
+        options = Parser.pvtArgParse(sys.argv[1:])
+        default = {}
+        deviceList = data.keys()
+        if options.device in deviceList:
+            default['device'] = deviceList.index(options.device)
+            versionList = data[options.device].keys()
+            if options.version in versionList:
+                default['version'] = versionList.index(options.version)
+                engList = data[options.device][options.version].keys()
+                if options.eng and 'Engineer' in engList:
+                    default['eng'] = engList.index('Engineer')
+                elif options.usr and 'User' in engList:
+                    default['eng'] = engList.index('User')
+                else:
+                    return default
+                if default['eng']:
+                    package = self.getPackages(
+                        data[options.device][
+                            options.version][
+                            engList[default['eng']]][
+                            'src']
+                        )
+                    if options.gaia and options.gecko:
+                        package[0:0] = 'gecko + gaia'
+                        if 'gaia' in package and 'gecko' in package:
+                            default['package'] = 0
+                    elif options.gaia and 'gaia' in package:
+                        default['package'] = package.index('gaia')
+                    elif options.gecko:
+                        default['package'] = package.index('gecko')
+                    elif options.full_flash:
+                        default['package'] = package.index('full image')
+        return default
 
 if __name__ == '__main__':
     data = {}

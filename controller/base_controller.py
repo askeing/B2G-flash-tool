@@ -2,6 +2,9 @@
 
 import os
 import sys
+import re
+import shutil
+import tempfile
 from sys import platform as _platform
 from utilities.logger import Logger
 from utilities.path_parser import PathParser
@@ -17,8 +20,9 @@ class BaseController(object):
         Generate base frame and each page, bind them in a list
         '''
         self.logger = Logger()
-        self.baseUrl = ""  # NOTE: Need to be overwritten
-        self.destFolder = ""  # NOTE: Need to be overwritten
+        self.baseUrl = ''  # NOTE: Need to be overwritten
+        self.destRootFolder = ''  # NOTE: Need to be overwritten
+        self.destFolder = ''
         account, password = self.loadAccountInfo()
         self.account = account
         self.password = password
@@ -42,10 +46,12 @@ class BaseController(object):
         '''
         Halt the program
         '''
-        print("### quit function invoked")
+        print('### quit function invoked')
         sys.exit(0)
 
     def doFlash(self, targets):
+        if len(self.destFolder) == 0:
+            self.destFolder = self.destRootFolder
         download = Downloader()
         archives = {}
         cmd = './shallow_flash.sh -y'
@@ -53,24 +59,24 @@ class BaseController(object):
         if _platform == 'darwin':
             sp = ' '
         for target in targets:
-            archives[target] = download.download(
-                self.paths[target],
-                self.destFolder,
-                self.printErr
-                )
+            archives[target] = download.download( self.paths[target], self.destFolder, status_callback=self.printErr)
         if 'images' in targets:
-            Decompressor().unzip(
-                archives['images'],
-                self.destFolder,
-                self.printErr
-                )
-            os.system(self.destFolder + "/flash.sh -f")
-            return
+            try:
+                temp_dir = tempfile.mkdtemp()
+                self.logger.log('Create temporary folder:' + temp_dir, status_callback=self.printErr)
+                Decompressor().unzip(archives['images'], self.temp_dir, status_callback=self.printErr)
+                os.system(self.temp_dir + '/flash.sh -f')
+                return
+            finally:
+                try:
+                    shutil.rmtree(tmp_dir)  # delete directory
+                except OSError:
+                    self.logger.log('Can not remove temporary folder:' + temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
         if 'gaia' in targets:
             cmd = cmd + ' -g' + sp + archives['gaia']
         if 'gecko' in targets:
             cmd = cmd + ' -G' + sp + archives['gecko']
-        print("run command: " + cmd)
+        print('run command: ' + cmd)
         os.system(cmd)
         self.after_flash_action()
         self.quit()
@@ -82,6 +88,9 @@ class BaseController(object):
         raise NotImplementedError
 
     def getPackages(self, src, build_id=''):
+        '''
+        input src and build-id, then setup the dest-folder and return the available packages.
+        '''
         #TODO: Async request?
         query = self.pathParser.get_available_packages_from_url(self.baseUrl, src, build_id=build_id)
         self.paths = {}
@@ -97,45 +106,9 @@ class BaseController(object):
         if 'images' in query:
             package.append('full image')
             self.paths['images'] = query['images']
+        # set up the download dest folder
+        self.destFolder = self._get_dest_folder_from_build_id(self.destRootFolder, src, build_id)
         return package
-
-    def loadOptions(self):
-        data = self.data
-        if not data:
-            return
-        options = Parser.pvtArgParse(sys.argv[1:])
-        default = {}
-        deviceList = data.keys()
-        if options.device in deviceList:
-            default['device'] = deviceList.index(options.device)
-            versionList = data[options.device].keys()
-            if options.version in versionList:
-                default['version'] = versionList.index(options.version)
-                engList = data[options.device][options.version].keys()
-                if options.eng and 'Engineer' in engList:
-                    default['eng'] = engList.index('Engineer')
-                elif options.usr and 'User' in engList:
-                    default['eng'] = engList.index('User')
-                else:
-                    return default
-                if default['eng']:
-                    package = self.getPackages(
-                        data[options.device][
-                            options.version][
-                            engList[default['eng']]][
-                            'src']
-                        )
-                    if options.gaia and options.gecko:
-                        package[0:0] = 'gecko + gaia'
-                        if 'gaia' in package and 'gecko' in package:
-                            default['package'] = 0
-                    elif options.gaia and 'gaia' in package:
-                        default['package'] = package.index('gaia')
-                    elif options.gecko:
-                        default['package'] = package.index('gecko')
-                    elif options.full_flash:
-                        default['package'] = package.index('full image')
-        return default
 
     def loadAccountInfo(self):
         account = {}
@@ -147,6 +120,19 @@ class BaseController(object):
             account['password'] = ''
         return account['account'], account['password']
 
+    def _get_dest_folder_from_build_id(self, root_folder, build_src, build_id):
+        target_folder = ''
+        if not build_id == '':
+            if self.pathParser.verify_build_id(build_id):
+                sub_folder = re.sub(r'^/', '', self.pathParser.get_path_of_build_id(build_id))
+                target_folder = os.path.join(root_folder, build_src, sub_folder)
+            else:
+                self.logger.log('The build id [' + self.target_build_id + '] is not not valid.', status_callback=self.printErr, level=Logger._LEVEL_WARNING)
+                self.quit()
+        else:
+            target_folder = os.path.join(root_folder, build_src, 'latest')
+        self.logger.log('Set up dest folder to [' + target_folder + '].', status_callback=self.printErr)
+        return target_folder
 
 if __name__ == '__main__':
     data = {}
