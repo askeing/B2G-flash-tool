@@ -14,7 +14,7 @@ class ConsoleDialog(object):
     _QUIT_CMD_INDEX = 'q'
     _QUIT_CMD_NAME = 'QUIT'
     _YES_CMD_INDEX = 'y'
-    _NO_CMD_INDEX ='n'
+    _NO_CMD_INDEX = 'n'
 
     def __init__(self):
         try:

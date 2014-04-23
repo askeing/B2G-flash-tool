@@ -20,8 +20,10 @@ class ConsoleApp(BaseController):
         # Setup Default value
         self.flash_params = []
         self.dialog = ConsoleDialog()
-        self.baseUrl = 'https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
-        self.destRootFolder = 'pvt'
+        if len(self.baseUrl) == 0:
+            self.baseUrl = 'https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
+        if len(self.destRootFolder) == 0:
+            self.destRootFolder = 'pvt'
         self.destFolder = ''
         self.target_device = ''
         self.target_branch = ''
@@ -83,17 +85,17 @@ class ConsoleApp(BaseController):
             elif len(branchs) == 1:
                 self.target_branch = branchs[0]
             else:
-                self.logger.log('There is no branch of ['+ self.target_device +'].', level=Logger._LEVEL_WARNING)
+                self.logger.log('There is no branch of [' + self.target_device + '].', level=Logger._LEVEL_WARNING)
                 self.quit()
 
         # get target build
         builds = self.data[self.target_device][self.target_branch].keys()
         # check engineer/user build from load options
         if not self.target_build == '' and self.target_build not in builds:
-            self.logger.log('The [' + self.target_build + '] build of ['+ self.target_device +'] ['+ self.target_branch +'] do not exist.', level=Logger._LEVEL_WARNING)
+            self.logger.log('The [' + self.target_build + '] build of [' + self.target_device + '] [' + self.target_branch + '] do not exist.', level=Logger._LEVEL_WARNING)
             self.target_build = ''
         else:
-            self.logger.log('The [' + self.target_build + '] build of ['+ self.target_device +'] ['+ self.target_branch +'] exist.')
+            self.logger.log('The [' + self.target_build + '] build of [' + self.target_device + '] [' + self.target_branch + '] exist.')
         # user input
         if self.target_build == '':
             if len(builds) > 1:
@@ -104,7 +106,7 @@ class ConsoleApp(BaseController):
             elif len(builds) == 1:
                 self.target_build = builds[0]
             else:
-                self.logger.log('There is no build of ['+ self.target_device +'] ['+ self.target_branch +'].', level=Logger._LEVEL_WARNING)
+                self.logger.log('There is no build of [' + self.target_device + '] [' + self.target_branch + '].', level=Logger._LEVEL_WARNING)
                 self.quit()
 
         # Get the target build's information
@@ -116,17 +118,17 @@ class ConsoleApp(BaseController):
         if not self.target_build_id == '':
             if self.pathParser.verify_build_id(self.target_build_id):
                 self.latest_or_buildid = self.target_build_id
-                self.logger.log('Set up the build ID [' + self.target_build_id + '] of ['+ self.target_device +'] ['+ self.target_branch +'].')
+                self.logger.log('Set up the build ID [' + self.target_build_id + '] of [' + self.target_device + '] [' + self.target_branch + '].')
             else:
                 self.logger.log('The build id [' + self.target_build_id + '] is not not valid.', level=Logger._LEVEL_WARNING)
                 self.quit()
         else:
-            self.logger.log('Set up the latest build of ['+ self.target_device +'] ['+ self.target_branch +'].')
+            self.logger.log('Set up the latest build of [' + self.target_device + '] [' + self.target_branch + '].')
 
         # get available packages
         packages = self.getPackages(self.target_build_info['src'], build_id=self.target_build_id)
         if len(packages) <= 0:
-            self.logger.log('There is no flash package of ['+ self.target_device +'] ['+ self.target_branch +'] [' + self.target_build + '] [' + self.latest_or_buildid + ']  Build.', level=Logger._LEVEL_WARNING)
+            self.logger.log('There is no flash package of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + ']  Build.', level=Logger._LEVEL_WARNING)
             self.quit()
 
         # check flash build from load options

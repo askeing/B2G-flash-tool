@@ -2,7 +2,9 @@
 
 from Tkinter import Tk, Frame
 import os
+import sys
 from sys import platform as _platform
+from utilities.arg_parse import Parser
 from view.page import ListPage, AuthPage
 from base_controller import BaseController
 

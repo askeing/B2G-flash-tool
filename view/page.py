@@ -59,12 +59,13 @@ class ListPage(BasePage):
                          command=lambda: self.
                          confirm())
         self.ok.grid(row=4, column=3, sticky="E")
-        self.deviceLabel = Label(self, text="Select Device", font=TITLE_FONT)
+        self.ok.config(state="disabled")
+        self.deviceLabel = Label(self, text="Device", font=TITLE_FONT)
         self.deviceLabel.grid(row=1, column=0)
         self.deviceList = Listbox(self, exportselection=0)
         self.deviceList.grid(row=2, column=0)
         self.deviceList.bind('<<ListboxSelect>>', self.deviceOnSelect)
-        self.versionLabel = Label(self, text="Select Version", font=TITLE_FONT)
+        self.versionLabel = Label(self, text="Branch", font=TITLE_FONT)
         self.versionLabel.grid(row=1, column=1)
         self.versionList = Listbox(self, exportselection=0)
         self.versionList.grid(row=2, column=1)
@@ -85,6 +86,40 @@ class ListPage(BasePage):
         self.packageList.grid(row=2, column=3)
         self.packageList.config(state="disabled")
         self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
+        # binding the Return Key to each componments
+        self.deviceList.bind('<Return>', self.pressReturnKey)
+        self.versionList.bind('<Return>', self.pressReturnKey)
+        self.engList.bind('<Return>', self.pressReturnKey)
+        self.packageList.bind('<Return>', self.pressReturnKey)
+        self.ok.bind('<Return>', self.pressReturnKey)
+        # set focus on device list
+        self.deviceList.focus_set()
+
+    def selection_all_checked(self):
+        result = False
+        if len(self.deviceList.curselection()) == 0:
+            self.logger.log('Please select device.', status_callback=self.printErr)
+            self.ok.config(state="disabled")
+            self.deviceList.focus_set()
+        elif len(self.versionList.curselection()) == 0:
+            self.logger.log('Please select branch.', status_callback=self.printErr)
+            self.ok.config(state="disabled")
+            self.versionList.focus_set()
+        elif len(self.engList.curselection()) == 0:
+            self.logger.log('Please select user or engineer build.', status_callback=self.printErr)
+            self.ok.config(state="disabled")
+            self.engList.focus_set()
+        elif len(self.packageList.curselection()) == 0:
+            self.logger.log('Please select package to flash.', status_callback=self.printErr)
+            self.ok.config(state="disabled")
+            self.packageList.focus_set()
+        else:
+            result = True
+        return result
+
+    def pressReturnKey(self, event=None):
+        if self.selection_all_checked():
+            self.confirm()
 
     def deviceOnSelect(self, evt):
         self.setVersionList()
@@ -99,18 +134,19 @@ class ListPage(BasePage):
         self.ok.config(state="normal")
 
     def confirm(self):
-        # TODO:  verify if all options are selected
-        params = []
-        package = self.packageList.get(
-            self.packageList.curselection()[0])
-        if('images' in package):
-            params.append('images')
-        if('gaia' in package):
-            params.append('gaia')
-        if('gecko' in package):
-            params.append('gecko')
-        self.controller.doFlash(params)
-        self.transition(self)
+        if self.selection_all_checked():
+            self.logger.log('Start to flash.', status_callback=self.printErr)
+            # TODO:  verify if all options are selected
+            params = []
+            package = self.packageList.get(self.packageList.curselection()[0])
+            if('images' in package):
+                params.append('images')
+            if('gaia' in package):
+                params.append('gaia')
+            if('gecko' in package):
+                params.append('gecko')
+            self.controller.doFlash(params)
+            self.controller.transition(self)
 
     def setDeviceList(self, device=[]):
         for li in device:
@@ -268,6 +304,7 @@ class AuthPage(BasePage):
         self.userInput.bind('<Return>', self.pressReturnKey)
         self.pwdInput.bind('<Return>', self.pressReturnKey)
         self.ok.bind('<Return>', self.pressReturnKey)
+        # set foucs on username input feild
         self.userInput.focus_set()
         if user and pwd_ori:
             self.confirm(self.mode.get(), self.userVar.get(), self.pwdVar.get())
