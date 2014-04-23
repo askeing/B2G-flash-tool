@@ -23,12 +23,11 @@ class BaseController(object):
         self.baseUrl = ''  # NOTE: Need to be overwritten
         self.destRootFolder = ''  # NOTE: Need to be overwritten
         self.destFolder = ''
-        account, password = self.loadAccountInfo()
-        self.account = account
-        self.password = password
         self.auth = Authenticator()
         self.pathParser = PathParser()
-
+        # load config from .flash_pvt file 
+        self.load_config_file()
+        
     def setData(self, data=None):
         if data is None:
             data = self.pathParser.get_builds_list_from_url(self.baseUrl)
@@ -115,15 +114,24 @@ class BaseController(object):
         #       should be an async request?
         pass
 
-    def loadAccountInfo(self):
+    def load_config_file(self):
+        '''
+        Load ".flash_pvt" as config file.
+        If there is no file, then copy from ".flash_pvt.template".
+        '''
+        if not os.path.exists('.flash_pvt'):
+            shutil.copy2('.flash_pvt.template', '.flash_pvt')
         account = {}
-        with open('.ldap') as f:
-            account = eval(f.read())
-        if 'account' not in account:
-            account['account'] = ''
-        if 'password' not in account:
-            account['password'] = ''
-        return account['account'], account['password']
+        with open('.flash_pvt') as f:
+            config = eval(f.read())
+        if 'account' in config:
+            self.account = config['account']
+        if 'password' in config:
+            self.password = config['password']
+        if 'download_home' in config:
+            self.destRootFolder = config['download_home']
+        if 'base_url' in config:
+            self.baseUrl = config['base_url']
 
     def _get_dest_folder_from_build_id(self, root_folder, build_src, build_id):
         target_folder = ''

@@ -37,4 +37,5 @@ pvt
 .DS_Store
 .TWCI_DL_LIST.conf
 .ldap
+.flash_pvt
 

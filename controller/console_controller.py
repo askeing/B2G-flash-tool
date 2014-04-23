@@ -20,8 +20,10 @@ class ConsoleApp(BaseController):
         # Setup Default value
         self.flash_params = []
         self.dialog = ConsoleDialog()
-        self.baseUrl = 'https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
-        self.destRootFolder = 'pvt'
+        if len(self.baseUrl) == 0:
+            self.baseUrl = 'https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
+        if len(self.destRootFolder) == 0:
+            self.destRootFolder = 'pvt'
         self.destFolder = ''
         self.target_device = ''
         self.target_branch = ''
