@@ -77,6 +77,7 @@ class BaseController(object):
             cmd = cmd + ' -G' + sp + archives['gecko']
         print('run command: ' + cmd)
         os.system(cmd)
+        self.logger.log('Flash Done.', status_callback=self.printErr)
         self.after_flash_action()
         self.quit()
 

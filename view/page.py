@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-from Tkinter import Frame, Label, Button,\
-    Radiobutton, StringVar, IntVar,\
-    Entry, Listbox, END
+from Tkinter import Frame, Label, Button, Radiobutton, StringVar, IntVar, Entry, Listbox, END
 import sys
+from threading import Lock
 from utilities.logger import Logger
 
 TITLE_FONT = ("Helvetica", 18, "bold")
@@ -35,11 +34,18 @@ class BasePage(Frame):
 class ListPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
+        self.mutex = Lock()
 
     def prepare(self):
+        self.deviceList.config(state='normal')
+        self.versionList.config(state='disabled')
+        self.engList.config(state='disabled')
+        self.packageList.config(state='disabled')
+        self.ok.config(state='disabled')
         self.setData(self.controller.data)
         self.setDeviceList(self.data.keys())
         self.controller.setDefault(self, self.controller.loadOptions())
+        self.deviceList.focus_force()
 
     def printErr(self, message):
         self.errLog.config(text=message)
@@ -65,18 +71,19 @@ class ListPage(BasePage):
         self.deviceList = Listbox(self, exportselection=0)
         self.deviceList.grid(row=2, column=0)
         self.deviceList.bind('<<ListboxSelect>>', self.deviceOnSelect)
+        self.deviceList.config(state="disabled")
         self.versionLabel = Label(self, text="Branch", font=TITLE_FONT)
         self.versionLabel.grid(row=1, column=1)
         self.versionList = Listbox(self, exportselection=0)
         self.versionList.grid(row=2, column=1)
-        self.versionList.config(state="disabled")
         self.versionList.bind('<<ListboxSelect>>', self.versionOnSelect)
+        self.versionList.config(state="disabled")
         self.engLabel = Label(self, text="Build Type", font=TITLE_FONT)
         self.engLabel.grid(row=1, column=2)
         self.engList = Listbox(self, exportselection=0)
         self.engList.grid(row=2, column=2)
-        self.engList.config(state="disabled")
         self.engList.bind('<<ListboxSelect>>', self.engOnSelect)
+        self.engList.config(state="disabled")
         self.packageLabel = Label(
             self,
             text="Gecko/Gaia/Full",
@@ -84,16 +91,14 @@ class ListPage(BasePage):
         self.packageLabel.grid(row=1, column=3)
         self.packageList = Listbox(self, exportselection=0)
         self.packageList.grid(row=2, column=3)
-        self.packageList.config(state="disabled")
         self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
+        self.packageList.config(state="disabled")
         # binding the Return Key to each componments
         self.deviceList.bind('<Return>', self.pressReturnKey)
         self.versionList.bind('<Return>', self.pressReturnKey)
         self.engList.bind('<Return>', self.pressReturnKey)
         self.packageList.bind('<Return>', self.pressReturnKey)
         self.ok.bind('<Return>', self.pressReturnKey)
-        # set focus on device list
-        self.deviceList.focus_set()
 
     def selection_all_checked(self):
         result = False
@@ -119,6 +124,7 @@ class ListPage(BasePage):
 
     def pressReturnKey(self, event=None):
         if self.selection_all_checked():
+            self.ok.config(state="disabled")
             self.confirm()
 
     def deviceOnSelect(self, evt):
@@ -134,21 +140,27 @@ class ListPage(BasePage):
         self.ok.config(state="normal")
 
     def confirm(self):
-        if self.selection_all_checked():
-            self.logger.log('Start to flash.', status_callback=self.printErr)
-            # TODO:  verify if all options are selected
-            params = []
-            package = self.packageList.get(self.packageList.curselection()[0])
-            if('images' in package):
-                params.append('images')
-            if('gaia' in package):
-                params.append('gaia')
-            if('gecko' in package):
-                params.append('gecko')
-            self.controller.doFlash(params)
-            self.controller.transition(self)
+        self.mutex.acquire()
+        try:
+            if self.selection_all_checked():
+                self.ok.config(state="disabled")
+                self.logger.log('Start to flash.', status_callback=self.printErr)
+                params = []
+                package = self.packageList.get(self.packageList.curselection()[0])
+                if('images' in package):
+                    params.append('images')
+                if('gaia' in package):
+                    params.append('gaia')
+                if('gecko' in package):
+                    params.append('gecko')
+                self.controller.doFlash(params)
+                self.packageList.select_clear(0, END)
+                self.controller.transition(self)
+        finally:
+            self.mutex.release()
 
     def setDeviceList(self, device=[]):
+        self.deviceList.delete(0, END)
         for li in device:
             self.deviceList.insert(END, li)
 
@@ -178,24 +190,31 @@ class ListPage(BasePage):
             self.engList.insert(END, li)
 
     def refreshPackageList(self):
-        self.packageList.config(state="normal")
-        self.ok.config(state="normal")
-        self.packageList.delete(0, END)
-        device = self.deviceList.get(self.deviceList.curselection())
-        version = self.versionList.get(self.versionList.curselection())
-        eng = self.engList.get(self.engList.curselection())
-        package = self.controller.getPackages(
-            self.data[device][version][eng]['src']
-            )
-        if len(package) == 0:
-            package = ['gaia/gecko', 'gaia', 'gecko', 'full']
-        for li in package:
-            self.packageList.insert(END, li)
+        self.mutex.acquire()
+        try:
+            self.packageList.config(state="normal")
+            self.ok.config(state="normal")
+            self.packageList.delete(0, END)
+            device = self.deviceList.get(self.deviceList.curselection())
+            version = self.versionList.get(self.versionList.curselection())
+            eng = self.engList.get(self.engList.curselection())
+            package = self.controller.getPackages(self.data[device][version][eng]['src'])
+            if len(package) == 0:
+                package = ['gaia/gecko', 'gaia', 'gecko', 'full']
+            for li in package:
+                self.packageList.insert(END, li)
+        finally:
+            self.mutex.release()
 
 
 class AuthPage(BasePage):
     def __init__(self, parent, controller):
+        self.is_auth = False
+        self.mutex = Lock()
         BasePage.__init__(self, parent, controller)
+
+    def prepare(self):
+        self.userInput.focus_force()
 
     def printErr(self, message):
         self.errLog.config(text=message)
@@ -209,17 +228,25 @@ class AuthPage(BasePage):
                 t.configure(state='disabled')
 
     def confirm(self, mode, user, pwd):
-        if(mode == 1):
-            # mode:1 flash from pvt
-            # TODO: the GUI do not updated due to the correct way to update the UI in tk is to use the after method.
-            self.logger.log('Logging into server...', status_callback=self.printErr)
-            if self.controller.setAuth(user, pwd):
-                self.controller.transition(self)
+        self.mutex.acquire()
+        try:
+            if mode == 1 and not self.is_auth:
+                # mode:1 flash from pvt
+                # TODO: the GUI do not updated due to the correct way to update the UI in tk is to use the after method.
+                self.logger.log('Logging into server...', status_callback=self.printErr)
+                if self.controller.setAuth(user, pwd):
+                    self.is_auth = True
+                    self.ok.config(state="disabled")
+                    self.userInput.config(state="disabled")
+                    self.pwdInput.config(state="disabled")
+                    self.controller.transition(self)
+                else:
+                    self.printErr("Auththentication failed")
             else:
-                self.printErr("Auththentication failed")
-        else:
-            # mode:2, flash from local
-            pass
+                # mode:2, flash from local
+                pass
+        finally:
+            self.mutex.release()
 
     def pressReturnKey(self, event=None):
         if len(self.userVar.get()) > 0 and len(self.pwdVar.get()) > 0:
@@ -304,8 +331,6 @@ class AuthPage(BasePage):
         self.userInput.bind('<Return>', self.pressReturnKey)
         self.pwdInput.bind('<Return>', self.pressReturnKey)
         self.ok.bind('<Return>', self.pressReturnKey)
-        # set foucs on username input feild
-        self.userInput.focus_set()
         if user and pwd_ori:
             self.confirm(self.mode.get(), self.userVar.get(), self.pwdVar.get())
 

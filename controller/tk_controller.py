@@ -41,10 +41,7 @@ class FlashApp(BaseController):
         listPage = ListPage(parent=self.container, controller=self)
         listPage.setupView()
         authPage = AuthPage(parent=self.container, controller=self)
-        self.setFrameList([
-            authPage,
-            listPage,
-            ])
+        self.setFrameList([authPage, listPage, ])
         authPage.setupView(
             "Account Info",
             self.account,
@@ -55,15 +52,14 @@ class FlashApp(BaseController):
         nextPage = None
         if page is None:
             nextPage = self.frames[0]
-            self.frames[0]
         elif page.index < len(self.frames) - 1:
             nextPage = self.frames[page.index + 1]
         else:
             return
-        nextPage.prepare()
-        nextPage.lift()
-        nextPage.focus_set()
         self.curPage = nextPage
+        self.curPage.lift()
+        self.curPage.prepare()
+        self.curPage.focus_set()
 
     def printErr(self, message):
         self.curPage.printErr(message)
