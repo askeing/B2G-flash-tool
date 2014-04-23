@@ -82,7 +82,7 @@ class BaseController(object):
         self.quit()
 
     def after_flash_action(self):
-        print(targets)
+        pass
 
     def printErr(self, message):
         raise NotImplementedError
@@ -109,6 +109,11 @@ class BaseController(object):
         # set up the download dest folder
         self.destFolder = self._get_dest_folder_from_build_id(self.destRootFolder, src, build_id)
         return package
+
+    def getLatestBuildId(self, src):
+        # TODO: Get from remote and Use in local flash;
+        #       should be an async request?
+        pass
 
     def loadAccountInfo(self):
         account = {}
