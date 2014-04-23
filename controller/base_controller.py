@@ -25,9 +25,9 @@ class BaseController(object):
         self.destFolder = ''
         self.auth = Authenticator()
         self.pathParser = PathParser()
-        # load config from .flash_pvt file 
+        # load config from .flash_pvt file
         self.load_config_file()
-        
+
     def setData(self, data=None):
         if data is None:
             data = self.pathParser.get_builds_list_from_url(self.baseUrl)
@@ -58,7 +58,7 @@ class BaseController(object):
         if _platform == 'darwin':
             sp = ' '
         for target in targets:
-            archives[target] = download.download( self.paths[target], self.destFolder, status_callback=self.printErr)
+            archives[target] = download.download(self.paths[target], self.destFolder, status_callback=self.printErr)
         if 'images' in targets:
             try:
                 temp_dir = tempfile.mkdtemp()
