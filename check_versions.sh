@@ -61,7 +61,7 @@ run_adb pull /system/b2g/application.ini &> /dev/null || echo "Error pulling app
 
 if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; then
     # unzip application.zip to get gaia info
-    unzip application.zip resources/gaia_commit.txt > /dev/null || \
+    unzip application.zip resources/gaia_commit.txt &> /dev/null || \
     echo '#####    Unzip application.zip error.'
     if [[ -f resources/gaia_commit.txt ]]; then
         echo 'Gaia     ' $(head -n 1 resources/gaia_commit.txt)
@@ -73,7 +73,7 @@ if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; the
     python optimizejars.py --deoptimize ./ ./ ./deoptimize &> /dev/null || \
     echo '#####    Deoptimize omni.ja failed, please run this script with sudo.'
     # unzip omni.ja to get gecko info
-    unzip deoptimize/omni.ja chrome/toolkit/content/global/buildconfig.html > /dev/null || \
+    unzip deoptimize/omni.ja chrome/toolkit/content/global/buildconfig.html &> /dev/null || \
     echo '#####    Unzip deoptimized omni.ja error.'
     if [[ -f chrome/toolkit/content/global/buildconfig.html ]]; then
         echo 'Gecko    ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
