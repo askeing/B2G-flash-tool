@@ -8,6 +8,10 @@ class PathParser(object):
 
     _ENGINEER_BUILD_NAME = 'Engineer'
     _USER_BUILD_NAME = 'User'
+    _GAIA_GECKO = 'gaia + gecko'
+    _GAIA = 'gaia'
+    _GECKO = 'gecko'
+    _IMAGES = 'images'
 
     def __init__(self):
         self.logger = Logger()
