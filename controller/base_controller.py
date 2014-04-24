@@ -59,11 +59,11 @@ class BaseController(object):
             sp = ' '
         for target in targets:
             archives[target] = download.download(self.paths[target], self.destFolder, status_callback=self.printErr)
-        if 'images' in targets:
+        if PathParser._IMAGES in targets:
             try:
                 temp_dir = tempfile.mkdtemp()
                 self.logger.log('Create temporary folder:' + temp_dir, status_callback=self.printErr)
-                Decompressor().unzip(archives['images'], self.temp_dir, status_callback=self.printErr)
+                Decompressor().unzip(archives[PathParser._IMAGES], self.temp_dir, status_callback=self.printErr)
                 os.system(self.temp_dir + '/flash.sh -f')
                 return
             finally:
@@ -71,10 +71,10 @@ class BaseController(object):
                     shutil.rmtree(tmp_dir)  # delete directory
                 except OSError:
                     self.logger.log('Can not remove temporary folder:' + temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
-        if 'gaia' in targets:
-            cmd = cmd + ' -g' + sp + archives['gaia']
-        if 'gecko' in targets:
-            cmd = cmd + ' -G' + sp + archives['gecko']
+        if PathParser._GAIA in targets:
+            cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
+        if PathParser._GECKO in targets:
+            cmd = cmd + ' -G' + sp + archives[PathParser._GECKO]
         print('run command: ' + cmd)
         os.system(cmd)
         self.logger.log('Flash Done.', status_callback=self.printErr)
@@ -95,17 +95,17 @@ class BaseController(object):
         query = self.pathParser.get_available_packages_from_url(self.baseUrl, src, build_id=build_id)
         self.paths = {}
         package = []
-        if 'gaia' in query and 'gecko' in query:
-            package.append('gaia + gecko')
-        if 'gaia' in query:
-            package.append('gaia')
-            self.paths['gaia'] = query['gaia']
-        if 'gecko' in query:
-            package.append('gecko')
-            self.paths['gecko'] = query['gecko']
-        if 'images' in query:
-            package.append('full image')
-            self.paths['images'] = query['images']
+        if PathParser._GAIA in query and PathParser._GECKO in query:
+            package.append(PathParser._GAIA_GECKO)
+        if PathParser._GAIA in query:
+            package.append(PathParser._GAIA)
+            self.paths[PathParser._GAIA] = query[PathParser._GAIA]
+        if PathParser._GECKO in query:
+            package.append(PathParser._GECKO)
+            self.paths[PathParser._GECKO] = query[PathParser._GECKO]
+        if PathParser._IMAGES in query:
+            package.append(PathParser._IMAGES)
+            self.paths[PathParser._IMAGES] = query[PathParser._IMAGES]
         # set up the download dest folder
         self.destFolder = self._get_dest_folder_from_build_id(self.destRootFolder, src, build_id)
         return package

@@ -3,6 +3,7 @@
 from Tkinter import Frame, Label, Button, Radiobutton, StringVar, IntVar, Entry, Listbox, END
 import sys
 from threading import Lock
+from utilities.path_parser import PathParser
 from utilities.logger import Logger
 
 TITLE_FONT = ("Helvetica", 18, "bold")
@@ -144,15 +145,16 @@ class ListPage(BasePage):
         try:
             if self.selection_all_checked():
                 self.ok.config(state="disabled")
-                self.logger.log('Start to flash.', status_callback=self.printErr)
                 params = []
                 package = self.packageList.get(self.packageList.curselection()[0])
-                if('images' in package):
-                    params.append('images')
-                if('gaia' in package):
-                    params.append('gaia')
-                if('gecko' in package):
-                    params.append('gecko')
+                self.logger.log('Start to flash [' + package + '].', status_callback=self.printErr)
+                if(PathParser._IMAGES in package):
+                    params.append(PathParser._IMAGES)
+                else:
+                    if(PathParser._GAIA in package):
+                        params.append(PathParser._GAIA)
+                    if(PathParser._GECKO in package):
+                        params.append(PathParser._GECKO)
                 self.controller.doFlash(params)
                 self.packageList.select_clear(0, END)
                 self.controller.transition(self)
@@ -200,7 +202,7 @@ class ListPage(BasePage):
             eng = self.engList.get(self.engList.curselection())
             package = self.controller.getPackages(self.data[device][version][eng]['src'])
             if len(package) == 0:
-                package = ['gaia/gecko', 'gaia', 'gecko', 'full']
+                package = [PathParser._GAIA_GECKO, PathParser._GAIA, PathParser._GECKO, PathParser._IMAGES]
             for li in package:
                 self.packageList.insert(END, li)
         finally:

@@ -5,6 +5,7 @@ import os
 import sys
 from sys import platform as _platform
 from utilities.arg_parse import Parser
+from utilities.path_parser import PathParser
 from view.page import ListPage, AuthPage
 from base_controller import BaseController
 
@@ -105,15 +106,15 @@ class FlashApp(BaseController):
                             'src']
                         )
                     if options.gaia and options.gecko:
-                        package[0:0] = 'gecko + gaia'
-                        if 'gaia' in package and 'gecko' in package:
+                        package[0:0] = PathParser._GAIA_GECKO
+                        if PathParser._GAIA in package and PathParser._GECKO in package:
                             default['package'] = 0
-                    elif options.gaia and 'gaia' in package:
-                        default['package'] = package.index('gaia')
-                    elif options.gecko:
-                        default['package'] = package.index('gecko')
-                    elif options.full_flash:
-                        default['package'] = package.index('full image')
+                    elif options.gaia and PathParser._GAIA in package:
+                        default['package'] = package.index(PathParser._GAIA)
+                    elif options.gecko and PathParser._GECKO in package:
+                        default['package'] = package.index(PathParser._GECKO)
+                    elif options.full_flash and PathParser._IMAGES in package:
+                        default['package'] = package.index(PathParser._IMAGES)
         return default
 
 if __name__ == '__main__':
