@@ -68,7 +68,7 @@ class BaseController(object):
                 return
             finally:
                 try:
-                    shutil.rmtree(tmp_dir)  # delete directory
+                    shutil.rmtree(temp_dir)  # delete directory
                 except OSError:
                     self.logger.log('Can not remove temporary folder:' + temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
         if PathParser._GAIA in targets:
