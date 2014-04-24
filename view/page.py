@@ -216,6 +216,11 @@ class AuthPage(BasePage):
         BasePage.__init__(self, parent, controller)
 
     def prepare(self):
+        mode = self.mode.get()
+        user = self.userVar.get()
+        pwd = self.pwdVar.get()
+        if mode is 1 and user and pwd:
+            self.confirm(mode, user, pwd)
         self.userInput.focus_force()
 
     def printErr(self, message):
@@ -333,8 +338,6 @@ class AuthPage(BasePage):
         self.userInput.bind('<Return>', self.pressReturnKey)
         self.pwdInput.bind('<Return>', self.pressReturnKey)
         self.ok.bind('<Return>', self.pressReturnKey)
-        if user and pwd_ori:
-            self.confirm(self.mode.get(), self.userVar.get(), self.pwdVar.get())
 
 
 class buildIdPage(BasePage):
