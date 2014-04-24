@@ -61,16 +61,16 @@ class BaseController(object):
             archives[target] = download.download(self.paths[target], self.destFolder, status_callback=self.printErr)
         if PathParser._IMAGES in targets:
             try:
-                temp_dir = tempfile.mkdtemp()
-                self.logger.log('Create temporary folder:' + temp_dir, status_callback=self.printErr)
+                self.temp_dir = tempfile.mkdtemp()
+                self.logger.log('Create temporary folder:' + self.temp_dir, status_callback=self.printErr)
                 Decompressor().unzip(archives[PathParser._IMAGES], self.temp_dir, status_callback=self.printErr)
                 os.system(self.temp_dir + '/flash.sh -f')
                 return
             finally:
                 try:
-                    shutil.rmtree(temp_dir)  # delete directory
+                    shutil.rmtree(self.temp_dir)  # delete directory
                 except OSError:
-                    self.logger.log('Can not remove temporary folder:' + temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
+                    self.logger.log('Can not remove temporary folder:' + self.temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
         if PathParser._GAIA in targets:
             cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
         if PathParser._GECKO in targets:
