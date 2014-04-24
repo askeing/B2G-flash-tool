@@ -64,7 +64,7 @@ class BaseController(object):
                 self.temp_dir = tempfile.mkdtemp()
                 self.logger.log('Create temporary folder:' + self.temp_dir, status_callback=self.printErr)
                 Decompressor().unzip(archives[PathParser._IMAGES], self.temp_dir, status_callback=self.printErr)
-                os.system(self.temp_dir + '/flash.sh -f')
+                os.system(self.temp_dir + '/b2g-distro/flash.sh -f')
                 return
             finally:
                 try:
