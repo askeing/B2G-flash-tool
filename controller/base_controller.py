@@ -2,6 +2,7 @@
 
 import os
 import sys
+import stat
 import re
 import shutil
 import tempfile
@@ -64,7 +65,10 @@ class BaseController(object):
                 self.temp_dir = tempfile.mkdtemp()
                 self.logger.log('Create temporary folder:' + self.temp_dir, status_callback=self.printErr)
                 Decompressor().unzip(archives[PathParser._IMAGES], self.temp_dir, status_callback=self.printErr)
-                os.system(self.temp_dir + '/b2g-distro/flash.sh -f')
+                # set the permissions to rwxrwxr-x (509 in python's os.chmod)
+                os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IXGRP|stat.S_IROTH|stat.S_IXOTH)
+                os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IXGRP|stat.S_IROTH|stat.S_IXOTH)
+                os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f')
                 return
             finally:
                 try:
