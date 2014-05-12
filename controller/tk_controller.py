@@ -104,7 +104,7 @@ class FlashApp(BaseController):
                             options.version][
                             engList[default['eng']]][
                             'src']
-                        )
+                    )
                     if options.gaia and options.gecko:
                         package[0:0] = PathParser._GAIA_GECKO
                         if PathParser._GAIA in package and PathParser._GECKO in package:
