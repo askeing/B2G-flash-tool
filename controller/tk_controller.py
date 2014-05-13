@@ -38,7 +38,6 @@ class FlashApp(BaseController):
         self.data = data
 
     def setupView(self):
-        #NOTE: Please overwrite this function to provide custom view
         listPage = ListPage(parent=self.container, controller=self)
         listPage.setupView()
         authPage = AuthPage(parent=self.container, controller=self)

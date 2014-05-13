@@ -105,11 +105,15 @@ class ListPage(BasePage):
             column=1,
             columnspan=2,
             sticky="W")
+        self.bidVar.set("latest")
+        # binding unfocus for build id field
+        self.bidInput.bind('<FocusOut>', self.updateBuildId)
         # binding the Return Key to each componments
         self.deviceList.bind('<Return>', self.pressReturnKey)
         self.versionList.bind('<Return>', self.pressReturnKey)
         self.engList.bind('<Return>', self.pressReturnKey)
         self.packageList.bind('<Return>', self.pressReturnKey)
+        self.bidInput.bind('<Return>', self.pressReturnKey)
         self.ok.bind('<Return>', self.pressReturnKey)
 
     def selection_all_checked(self):
@@ -130,9 +134,16 @@ class ListPage(BasePage):
             self.logger.log('Please select package to flash.', status_callback=self.printErr)
             self.ok.config(state="disabled")
             self.packageList.focus_set()
+        elif len(self.bidVar.get()) == 0:
+            self.logger.log('Please enter build ID to flash or use "latest" to get the newest', status_callback=self.printErr)
+            self.bidVar.set("latest")
         else:
             result = True
         return result
+
+    def updateBuildId(self, event=None):
+        if len(self.engList.curselection()) != 0:
+            self.refreshPackageList()
 
     def pressReturnKey(self, event=None):
         if self.selection_all_checked():
@@ -211,7 +222,8 @@ class ListPage(BasePage):
             device = self.deviceList.get(self.deviceList.curselection())
             version = self.versionList.get(self.versionList.curselection())
             eng = self.engList.get(self.engList.curselection())
-            package = self.controller.getPackages(self.data[device][version][eng]['src'])
+            buildId = self.bidVar.get()
+            package = self.controller.getPackages(self.data[device][version][eng]['src'], buildId)
             if len(package) == 0:
                 package = [PathParser._GAIA_GECKO, PathParser._GAIA, PathParser._GECKO, PathParser._IMAGES]
             for li in package:
