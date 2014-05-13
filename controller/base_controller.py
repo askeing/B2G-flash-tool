@@ -75,12 +75,17 @@ class BaseController(object):
                     shutil.rmtree(self.temp_dir)  # delete directory
                 except OSError:
                     self.logger.log('Can not remove temporary folder:' + self.temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
-        if PathParser._GAIA in targets:
-            cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
-        if PathParser._GECKO in targets:
-            cmd = cmd + ' -G' + sp + archives[PathParser._GECKO]
-        print('run command: ' + cmd)
-        os.system(cmd)
+            flash_img_cmd = 'CUR_DIR=`pwd`; TEMP_DIR=`mktemp -d`; unzip -d $TEMP_DIR ' + archives[PathParser._IMAGES] + '; \\\n' + \
+                            'cd $TEMP_DIR/b2g-distro/; ./flash.sh -f; \\\ncd $CUR_DIR; rm -rf $TEMP_DIR'
+            self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (flash_img_cmd,))
+        else:
+            if PathParser._GAIA in targets:
+                cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
+            if PathParser._GECKO in targets:
+                cmd = cmd + ' -G' + sp + archives[PathParser._GECKO]
+            print('run command: ' + cmd)
+            os.system(cmd)
+            self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (cmd,))
         self.logger.log('Flash Done.', status_callback=self.printErr)
         self.after_flash_action()
         self.quit()
