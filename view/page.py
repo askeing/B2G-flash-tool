@@ -54,7 +54,7 @@ class ListPage(BasePage):
     def setData(self, data):
         self.data = data
 
-    def setupView(self, title="Select your flash(?)", data=None):
+    def setupView(self, title="Select your flash", data=None):
         if(data):
             self.setData(data)
         self.errLog = Label(self, text="")
@@ -94,6 +94,17 @@ class ListPage(BasePage):
         self.packageList.grid(row=2, column=3)
         self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
         self.packageList.config(state="disabled")
+        self.bidVar = StringVar()
+        Label(self, text="Build ID").grid(row=3, column=0, sticky='E')
+        self.bidInput = Entry(
+            self,
+            textvariable=self.bidVar,
+            width="30")
+        self.bidInput.grid(
+            row=3,
+            column=1,
+            columnspan=2,
+            sticky="W")
         # binding the Return Key to each componments
         self.deviceList.bind('<Return>', self.pressReturnKey)
         self.versionList.bind('<Return>', self.pressReturnKey)
