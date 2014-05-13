@@ -3,31 +3,14 @@
 import os
 import sys
 from utilities.arg_parse import Parser
-from controller.tk_controller import FlashApp
 from controller.console_controller import ConsoleApp
-
-
-def setupTempFolder():
-    ### setup temp folder here
-    pass
-    ###
-
-
-def parseArgument():
-    ### parse input argument here
-    pass
-    ###
-
-
-class PvtFlashApp(FlashApp):
-    def quit(self):
-        pass
 
 
 def main():
     options = Parser.pvtArgParse(sys.argv[1:])
     if options.window:
-        prog = PvtFlashApp()
+        from controller.tk_controller import FlashApp
+        prog = FlashApp()
         app = prog.container
         prog.setupView()
         from sys import platform as _platform
