@@ -105,7 +105,7 @@ class ListPage(BasePage):
             column=1,
             columnspan=2,
             sticky="W")
-        self.bidVar.set("latest")
+        self.bidVar.set('latest')
         # binding unfocus for build id field
         self.bidInput.bind('<FocusOut>', self.updateBuildId)
         # binding the Return Key to each componments
@@ -136,7 +136,7 @@ class ListPage(BasePage):
             self.packageList.focus_set()
         elif len(self.bidVar.get()) == 0:
             self.logger.log('Please enter build ID to flash or use "latest" to get the newest', status_callback=self.printErr)
-            self.bidVar.set("latest")
+            self.bidVar.set('latest')
         else:
             result = True
         return result
@@ -222,8 +222,9 @@ class ListPage(BasePage):
             device = self.deviceList.get(self.deviceList.curselection())
             version = self.versionList.get(self.versionList.curselection())
             eng = self.engList.get(self.engList.curselection())
-            buildId = self.bidVar.get()
-            package = self.controller.getPackages(self.data[device][version][eng]['src'], buildId)
+            # if the value is '' or 'latest', the set the build_id option as ''.
+            buildId = '' if (len(self.bidVar.get()) == 0 or self.bidVar.get() == 'latest') else self.bidVar.get()
+            package = self.controller.getPackages(self.data[device][version][eng]['src'], build_id=buildId)
             if len(package) == 0:
                 package = [PathParser._GAIA_GECKO, PathParser._GAIA, PathParser._GECKO, PathParser._IMAGES]
             for li in package:

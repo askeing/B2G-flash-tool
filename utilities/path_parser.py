@@ -30,7 +30,7 @@ class PathParser(object):
         packages = {}
         path = '/latest/'
         build_id = build_id.strip()
-        if not build_id == '':
+        if not build_id == '' and not build_id == 'latest':
             if self.verify_build_id(build_id, status_callback):
                 path = self.get_path_of_build_id(build_id, status_callback)
             else:

@@ -145,12 +145,12 @@ class BaseController(object):
 
     def _get_dest_folder_from_build_id(self, root_folder, build_src, build_id):
         target_folder = ''
-        if not build_id == '':
+        if not build_id == '' or build_id == 'latest':
             if self.pathParser.verify_build_id(build_id):
                 sub_folder = re.sub(r'^/', '', self.pathParser.get_path_of_build_id(build_id))
                 target_folder = os.path.join(root_folder, build_src, sub_folder)
             else:
-                self.logger.log('The build id [' + self.target_build_id + '] is not not valid.', status_callback=self.printErr, level=Logger._LEVEL_WARNING)
+                self.logger.log('The build id [' + build_id + '] is not not valid.', status_callback=self.printErr, level=Logger._LEVEL_WARNING)
                 self.quit()
         else:
             target_folder = os.path.join(root_folder, build_src, 'latest')
