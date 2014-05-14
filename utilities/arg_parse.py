@@ -19,7 +19,6 @@ class Parser(object):
         parser.add_argument('-w', '--window', action='store_true', help='interaction GUI mode')
         parser.add_argument('-u', '--username', help='LDAP account (will load from .flash_pvt file if exists)')
         parser.add_argument('-p', '--password', help='LDAP password (will load from .flash_pvt file if exists)')
-        parser.add_argument('--uninstall_comril', action='store_true', help='uninstall com-ril when shallow flash gecko')
         parser.add_argument('--dl_home', help='specify download forlder')
         options = parser.parse_args(input)
         return options
