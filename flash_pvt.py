@@ -9,7 +9,11 @@ from controller.console_controller import ConsoleApp
 def main():
     options = Parser.pvtArgParse(sys.argv[1:])
     if options.window:
-        from controller.tk_controller import FlashApp
+        try:
+            from controller.tk_controller import FlashApp
+        except ImportError:
+            print '### Please install Tkinter, a GUI Package of Python.\n    ex: Ubuntu user can type "sudo apt-get install python-tk" to install Tkinter.'
+            sys.exit(-1)
         prog = FlashApp()
         app = prog.container
         prog.setupView()
