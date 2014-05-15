@@ -11,8 +11,9 @@ def main():
     if options.window:
         try:
             from controller.tk_controller import FlashApp
-        except ImportError:
-            print '### Please install Tkinter, a GUI Package of Python.\n    ex: Ubuntu user can type "sudo apt-get install python-tk" to install Tkinter.'
+        except ImportError as e:
+            print 'ImportError:', e.message
+            print '### Please install Tkinter, a GUI Package of Python.\n    For example, Ubuntu user can type "sudo apt-get install python-tk" to install Tkinter.'
             sys.exit(-1)
         prog = FlashApp()
         app = prog.container
