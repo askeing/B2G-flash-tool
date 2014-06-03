@@ -134,16 +134,26 @@ class ListPage(BasePage):
             self.logger.log('Please select package to flash.', status_callback=self.printErr)
             self.ok.config(state="disabled")
             self.packageList.focus_set()
-        elif len(self.bidVar.get()) == 0:
+        elif len(self.bidVar.get()) != 14 and self.bidVar.get() != 'latest':
             self.logger.log('Please enter build ID to flash or use "latest" to get the newest', status_callback=self.printErr)
+            self.logger.log(self.bidVar.get() + ' is invalid: ' + str(len(self.bidVar.get())))
             self.bidVar.set('latest')
         else:
             result = True
         return result
 
     def updateBuildId(self, event=None):
-        if len(self.engList.curselection()) != 0:
-            self.refreshPackageList()
+        # if the value is '' or 'latest', the set the build_id option as ''.
+        buildId = self.bidVar.get()
+        if buildId == 'latest':
+            buildId = ''
+        elif len(buildId) != 14:
+            self.printErr("Invalid build ID: " + buildId + ", reset to latest")
+            buildId = ''
+            self.bidVar.set('latest')
+        else:
+            if len(self.engList.curselection()) != 0:
+                self.refreshPackageList()
 
     def pressReturnKey(self, event=None):
         if self.selection_all_checked():
@@ -222,8 +232,7 @@ class ListPage(BasePage):
             device = self.deviceList.get(self.deviceList.curselection())
             version = self.versionList.get(self.versionList.curselection())
             eng = self.engList.get(self.engList.curselection())
-            # if the value is '' or 'latest', the set the build_id option as ''.
-            buildId = '' if (len(self.bidVar.get()) == 0 or self.bidVar.get() == 'latest') else self.bidVar.get()
+            buildId = self.bidVar.get()
             package = self.controller.getPackages(self.data[device][version][eng]['src'], build_id=buildId)
             if len(package) == 0:
                 package = [PathParser._GAIA_GECKO, PathParser._GAIA, PathParser._GECKO, PathParser._IMAGES]
