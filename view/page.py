@@ -232,7 +232,7 @@ class ListPage(BasePage):
             device = self.deviceList.get(self.deviceList.curselection())
             version = self.versionList.get(self.versionList.curselection())
             eng = self.engList.get(self.engList.curselection())
-            buildId = self.bidVar.get()
+            buildId = '' if (len(self.bidVar.get()) == 0 or self.bidVar.get() == 'latest') else self.bidVar.get()
             package = self.controller.getPackages(self.data[device][version][eng]['src'], build_id=buildId)
             if len(package) == 0:
                 package = [PathParser._GAIA_GECKO, PathParser._GAIA, PathParser._GECKO, PathParser._IMAGES]
