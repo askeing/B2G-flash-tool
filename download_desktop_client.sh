@@ -53,19 +53,23 @@ function os_info(){
 function version(){
     local_ver=$1
     case "$local_ver" in
-        110|v1.1.0) Version_Flag="110";;
-        120|v1.2.0) Version_Flag="120";;
-        130|v1.3.0) Version_Flag="130";;
         0|master) Version_Flag="0";;
+        200|v2.0.0) Version_Flag="200";;
+        140|v1.4.0) Version_Flag="140";;
+        130|v1.3.0) Version_Flag="130";;
+        120|v1.2.0) Version_Flag="120";;
+        110|v1.1.0) Version_Flag="110";;
     esac
 }
 
 function version_info(){
     echo -e "Available version:"
-    echo -e "\t110|v1.1.0\tB2G v1.1.0 build"
-    echo -e "\t120|v1.2.0\tB2G v1.2.0 build"
-    echo -e "\t130|v1.3.0\tB2G v1.3.0 build"
     echo -e "\t0|master\tB2G master build"
+    echo -e "\t200|v2.0.0\tB2G v2.0.0 build"
+    echo -e "\t140|v1.4.0\tB2G v1.4.0 build"
+    echo -e "\t130|v1.3.0\tB2G v1.3.0 build"
+    echo -e "\t120|v1.2.0\tB2G v1.2.0 build"
+    echo -e "\t110|v1.1.0\tB2G v1.1.0 build"
 }
 
 ####################
