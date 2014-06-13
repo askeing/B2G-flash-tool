@@ -20,6 +20,7 @@ class Parser(object):
         parser.add_argument('-u', '--username', help='LDAP account (will load from .flash_pvt file if exists)')
         parser.add_argument('-p', '--password', help='LDAP password (will load from .flash_pvt file if exists)')
         parser.add_argument('--dl_home', help='specify download forlder')
+        parser.add_argument('--keep_profile', action='store_true', help='keep the user profile (BETA)')
         options = parser.parse_args(input)
         return options
 

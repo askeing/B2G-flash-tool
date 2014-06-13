@@ -49,7 +49,7 @@ class BaseController(object):
         print('### quit function invoked')
         sys.exit(0)
 
-    def doFlash(self, targets):
+    def doFlash(self, targets, keep_profile=False):
         if len(self.destFolder) == 0:
             self.destFolder = self.destRootFolder
         download = Downloader()
@@ -66,8 +66,8 @@ class BaseController(object):
                 self.logger.log('Create temporary folder:' + self.temp_dir, status_callback=self.printErr)
                 Decompressor().unzip(archives[PathParser._IMAGES], self.temp_dir, status_callback=self.printErr)
                 # set the permissions to rwxrwxr-x (509 in python's os.chmod)
-                os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IXGRP|stat.S_IROTH|stat.S_IXOTH)
-                os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IXGRP|stat.S_IROTH|stat.S_IXOTH)
+                os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f')
                 return
             finally:
@@ -83,6 +83,9 @@ class BaseController(object):
                 cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
             if PathParser._GECKO in targets:
                 cmd = cmd + ' -G' + sp + archives[PathParser._GECKO]
+            if keep_profile:
+                self.logger.log('Keep User Profile.')
+                cmd = cmd + ' --keep_profile'
             print('run command: ' + cmd)
             os.system(cmd)
             self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (cmd,))

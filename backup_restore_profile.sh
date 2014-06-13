@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PROFILE_HOME=${PROFILE_HOME:="./mozilla-profile"}
+REBOOT_FLAG=true
 
 ## Show usage
 function helper(){
@@ -29,6 +30,7 @@ function do_backup_profile() {
     echo -e "### Backup your profiles..." | tee -a ${PROFILE_HOME}/backup.log
     rm -rf ${PROFILE_HOME}/*
     date +"### %F %T" | tee -a ${PROFILE_HOME}/backup.log
+    echo -e "### Stop B2G..." | tee -a ${PROFILE_HOME}/backup.log
     run_adb shell stop b2g 2>> ${PROFILE_HOME}/backup.log
 
     echo "### Backup Wifi information..." | tee -a ${PROFILE_HOME}/backup.log
@@ -48,7 +50,10 @@ function do_backup_profile() {
         echo "### Remove ${PROFILE_HOME}/data-local/webapps/$FILE ..." | tee -a ${PROFILE_HOME}/backup.log
         rm -rf ${PROFILE_HOME}/data-local/webapps/$FILE
     done
-    run_adb shell start b2g 2>> ${PROFILE_HOME}/backup.log
+    if [[ ${REBOOT_FLAG} == true ]]; then
+        echo -e "### Start B2G..." | tee -a ${PROFILE_HOME}/backup.log
+        run_adb shell start b2g 2>> ${PROFILE_HOME}/backup.log
+    fi
     echo -e "### Backup done." | tee -a ${PROFILE_HOME}/backup.log
 }
 
@@ -60,6 +65,7 @@ function do_restore_profile() {
     fi
     rm -rf ${PROFILE_HOME}/recover.log
     date +"### %F %T" | tee -a ${PROFILE_HOME}/recover.log
+    echo -e "### Stop B2G..." | tee -a ${PROFILE_HOME}/recover.log
     run_adb shell stop b2g 2>> ${PROFILE_HOME}/recover.log
     run_adb shell rm -r /data/b2g/mozilla 2>> ${PROFILE_HOME}/recover.log
 
@@ -74,8 +80,11 @@ function do_restore_profile() {
     echo "### Restore ${PROFILE_HOME}/data-local ..." | tee -a ${PROFILE_HOME}/recover.log
     run_adb push ${PROFILE_HOME}/data-local /data/local 2>> ${PROFILE_HOME}/recover.log
 
-    run_adb reboot 2>> ${PROFILE_HOME}/recover.log
-    run_adb wait-for-device 2>> ${PROFILE_HOME}/recover.log
+    if [[ ${REBOOT_FLAG} == true ]]; then
+        echo -e "### Reboot..." | tee -a ${PROFILE_HOME}/recover.log
+        run_adb reboot 2>> ${PROFILE_HOME}/recover.log
+        run_adb wait-for-device 2>> ${PROFILE_HOME}/recover.log
+    fi
     echo -e "### Recover done." | tee -a ${PROFILE_HOME}/recover.log
 }
 
@@ -89,7 +98,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o brp::h --long backup,restore,profile-dir::,help \
+        TEMP=`getopt -o brp::h --long backup,restore,profile-dir::,no-reboot,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -108,6 +117,8 @@ do
                 "") echo "Please specify the profile folder."; exit 0; shift 2;;
                 *) PROFILE_HOME=$2; echo "Set the profile folder as ${PROFILE_HOME}"; shift 2;;
             esac ;;
+        # only for other tools
+        --no-reboot) REBOOT_FLAG=false; shift;;
         -h|--help) helper; exit 0;;
         --) shift;break;;
         "") shift;break;;

@@ -16,12 +16,17 @@
 # Parameter Flags  #
 ####################
 VERY_SURE=false
+KEEP_PROFILE=false
 ADB_DEVICE="Device"
 FLASH_GAIA=false
 FLASH_GAIA_FILE=""
 FLASH_GECKO=false
 FLASH_GECKO_FILE=""
-
+# for other bash script tools call.
+case `uname` in
+    "Linux") SP="";;
+    "Darwin") SP=" ";;
+esac
 
 ####################
 # Functions        #
@@ -33,6 +38,7 @@ function helper(){
     echo -e "Usage: ./shallow_flash.sh [parameters]"
     echo -e "-g|--gaia\tFlash the gaia (zip format) into your device."
     echo -e "-G|--gecko\tFlash the gecko (tar.gz format) into your device."
+    echo -e "--keep_profile\tKeep the user profile on your device. (BETA)"
     echo -e "-s <serial number>\tdirects command to device with the given serial number."
     echo -e "-y\t\tflash the file without asking askeing (it's a joke...)"
     echo -e "-h|--help\tDisplay help."
@@ -85,7 +91,7 @@ function adb_reboot() {
 
 ## clean cache, gaia (webapps) and profiles
 function adb_clean_gaia() {
-    echo "Clean Gaia and profiles ..."
+    echo "### Clean Gaia and profiles ..."
     run_adb shell rm -r /cache/* &&
     run_adb shell rm -r /data/b2g/* &&
     run_adb shell rm -r /data/local/storage/persistent/* &&
@@ -97,7 +103,7 @@ function adb_clean_gaia() {
     run_adb shell rm -r /data/local/indexedDB &&
     run_adb shell rm -r /data/local/debug_info_trigger &&
     run_adb shell rm -r /system/b2g/webapps &&
-    echo "Clean Done."
+    echo "### Clean Done."
 }
 
 ## push gaia into device
@@ -106,12 +112,12 @@ function adb_push_gaia() {
     ## Adjusting user.js
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js
     
-    echo "Push Gaia ..."
+    echo "### Push Gaia ..."
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
     run_adb push $GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
     run_adb push $GAIA_DIR/user.js /system/b2g/defaults/pref &&
     run_adb push $GAIA_DIR/gaia/profile/settings.json /system/b2g/defaults &&
-    echo "Push Done."
+    echo "### Push Done."
 }
 
 ## shallow flash gaia
@@ -119,12 +125,12 @@ function shallow_flash_gaia() {
     GAIA_ZIP_FILE=$1
     
     if ! [ -f $GAIA_ZIP_FILE ]; then
-        echo "Cannot found $GAIA_ZIP_FILE file."
+        echo "### Cannot found $GAIA_ZIP_FILE file."
         exit -1
     fi
 
     if ! which mktemp > /dev/null; then
-        echo "Package \"mktemp\" not found!"
+        echo "### Package \"mktemp\" not found!"
         rm -rf ./shallowflashgaia_temp
         mkdir shallowflashgaia_temp
         cd shallowflashgaia_temp
@@ -146,10 +152,10 @@ function unzip_file() {
     ZIP_FILE=$1
     DEST_DIR=$2
     if ! [ -z $ZIP_FILE ]; then
-        test ! -f $ZIP_FILE && echo -e "The file $ZIP_FILE DO NOT exist." && exit 1
+        test ! -f $ZIP_FILE && echo -e "### The file $ZIP_FILE DO NOT exist." && exit 1
     fi
-    echo "Unzip $ZIP_FILE to $DEST_DIR ..."
-    test -e $ZIP_FILE && unzip -q $ZIP_FILE -d $DEST_DIR || echo "Unzip $ZIP_FILE Failed."
+    echo "### Unzip $ZIP_FILE to $DEST_DIR ..."
+    test -e $ZIP_FILE && unzip -q $ZIP_FILE -d $DEST_DIR || echo "### Unzip $ZIP_FILE Failed."
     #ls -LR $DEST_DIR
 }
 
@@ -158,12 +164,12 @@ function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
 
     if ! [ -f $GECKO_TAR_FILE ]; then
-        echo "Cannot found $GECKO_TAR_FILE file."
+        echo "### Cannot found $GECKO_TAR_FILE file."
         exit -1
     fi
 
     if ! which mktemp > /dev/null; then
-        echo "Package \"mktemp\" not found!"
+        echo "### Package \"mktemp\" not found!"
         rm -rf ./shallowflashgecko_temp
         mkdir shallowflashgecko_temp
         cd shallowflashgecko_temp
@@ -174,10 +180,10 @@ function shallow_flash_gecko() {
     fi
     
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
-    echo "Push Gecko ..."
+    echo "### Push Gecko ..."
     ## push gecko into device
     run_adb push $TMP_DIR/b2g /system/b2g &&
-    echo "Push Done."
+    echo "### Push Done."
     
     rm -rf $TMP_DIR
 }
@@ -187,13 +193,34 @@ function untar_file() {
     TAR_FILE=$1
     DEST_DIR=$2
     if ! [ -z $TAR_FILE ]; then
-        test ! -f $TAR_FILE && echo -e "The file $TAR_FILE DO NOT exist." && exit 1
+        test ! -f $TAR_FILE && echo -e "### The file $TAR_FILE DO NOT exist." && exit 1
     fi
-    echo "Untar $TAR_FILE to $DEST_DIR ..."
-    test -e $TAR_FILE && tar -xzf $TAR_FILE -C $DEST_DIR || echo "Untar $TAR_FILE Failed."
+    echo "### Untar $TAR_FILE to $DEST_DIR ..."
+    test -e $TAR_FILE && tar -xzf $TAR_FILE -C $DEST_DIR || echo "### Untar $TAR_FILE Failed."
     #ls -LR $DEST_DIR
 }
 
+## option $1 is temp_folder
+function backup_profile() {
+    DEST_DIR=$1
+    echo "### Backup Profile to ${DEST_DIR}"
+    bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -b
+}
+
+## option $1 is temp_folder
+function restore_profile() {
+    DEST_DIR=$1
+    echo "### Restore Profile from ${DEST_DIR}"
+    bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -r
+}
+
+## option $1 is temp_folder
+function remove_profile() {
+    DEST_DIR=$1
+    echo "### Remove Profile under ${DEST_DIR}"
+    rm -rf ${DEST_DIR}
+    echo "### Remove Profile done."
+}
 
 #########################
 # Processing Parameters #
@@ -206,7 +233,7 @@ if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
 case `uname` in
     "Linux")
         ## add getopt argument parsing
-        TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,help \
+        TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,keep_profile,help \
         -n 'invalid option' -- "$@"`
 
         if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
@@ -218,6 +245,7 @@ esac
 while true
 do
     case "$1" in
+        -h|--help) helper; exit 0;;
         -g|--gaia) 
             FLASH_GAIA=true;
             case "$2" in
@@ -230,13 +258,13 @@ do
                 "") FLASH_GECKO_FILE="b2g-18.0.en-US.android-arm.tar.gz"; shift 2;;
                 *) FLASH_GECKO_FILE=$2; shift 2;;
             esac ;;
+        --keep_profile) if [[ -e ./backup_restore_profile.sh ]]; then KEEP_PROFILE=true; else echo "### There is no backup_restore_profile.sh file."; fi; shift;;
         -s)
             case "$2" in
                 "") shift 2;;
                 *) ADB_DEVICE=$2; ADB_FLAGS+="-s $2"; shift 2;;
             esac ;;
         -y) VERY_SURE=true; shift;;
-        -h|--help) helper; exit 0;;
         --) shift;break;;
         "") shift;break;;
         *) helper; echo error occured; exit 1;;
@@ -247,15 +275,15 @@ done
 ####################
 # Make Sure        #
 ####################
-if [ $VERY_SURE == false ] && ([ $FLASH_GAIA == true ] || [ $FLASH_GECKO == true ]); then
+if [[ $VERY_SURE == false ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO == true ]]); then
     make_sure
 fi
-if ! [ -f $FLASH_GAIA_FILE ] && [ $FLASH_GAIA == true ]; then
-    echo "Cannot found $FLASH_GAIA_FILE file."
+if ! [[ -f $FLASH_GAIA_FILE ]] && [[ $FLASH_GAIA == true ]]; then
+    echo "### Cannot found $FLASH_GAIA_FILE file."
     exit -1
 fi
-if ! [ -f $FLASH_GECKO_FILE ] && [ $FLASH_GECKO == true ]; then
-    echo "Cannot found $FLASH_GECKO_FILE file."
+if ! [[ -f $FLASH_GECKO_FILE ]] && [[ $FLASH_GECKO == true ]]; then
+    echo "### Cannot found $FLASH_GECKO_FILE file."
     exit -1
 fi
 
@@ -265,12 +293,28 @@ fi
 ####################
 adb_root_remount
 
+####################
+# Backup Profile   #
+####################
+if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO == true ]]) ; then
+    if ! which mktemp > /dev/null; then
+        echo "### Package \"mktemp\" not found!"
+        rm -rf ./profile_temp
+        mkdir profile_temp
+        cd profile_temp
+        TMP_PROFILE_DIR=`pwd`
+        cd ..
+    else
+        TMP_PROFILE_DIR=`mktemp -d -t shallowflashprofile.XXXXXXXXXXXX`
+    fi
+    backup_profile ${TMP_PROFILE_DIR}
+fi
 
 ####################
 # Processing Gaia  #
 ####################
-if [ $FLASH_GAIA == true ]; then
-    echo "Processing Gaia: $FLASH_GAIA_FILE"
+if [[ $FLASH_GAIA == true ]]; then
+    echo "### Processing Gaia: $FLASH_GAIA_FILE"
     shallow_flash_gaia $FLASH_GAIA_FILE
 fi
 
@@ -278,11 +322,18 @@ fi
 ####################
 # Processing Gecko #
 ####################
-if [ $FLASH_GECKO == true ]; then
-    echo "Processing Gecko: $FLASH_GECKO_FILE"
+if [[ $FLASH_GECKO == true ]]; then
+    echo "### Processing Gecko: $FLASH_GECKO_FILE"
     shallow_flash_gecko $FLASH_GECKO_FILE
 fi
 
+####################
+# Restore Profile  #
+####################
+if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO == true ]]) ; then
+    restore_profile ${TMP_PROFILE_DIR}
+    remove_profile ${TMP_PROFILE_DIR}
+fi
 
 ####################
 # ADB Work         #
@@ -293,7 +344,7 @@ adb_reboot
 ####################
 # Version          #
 ####################
-if [ -e ./check_versions.sh ]; then
+if [[ -e ./check_versions.sh ]]; then
     bash ./check_versions.sh
 fi
 
@@ -301,6 +352,6 @@ fi
 ####################
 # Done             #
 ####################
-echo -e "Shallow Flash Done!"
+echo -e "### Shallow Flash Done!"
 
 
