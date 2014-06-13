@@ -1,7 +1,94 @@
 # Script tools for B2G project
 
+## flash_pvt.py
+The flash_pvt.py is a flash tool for B2G PVT builds which is written by Python.
 
-## auto_flash_from_pvt.sh
+Usage helper: 
+```
+$ ./flash_pvt.py --help
+```
+
+### PREREQUISITE
+Linux or MAC
+You will need adb and fastboot installed on your machine.
+
+Android-SDK can be downloaded from http://developer.android.com/sdk/index.html 
+
+Require git installed.
+Require Python installed.
+Optional, Python Tkinter installed for interactive mode.
+  In ubuntu:
+```
+sudo apt-get install python-tk
+```
+
+### GUI Mode
+```
+$ ./flash_pvt.py -w
+```
+
+### Flash in Command Line 
+```
+Usage: flash_pvt.py [-h] [-v VERSION] [-d DEVICE] [-s SERIAL] [-f] [-g] [-G]
+                    [--usr] [--eng] [-b BUILD_ID] [-w] [-u USERNAME]
+                    [-p PASSWORD] [--dl_home DL_HOME]
+
+B2G Flash Tool by TWQA
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v VERSION, --version VERSION
+                        target build version
+  -d DEVICE, --device DEVICE
+                        target device codename
+  -s SERIAL, --serial SERIAL
+                        directs command to device with the given serial number
+  -f, --full_flash      flash full image of device
+  -g, --gaia            shallow flash gaia into device
+  -G, --gecko           shallow flash gaia into device
+  --usr                 specify user build
+  --eng                 specify engineer build
+  -b BUILD_ID, --build_id BUILD_ID
+                        specify target build YYYYMMDDhhmmss
+  -w, --window          interaction GUI mode
+  -u USERNAME, --username USERNAME
+                        LDAP account (will load from .flash_pvt file if
+                        exists)
+  -p PASSWORD, --password PASSWORD
+                        LDAP password (will load from .flash_pvt file if
+                        exists)
+  --dl_home DL_HOME     specify download forlder
+```
+
+For example, flash the Gaia and Gecko of mozilla-central Flame latest Engineer build:
+```
+ $ ./flash_pvt.py -d flame -v central --eng -g -G
+```
+
+### Flash without downloading again
+If you want to flash other phones without download again, the screen will show you the commands to help you flash again. 
+```
+ex:
+ ### INFO: !!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.
+ ./shallow_flash.sh -y -gpvt/mozilla-central-flame-eng/latest/gaia.zip -Gpvt/mozilla-central-flame-eng/latest/b2g-33.0a1.en-US.android-arm.tar.gz
+```
+
+### LDAP
+If you want to skip the step of enter LDAP account, please executing flash_pvt.py once, then filling your LDAP account information into .flash_pvt file. 
+```
+$ {YOUR_EDITOR} .flash_pvt
+{
+  "account": "",
+  "password": "",
+  "download_home": "pvt",
+  "base_url": "https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/"
+}
+```
+
+
+Details in mozilla intrawiki
+
+## auto_flash_from_pvt.sh (deprecated)
 
 This script was written for download builds from PVT server.
 
