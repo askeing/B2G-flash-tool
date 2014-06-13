@@ -29,6 +29,7 @@ class ConsoleApp(BaseController):
         self.target_branch = ''
         self.target_build = ''
         self.target_build_id = ''
+        self.target_keep_profile = False
         # Load options from input argvs
         self.options = Parser.pvtArgParse(sys.argv[1:])
         self._load_options()
@@ -167,7 +168,7 @@ class ConsoleApp(BaseController):
 
         # flash
         self.logger.log('Flash' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build ...')
-        self.doFlash(self.flash_params)
+        self.doFlash(self.flash_params, keep_profile=self.target_keep_profile)
 
     def _load_options(self):
         # Settings
@@ -209,6 +210,8 @@ class ConsoleApp(BaseController):
                 self.flash_params.append(PathParser._GAIA)
             if self.options.gecko:
                 self.flash_params.append(PathParser._GECKO)
+        # keep profile
+        self.target_keep_profile = self.options.keep_profile
 
     def after_flash_action(self):
         self.dialog.msg_box('Flash Information', 'Flash ' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Done.')

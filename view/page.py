@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from Tkinter import Frame, Label, Button, Radiobutton, StringVar, IntVar, Entry, Listbox, END
+from Tkinter import Frame, Label, Button, Radiobutton, StringVar, IntVar, Entry, Listbox, END, Checkbutton, IntVar
 import sys
 from threading import Lock
 from utilities.path_parser import PathParser
@@ -35,6 +35,7 @@ class BasePage(Frame):
 class ListPage(BasePage):
     def __init__(self, parent, controller):
         BasePage.__init__(self, parent, controller)
+        self.target_keep_profile_var = IntVar()
         self.mutex = Lock()
 
     def prepare(self):
@@ -67,6 +68,9 @@ class ListPage(BasePage):
                          confirm())
         self.ok.grid(row=4, column=3, sticky="E")
         self.ok.config(state="disabled")
+        # bind self.target_keep_profile_var (IntVar) to keepProfileCheckbutton, 1 is True, 0 is Flase
+        self.keepProfileCheckbutton = Checkbutton(self, text="Keep User Profile (BETA)", variable=self.target_keep_profile_var)
+        self.keepProfileCheckbutton.grid(row=5, column=0, columnspan=4, sticky="W")
         self.deviceLabel = Label(self, text="Device", font=TITLE_FONT)
         self.deviceLabel.grid(row=1, column=0)
         self.deviceList = Listbox(self, exportselection=0)
@@ -187,7 +191,8 @@ class ListPage(BasePage):
                         params.append(PathParser._GAIA)
                     if(PathParser._GECKO in package):
                         params.append(PathParser._GECKO)
-                self.controller.doFlash(params)
+                keep_profile = (self.target_keep_profile_var.get() == 1)
+                self.controller.doFlash(params, keep_profile=keep_profile)
                 self.packageList.select_clear(0, END)
                 self.controller.transition(self)
         finally:

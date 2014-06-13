@@ -65,6 +65,9 @@ class FlashApp(BaseController):
         self.curPage.printErr(message)
 
     def setDefault(self, listPage, default):
+        if 'keep_profile' in default:
+            if default['keep_profile']:
+                listPage.target_keep_profile_var.set(1)
         if 'device' in default:
             listPage.deviceList.selection_set(default['device'])
             listPage.setVersionList()
@@ -85,6 +88,8 @@ class FlashApp(BaseController):
         options = Parser.pvtArgParse(sys.argv[1:])
         default = {}
         deviceList = data.keys()
+        if options.keep_profile:
+            default['keep_profile'] = True
         if options.device in deviceList:
             default['device'] = deviceList.index(options.device)
             versionList = data[options.device].keys()
