@@ -58,11 +58,18 @@ optional arguments:
                         LDAP password (will load from .flash_pvt file if
                         exists)
   --dl_home DL_HOME     specify download forlder
+  --keep_profile        keep the user profile (BETA)
 ```
 
 For example, flash the Gaia and Gecko of mozilla-central Flame latest Engineer build:
 ```
  $ ./flash_pvt.py -d flame -v central --eng -g -G
+```
+
+### Keep User Profile
+If you want to keep your profile on the phone, you can enable this feature by command line or by GUI.
+```
+ $ ./flash_pvt.py {YOUR_OPTIONS} --keep_profile
 ```
 
 ### Flash without downloading again
@@ -317,6 +324,7 @@ This script was written for shallow flash the gaia and/or gecko.
 Usage: ./shallow_flash.sh [parameters]
 -g|--gaia       Flash the gaia (zip format) into your device.
 -G|--gecko      Flash the gecko (tar.gz format) into your device.
+--keep_profile  Keep the user profile on your device. (BETA)
 -s <serial number>      directs command to device with the given serial number.
 -y              flash the file without asking askeing (it's a joke...)
 -h|--help       Display help.
