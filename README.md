@@ -21,6 +21,10 @@ Optional, Python Tkinter installed for interactive mode.
 ```
 sudo apt-get install python-tk
 ```
+  In fedora:
+```
+sudo yum install tkinter
+```
 
 ### GUI Mode
 ```
