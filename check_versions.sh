@@ -88,6 +88,9 @@ fi
 # get OEM build info
 run_adb shell cat /system/build.prop | grep 'ro.build.version.incremental'
 run_adb shell cat /system/build.prop | grep 'ro.build.date='
+if [ $(run_adb shell getprop t2m.sw.version) ]; then
+  run_adb shell getprop t2m.sw.version
+fi
 
 rm -rf $dir
 
