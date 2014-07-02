@@ -124,12 +124,17 @@ class ConsoleDialog(object):
         return response
 
     def _print_horizontal_lines(self):
-        for i in xrange(0, int(self.console_columns)):
+        for i in xrange(0, int(self.console_columns) - 1):
             sys.stdout.write(self._SYMBOL_CHAR)
             sys.stdout.flush()
+        sys.stdout.write('\n')
 
     def _update_terminal_size(self):
-        self.console_rows, self.console_columns = ConsoleDialog.get_terminal_size()
+        try:
+            self.console_rows, self.console_columns = ConsoleDialog.get_terminal_size()
+        except:
+            self.console_rows = 23
+            self.console_columns = 80
 
     @staticmethod
     def get_terminal_size():
