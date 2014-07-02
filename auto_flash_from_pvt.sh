@@ -424,7 +424,7 @@ function check_build_id() {
 
 function replace_url_for_build_id() {
     ## Replace Target URL with BUILD ID
-    if [[ ${BUILD_ID} != "" ]]; then
+    if [[ ${BUILD_ID} != "" && ${TARGET_URL} =~ "nightly" ]]; then
         check_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
     fi
@@ -924,7 +924,7 @@ function find_latest_build_id() {
         SRC_URL=${TARGET_URL%/latest/}
     fi
     SOURCE=`run_wget -qO- ${SRC_URL} | grep ">[0-9-]*/" | sed 's|.*>\([0-9-]*\)/.*|\1|' | tail -n 1`
-    if [[ ${SOURCE} == *"-"* ]]; then
+    if [[ ${#SOURCE} -gt 13 ]]; then
         LATEST_BUILD_ID="${SOURCE//-/}"
     fi
     find_latest_build_id "${SRC_URL}/${SOURCE}"
