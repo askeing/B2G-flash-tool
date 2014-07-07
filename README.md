@@ -340,3 +340,16 @@ Example:
 
 ----
 
+## update_system_fonts.sh
+
+Update the system fonts of B2G v2.1 (Bug 1032874).
+
+### Usage:
+
+```
+Usage: ./update_system_fonts.sh
+```
+
+----
+
+
