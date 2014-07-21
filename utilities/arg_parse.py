@@ -1,12 +1,20 @@
 import argparse
 import sys
+import textwrap
+from argparse import RawTextHelpFormatter
 
 
 class Parser(object):
 
     @staticmethod
     def pvtArgParse(input):
-        parser = argparse.ArgumentParser(description='B2G Flash Tool by TWQA')
+        parser = argparse.ArgumentParser(description='B2G Flash Tool by TWQA',
+            formatter_class=RawTextHelpFormatter,
+            epilog=textwrap.dedent('''\
+            Example:
+              $ ./flash_pvt.py -d flame -v central --eng -g -G 
+              $ ./flash_pvt.py -d hamachi -v b2g30_v1_4 -b 20140718000231 --usr -g -G 
+            '''))
         parser.add_argument('-v', '--version', help='target build version')
         parser.add_argument('-d', '--device', help='target device codename')
         parser.add_argument('-s', '--serial', help='directs command to device with the given serial number')
