@@ -11,7 +11,7 @@ while [ $# -gt 0 ]; do
     "-h")
       echo "
       Help:
-          -v <version> : version to update to (nightly, aurora, nightly-b2g30)
+          -v <version> : version to update to (nightly, aurora, nightly-b2g32 for 2.0, nightly-b2g30 for 1.4)
           -h : this help menu
       "
       ;;
@@ -26,10 +26,12 @@ case "$VERSION" in
     ;;
   "aurora")
     ;;
+  "nightly-b2g32")
+    ;;
   "nightly-b2g30")
     ;;
   *)
-    echo "Please specify the version : (nightly, aurora, nightly-b2g30)"
+    echo "Please specify the version : -v (nightly, aurora, nightly-b2g32, nightly-b2g30)"
     exit
     ;;
 esac
