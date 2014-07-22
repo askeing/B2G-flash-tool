@@ -60,25 +60,43 @@ function run_adb()
 ## make sure user want to shallow flash
 function make_sure() {
     echo "Are you sure you want to flash "
-    if [ $FLASH_GAIA == true ]; then
+    if [[ $FLASH_GAIA == true ]]; then
         echo -e "Gaia: $FLASH_GAIA_FILE "
     fi
-    if [ $FLASH_GECKO == true ]; then
+    if [[ $FLASH_GECKO == true ]]; then
         echo -e "Gecko: $FLASH_GECKO_FILE "
     fi
     read -p "to your $ADB_DEVICE? [y/N]" isFlash
     test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo -e "byebye." && exit 0
 }
 
+## check the return code, exit if return code is not zero.
+function check_exit_code() {
+	RET=$1
+	ERROR_MSG=$2
+	if [[ ${RET} != 0 ]]; then
+        if [[ -z ${ERROR_MSG} ]]; then
+            echo "### Failed!"
+        else
+        	echo "### Failed: ${ERROR_MSG}"
+        fi
+        exit 1
+	fi
+}
+
 ## adb root, then remount and stop b2g
 function adb_root_remount() {
     run_adb root
+    check_exit_code $? "Please make sure your adbd is running as root."
     run_adb wait-for-device     #in: gedit display issue
     run_adb remount
+    check_exit_code $? "Please make sure your adbd is running as root."
     run_adb wait-for-device     #in: gedit display issue
     run_adb shell mount -o remount,rw /system &&
+    check_exit_code $? "Please make sure your adbd is running as root."
     run_adb wait-for-device     #in: gedit display issue
     run_adb shell stop b2g
+    check_exit_code $?
     run_adb wait-for-device     #in: gedit display issue
 }
 
@@ -124,9 +142,9 @@ function adb_push_gaia() {
 function shallow_flash_gaia() {
     GAIA_ZIP_FILE=$1
     
-    if ! [ -f $GAIA_ZIP_FILE ]; then
+    if ! [[ -f $GAIA_ZIP_FILE ]]; then
         echo "### Cannot found $GAIA_ZIP_FILE file."
-        exit -1
+        exit 2
     fi
 
     if ! which mktemp > /dev/null; then
@@ -143,6 +161,7 @@ function shallow_flash_gaia() {
     unzip_file $GAIA_ZIP_FILE $TMP_DIR &&
     adb_clean_gaia &&
     adb_push_gaia $TMP_DIR
+    check_exit_code $? "Push Gaia failed."
 
     rm -rf $TMP_DIR
 }
@@ -151,11 +170,15 @@ function shallow_flash_gaia() {
 function unzip_file() {
     ZIP_FILE=$1
     DEST_DIR=$2
-    if ! [ -z $ZIP_FILE ]; then
-        test ! -f $ZIP_FILE && echo -e "### The file $ZIP_FILE DO NOT exist." && exit 1
+    if ! [[ -z $ZIP_FILE ]]; then
+        test ! -f $ZIP_FILE && echo -e "### The file $ZIP_FILE DO NOT exist." && exit 2
+    else
+        echo "### No input zip file."
+        exit 2
     fi
     echo "### Unzip $ZIP_FILE to $DEST_DIR ..."
-    test -e $ZIP_FILE && unzip -q $ZIP_FILE -d $DEST_DIR || echo "### Unzip $ZIP_FILE Failed."
+    test -e $ZIP_FILE && unzip -q $ZIP_FILE -d $DEST_DIR
+    check_exit_code $? "Unzip $ZIP_FILE Failed."
     #ls -LR $DEST_DIR
 }
 
@@ -163,9 +186,9 @@ function unzip_file() {
 function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
 
-    if ! [ -f $GECKO_TAR_FILE ]; then
+    if ! [[ -f $GECKO_TAR_FILE ]]; then
         echo "### Cannot found $GECKO_TAR_FILE file."
-        exit -1
+        exit 2
     fi
 
     if ! which mktemp > /dev/null; then
@@ -178,13 +201,14 @@ function shallow_flash_gecko() {
     else
         TMP_DIR=`mktemp -d -t shallowflashgecko.XXXXXXXXXXXX`
     fi
-    
+
+	## push gecko into device
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
-    echo "### Push Gecko ..."
-    ## push gecko into device
+    echo "### Push Gecko ..." &&
     run_adb push $TMP_DIR/b2g /system/b2g &&
     echo "### Push Done."
-    
+    check_exit_code $? "Push Gecko failed."
+
     rm -rf $TMP_DIR
 }
 
@@ -192,11 +216,15 @@ function shallow_flash_gecko() {
 function untar_file() {
     TAR_FILE=$1
     DEST_DIR=$2
-    if ! [ -z $TAR_FILE ]; then
-        test ! -f $TAR_FILE && echo -e "### The file $TAR_FILE DO NOT exist." && exit 1
+    if ! [[ -z $TAR_FILE ]]; then
+        test ! -f $TAR_FILE && echo -e "### The file $TAR_FILE DO NOT exist." && exit 2
+    else
+        echo "### No input tar file."
+        exit 2
     fi
     echo "### Untar $TAR_FILE to $DEST_DIR ..."
-    test -e $TAR_FILE && tar -xzf $TAR_FILE -C $DEST_DIR || echo "### Untar $TAR_FILE Failed."
+    test -e $TAR_FILE && tar -xzf $TAR_FILE -C $DEST_DIR
+    check_exit_code $? "Untar $TAR_FILE Failed."
     #ls -LR $DEST_DIR
 }
 
@@ -227,7 +255,7 @@ function remove_profile() {
 #########################
 
 ## show helper if nothing specified
-if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
+if [[ $# = 0 ]]; then echo "Nothing specified"; helper; exit 0; fi
 
 ## distinguish platform
 case `uname` in
@@ -236,7 +264,7 @@ case `uname` in
         TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,keep_profile,help \
         -n 'invalid option' -- "$@"`
 
-        if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
+        if [[ $? != 0 ]]; then echo "Try '--help' for more information." >&2; exit 1; fi
 
         eval set -- "$TEMP";;
     "Darwin");;
@@ -280,11 +308,11 @@ if [[ $VERY_SURE == false ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO ==
 fi
 if ! [[ -f $FLASH_GAIA_FILE ]] && [[ $FLASH_GAIA == true ]]; then
     echo "### Cannot found $FLASH_GAIA_FILE file."
-    exit -1
+    exit 2
 fi
 if ! [[ -f $FLASH_GECKO_FILE ]] && [[ $FLASH_GECKO == true ]]; then
     echo "### Cannot found $FLASH_GECKO_FILE file."
-    exit -1
+    exit 2
 fi
 
 
