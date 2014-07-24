@@ -98,6 +98,7 @@ function helper(){
 ## Show the available version info
 function version_info(){
     echo -e "Available version:"
+    echo -e "  200|v2.0.0"
     echo -e "  140|v1.4.0"
     echo -e "  130|v1.3.0"
     echo -e "  120|v1.2.0"
@@ -111,6 +112,7 @@ function version_info(){
 function version() {
     local_ver=$1
     case "$local_ver" in
+        200|v2.0.0) VERSION_NAME="v200";;
         140|v1.4.0) VERSION_NAME="v140";;
         130|v1.3.0) VERSION_NAME="v130";;
         120|v1.2.0) VERSION_NAME="v120";;
