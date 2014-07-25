@@ -43,9 +43,16 @@ function helper(){
     echo -e "-y\t\tflash the file without asking askeing (it's a joke...)"
     echo -e "-h|--help\tDisplay help."
     echo -e "Example:"
-    echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia=gaia.zip"
-    echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz"
-    echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz"
+    case `uname` in
+        "Linux")
+            echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia=gaia.zip"
+            echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz"
+            echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz";;
+        "Darwin")
+            echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia gaia.zip"
+            echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko b2g-18.0.en-US.android-arm.tar.gz"
+            echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -g gaia.zip -G b2g-18.0.en-US.android-arm.tar.gz";;
+    esac
     exit 0
 }
 
