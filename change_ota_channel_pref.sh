@@ -15,8 +15,8 @@ while [ $# -gt 0 ]; do
     "-h")
       echo "
       Help:
-          -d <device>  : specify a device (leo, tarako, hamachi, helix, inari) to update
-          -v <version> : version to update to (1.4.0, 1.3.0, 1.2.0, 1.1.1)
+          -d <device>  : specify a device (leo, tarako, hamachi, helix, inari, flame) to update
+          -v <version> : version to update to (2.1.0, 2.0.0, 1.5.0, 1.4.0, 1.3.0t, 1.3.0, 1.2.0, 1.1.1)
           -h : this help menu
       "
       ;;
@@ -40,12 +40,14 @@ case "$DEVICE" in
   "flame")
     ;;
   *)
-    echo "You must specify a device: leo, hamachi, helix or inari"
+    echo "You must specify a device: leo, hamachi, helix, inari or flame"
     exit
     ;;
 esac
 
 case "$VERSION" in
+  "2.1.0")
+    ;;
   "2.0.0")
     ;;
   "1.5.0")
@@ -61,7 +63,7 @@ case "$VERSION" in
   "1.1.1")
     ;;
   *)
-    echo "You must specify a version : 2.0.0, 1.5.0, 1.4.0, 1.3.0t, 1.3.0, 1.2.0, 1.1.1 (1.1.1 for 1.1hd)"
+    echo "You must specify a version : 2.1.0, 2.0.0, 1.5.0, 1.4.0, 1.3.0t, 1.3.0, 1.2.0, 1.1.1 (1.1.1 for 1.1hd)"
     exit
     ;;
 esac
