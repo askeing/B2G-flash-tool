@@ -425,10 +425,17 @@ function check_build_id() {
 }
 
 function replace_url_for_build_id() {
-    ## Replace Target URL with BUILD ID
+
+    ## Replace latest/ with path to BUILD ID when flashing a pvt nightly build
     if [[ ${BUILD_ID} != "" && ${TARGET_URL} =~ "nightly" ]]; then
         check_build_id
         TARGET_URL=${TARGET_URL%latest/}${BUILD_ID:0:4}/${BUILD_ID:4:2}/${BUILD_ID:0:4}-${BUILD_ID:4:2}-${BUILD_ID:6:2}-${BUILD_ID:8:2}-${BUILD_ID:10:2}-${BUILD_ID:12:2}/
+    fi
+
+    ## Replace latest/ with BUILD ID folder when flashing a tinderbox build
+    if [[ ${BUILD_ID} != "" && ${TARGET_URL} =~ "tinderbox-builds" ]]; then
+        check_build_id
+        TARGET_URL=${TARGET_URL%latest/}${BUILD_ID}/
     fi
 
     if [[ ${FLASH_GECKO} == true ]]; then
