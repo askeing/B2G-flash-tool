@@ -86,7 +86,7 @@ class PathParser(object):
 
     def _parse_build_and_time_from_html(self, html_content):
         build_and_time_pattern = re.compile(
-            '<a href="mozilla-.*?-.*?/">(?P<build>mozilla-.*?-.*?)/</a></td><td align="right">(?P<time>.*?)\s*</td>',
+            '<a href="(b2g|mozilla)-.*?-.*?/">(?P<build>(b2g|mozilla)-.*?-.*?)/</a></td><td align="right">(?P<time>.*?)\s*</td>',
             re.DOTALL | re.MULTILINE)
         build_and_time_list = build_and_time_pattern.findall(html_content)
         return build_and_time_list
@@ -95,16 +95,17 @@ class PathParser(object):
         root_dict = {}
         for build_and_time in build_and_time_list:
             # If the build name ends with '-eng', then it is Engineer build.
-            build_src = build_and_time[0]
+            build_src = build_and_time[1]
             engineer_build = build_src.endswith('-eng')
             # Remove '-eng', then split string by '-'
             target_build_src = build_src.replace('-eng', '')
-            splited_build_info = target_build_src.split('-', 2)
-            device_name = splited_build_info[2]
-            branch_name = splited_build_info[1]
-            src_name = build_and_time[0]
+            groups = target_build_src.split('-')
+            splited_build_info = '-'.join(groups[:2]), '-'.join(groups[2:])
+            device_name = splited_build_info[1]
+            branch_name = splited_build_info[0]
+            src_name = build_and_time[1]
             build = self._ENGINEER_BUILD_NAME if engineer_build else self._USER_BUILD_NAME
-            last_modify_time = build_and_time[1]
+            last_modify_time = build_and_time[2]
             build_item = {build: {'src': src_name, 'last_modify_time': last_modify_time}}
 
             if root_dict.get(device_name) == None:
