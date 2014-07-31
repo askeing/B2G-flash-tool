@@ -25,9 +25,12 @@
 #   2013/12/13 Askeing: remove DEBUG and auto pull.
 #   2014/02/06 Askeing: enable local cache by default, USE_LOCAL=false to force download from pvt.
 #   2014/02/06 Askeing: added DL_HOME to specify download folder.
+#   2014/07/31 Askeing: End of maintenance.
 #
 #==========================================================================
 
+echo -e "This tool will end of maintenace from now.\nPlease run './flash_pvt.py -h' to get the usage of new tool.\n"
+sleep 5
 
 ####################
 # Parameter Flags  #
