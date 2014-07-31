@@ -11,7 +11,7 @@ class Parser(object):
         parser = argparse.ArgumentParser(description='B2G Flash Tool by TWQA',
             formatter_class=RawTextHelpFormatter,
             epilog=textwrap.dedent('''\
-            Example:
+            example:
               $ ./flash_pvt.py -d flame -v central --eng -g -G 
               $ ./flash_pvt.py -d hamachi -v b2g30_v1_4 -b 20140718000231 --usr -g -G 
             '''))
