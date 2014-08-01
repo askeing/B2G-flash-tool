@@ -104,7 +104,7 @@ class BaseController(object):
         input src and build-id, then setup the dest-folder and return the available packages.
         '''
         #TODO: Async request?
-        query = self.pathParser.get_available_packages_from_url(self.baseUrl, src, build_id=build_id)
+        query = self.pathParser.get_available_packages_from_url(base_url=self.baseUrl, build_src=src, build_id=build_id, build_id_format=self.build_id_format)
         self.paths = {}
         package = []
         if PathParser._GAIA in query and PathParser._GECKO in query:
@@ -139,18 +139,30 @@ class BaseController(object):
             config = eval(f.read())
         if 'account' in config:
             self.account = config['account']
+        else:
+            self.account = ''
         if 'password' in config:
             self.password = config['password']
+        else:
+            self.password = ''
         if 'download_home' in config:
             self.destRootFolder = config['download_home']
+        else:
+            self.destRootFolder = 'pvt'
         if 'base_url' in config:
             self.baseUrl = config['base_url']
+        else:
+            self.baseUrl = 'pvhttps://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/nightly/'
+        if 'build_id_format' in config:
+            self.build_id_format = config['build_id_format']
+        else:
+            self.build_id_format = '/{year}/{month}/{year}-{month}-{day}-{hour}-{min}-{sec}/'
 
     def _get_dest_folder_from_build_id(self, root_folder, build_src, build_id):
         target_folder = ''
         if not build_id == '' or build_id == 'latest':
             if self.pathParser.verify_build_id(build_id):
-                sub_folder = re.sub(r'^/', '', self.pathParser.get_path_of_build_id(build_id))
+                sub_folder = re.sub(r'^/', '', self.pathParser.get_path_of_build_id(build_id=build_id, build_id_format=self.build_id_format))
                 target_folder = os.path.join(root_folder, build_src, sub_folder)
             else:
                 self.logger.log('The build id [' + build_id + '] is not not valid.', status_callback=self.printErr, level=Logger._LEVEL_WARNING)
