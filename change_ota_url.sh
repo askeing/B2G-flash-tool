@@ -25,7 +25,7 @@ function helper_config(){
 
 function show_prefs(){
     set -e
-    if [ 'unknown' == $(adb get-state) ]; then
+    if [ 'unknown' = $(adb get-state) ]; then
 	    echo "Unknown device"
 	    exit -1
     fi
