@@ -23,10 +23,7 @@ function run_adb()
 }
 
 function do_backup_profile() {
-    if [ ! -d ${PROFILE_HOME} ]; then
-        echo "### No backup folder ${PROFILE_HOME}, creating..."
-        mkdir -p ${PROFILE_HOME}
-    fi
+    mkdir -p ${PROFILE_HOME}
     echo -e "### Backup your profiles..." | tee -a ${PROFILE_HOME}/backup.log
     rm -rf ${PROFILE_HOME}/*
     date +"### %F %T" | tee -a ${PROFILE_HOME}/backup.log
