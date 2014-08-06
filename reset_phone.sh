@@ -16,7 +16,7 @@
 
 ## Show usage
 function helper(){
-    echo -e "This script was written for reset the Firefox OS phone.\n"
+    echo -e "This script was written to reset the Firefox OS phone.\n"
     echo -e "Usage: ./reset_phone.sh [parameters]"
     echo -e "  -s <serial number>\tdirects command to device with the given serial number."
     echo -e "  -h|--help\tdisplay help."
@@ -66,10 +66,10 @@ done
 # Run Reset Phone #
 ###################
 
-echo "### Start to Reset Firefox OS Phone..."
+echo "### Starting to Reset Firefox OS Phone..."
 run_adb shell rm -r /cache/*
 run_adb shell mkdir /cache/recovery > /dev/null
 run_adb shell 'echo "--wipe_data" > /cache/recovery/command' &&
 run_adb reboot recovery
-echo "### Reset Firefox OS Phone done."
+echo "### Reset of Firefox OS Phone done."
 
