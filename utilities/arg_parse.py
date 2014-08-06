@@ -12,8 +12,8 @@ class Parser(object):
             formatter_class=RawTextHelpFormatter,
             epilog=textwrap.dedent('''\
             example:
-              $ ./flash_pvt.py -d flame -v central --eng -g -G
-              $ ./flash_pvt.py -d hamachi -v b2g30_v1_4 -b 20140718000231 --usr -g -G
+              $ ./flash_pvt.py -d flame -v mozilla-central --eng -g -G 
+              $ ./flash_pvt.py -d hamachi -v mozilla-b2g30_v1_4 -b 20140718000231 --usr -g -G 
             '''))
         parser.add_argument('-v', '--version', help='target build version')
         parser.add_argument('-d', '--device', help='target device codename')
