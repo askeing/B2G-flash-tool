@@ -34,10 +34,10 @@ esac
 
 ## helper function
 function helper(){
-    echo -e "This script was written for shallow flash the gaia and/or gecko.\n"
+    echo -e "This script was written for shallow flash of gaia and/or gecko.\n"
     echo -e "Usage: ./shallow_flash.sh [parameters]"
-    echo -e "-g|--gaia\tFlash the gaia (zip format) into your device."
-    echo -e "-G|--gecko\tFlash the gecko (tar.gz format) into your device."
+    echo -e "-g|--gaia\tFlash the gaia (zip format) onto your device."
+    echo -e "-G|--gecko\tFlash the gecko (tar.gz format) onto your device."
     echo -e "--keep_profile\tKeep the user profile on your device. (BETA)"
     echo -e "-s <serial number>\tdirects command to device with the given serial number."
     echo -e "-y\t\tflash the file without asking askeing (it's a joke...)"
@@ -74,7 +74,7 @@ function make_sure() {
         echo -e "Gecko: $FLASH_GECKO_FILE "
     fi
     read -p "to your $ADB_DEVICE? [y/N]" isFlash
-    test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo -e "byebye." && exit 0
+    test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo -e "bye bye." && exit 0
 }
 
 ## check the return code, exit if return code is not zero.
@@ -94,13 +94,13 @@ function check_exit_code() {
 ## adb root, then remount and stop b2g
 function adb_root_remount() {
     run_adb root
-    check_exit_code $? "Please make sure your adbd is running as root."
+    check_exit_code $? "Please make sure adb is running as root."
     run_adb wait-for-device     #in: gedit display issue
     run_adb remount
-    check_exit_code $? "Please make sure your adbd is running as root."
+    check_exit_code $? "Please make sure adb is running as root."
     run_adb wait-for-device     #in: gedit display issue
     run_adb shell mount -o remount,rw /system &&
-    check_exit_code $? "Please make sure your adbd is running as root."
+    check_exit_code $? "Please make sure adb is running as root."
     run_adb wait-for-device     #in: gedit display issue
     run_adb shell stop b2g
     check_exit_code $?
@@ -116,7 +116,7 @@ function adb_reboot() {
 
 ## clean cache, gaia (webapps) and profiles
 function adb_clean_gaia() {
-    echo "### Clean Gaia and profiles ..."
+    echo "### Cleaning Gaia and Profiles ..."
     run_adb shell rm -r /cache/* &&
     run_adb shell rm -r /data/b2g/* &&
     run_adb shell rm -r /data/local/storage/persistent/* &&
@@ -128,7 +128,7 @@ function adb_clean_gaia() {
     run_adb shell rm -r /data/local/indexedDB &&
     run_adb shell rm -r /data/local/debug_info_trigger &&
     run_adb shell rm -r /system/b2g/webapps &&
-    echo "### Clean Done."
+    echo "### Cleaning Done."
 }
 
 ## push gaia into device
@@ -137,7 +137,7 @@ function adb_push_gaia() {
     ## Adjusting user.js
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js
     
-    echo "### Push Gaia ..."
+    echo "### Pushing Gaia to device ..."
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
     run_adb push $GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
     run_adb push $GAIA_DIR/user.js /system/b2g/defaults/pref &&
@@ -150,7 +150,7 @@ function shallow_flash_gaia() {
     GAIA_ZIP_FILE=$1
     
     if ! [[ -f $GAIA_ZIP_FILE ]]; then
-        echo "### Cannot found $GAIA_ZIP_FILE file."
+        echo "### Cannot find $GAIA_ZIP_FILE file."
         exit 2
     fi
 
@@ -168,7 +168,7 @@ function shallow_flash_gaia() {
     unzip_file $GAIA_ZIP_FILE $TMP_DIR &&
     adb_clean_gaia &&
     adb_push_gaia $TMP_DIR
-    check_exit_code $? "Push Gaia failed."
+    check_exit_code $? "Pushing Gaia to device failed."
 
     rm -rf $TMP_DIR
 }
@@ -178,7 +178,7 @@ function unzip_file() {
     ZIP_FILE=$1
     DEST_DIR=$2
     if ! [[ -z $ZIP_FILE ]]; then
-        test ! -f $ZIP_FILE && echo -e "### The file $ZIP_FILE DO NOT exist." && exit 2
+        test ! -f $ZIP_FILE && echo -e "### The file $ZIP_FILE DOES NOT exist." && exit 2
     else
         echo "### No input zip file."
         exit 2
@@ -194,7 +194,7 @@ function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
 
     if ! [[ -f $GECKO_TAR_FILE ]]; then
-        echo "### Cannot found $GECKO_TAR_FILE file."
+        echo "### Cannot finnd $GECKO_TAR_FILE file."
         exit 2
     fi
 
@@ -211,10 +211,10 @@ function shallow_flash_gecko() {
 
 	## push gecko into device
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
-    echo "### Push Gecko ..." &&
+    echo "### Pushing Gecko to device..." &&
     run_adb push $TMP_DIR/b2g /system/b2g &&
     echo "### Push Done."
-    check_exit_code $? "Push Gecko failed."
+    check_exit_code $? "Pushing Gecko to device failed."
 
     rm -rf $TMP_DIR
 }
@@ -224,7 +224,7 @@ function untar_file() {
     TAR_FILE=$1
     DEST_DIR=$2
     if ! [[ -z $TAR_FILE ]]; then
-        test ! -f $TAR_FILE && echo -e "### The file $TAR_FILE DO NOT exist." && exit 2
+        test ! -f $TAR_FILE && echo -e "### The file $TAR_FILE DOES NOT exist." && exit 2
     else
         echo "### No input tar file."
         exit 2
@@ -238,7 +238,7 @@ function untar_file() {
 ## option $1 is temp_folder
 function backup_profile() {
     DEST_DIR=$1
-    echo "### Backup Profile to ${DEST_DIR}"
+    echo "### Profile back up to ${DEST_DIR}"
     bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -b
 }
 
@@ -252,9 +252,9 @@ function restore_profile() {
 ## option $1 is temp_folder
 function remove_profile() {
     DEST_DIR=$1
-    echo "### Remove Profile under ${DEST_DIR}"
+    echo "### Removing Profile under ${DEST_DIR}"
     rm -rf ${DEST_DIR}
-    echo "### Remove Profile done."
+    echo "### Removing Profile complete ."
 }
 
 #########################
@@ -314,11 +314,11 @@ if [[ $VERY_SURE == false ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO ==
     make_sure
 fi
 if ! [[ -f $FLASH_GAIA_FILE ]] && [[ $FLASH_GAIA == true ]]; then
-    echo "### Cannot found $FLASH_GAIA_FILE file."
+    echo "### Cannot find $FLASH_GAIA_FILE file."
     exit 2
 fi
 if ! [[ -f $FLASH_GECKO_FILE ]] && [[ $FLASH_GECKO == true ]]; then
-    echo "### Cannot found $FLASH_GECKO_FILE file."
+    echo "### Cannot find $FLASH_GECKO_FILE file."
     exit 2
 fi
 
@@ -387,6 +387,6 @@ fi
 ####################
 # Done             #
 ####################
-echo -e "### Shallow Flash Done!"
+echo -e "### Shallow Flash Successful!"
 
 
