@@ -14,75 +14,85 @@ function helper(){
     exit 0
 }
 
+function log_command() {
+    logname=$1 ; shift
+    mkdir -p ${PROFILE_HOME}
+    $@ 2>&1 | tee -a ${PROFILE_HOME}/${logname}.log
+}
+
+function log() {
+    logname=$1 ; shift
+    log_command $logname echo -e "$(date -u +'%Y-%m-%d %H:%M%S') ###" $@
+}
+
 ## adb with flags
 function run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-    adb $ADB_FLAGS $@
+    logname=$1 ; shift
+    mkdir -p ${PROFILE_HOME}
+    log_command $logname adb $ADB_FLAGS $@
 }
 
 function do_backup_profile() {
     mkdir -p ${PROFILE_HOME}
-    echo -e "### Backup your profiles..." | tee -a ${PROFILE_HOME}/backup.log
+    log backup "Backing up your profile..."
     rm -rf ${PROFILE_HOME}/*
-    date +"### %F %T" | tee -a ${PROFILE_HOME}/backup.log
-    echo -e "### Stop B2G..." | tee -a ${PROFILE_HOME}/backup.log
-    run_adb shell stop b2g 2>> ${PROFILE_HOME}/backup.log
+    log backup "Stoping B2G..."
+    run_adb backup shell stop b2g
 
-    echo "### Backup Wifi information..." | tee -a ${PROFILE_HOME}/backup.log
+    log backup "Backing up Wifi information..."
     mkdir -p ${PROFILE_HOME}/wifi
-    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${PROFILE_HOME}/wifi/wpa_supplicant.conf 2>> ${PROFILE_HOME}/backup.log &&
+    run_adb backup pull /data/misc/wifi/wpa_supplicant.conf ${PROFILE_HOME}/wifi/wpa_supplicant.conf
 
-    echo "### Backup /data/b2g/mozilla to ${PROFILE_HOME}/profile ..." | tee -a ${PROFILE_HOME}/backup.log
+    log backup "Backup /data/b2g/mozilla to ${PROFILE_HOME}/profile ..."
     mkdir -p ${PROFILE_HOME}/profile &&
-    run_adb pull /data/b2g/mozilla ${PROFILE_HOME}/profile 2>> ${PROFILE_HOME}/backup.log
+    run_adb backup pull /data/b2g/mozilla ${PROFILE_HOME}/profile
 
-    echo "### Backup /data/local to ${PROFILE_HOME}/data-local ..." | tee -a ${PROFILE_HOME}/backup.log
-    mkdir -p ${PROFILE_HOME}/data-local &&
-    run_adb pull /data/local ${PROFILE_HOME}/data-local 2>> ${PROFILE_HOME}/backup.log
+    log backup "Backup /data/local to ${PROFILE_HOME}/data-local ..."
+    mkdir -p ${PROFILE_HOME}/data-local
+    run_adb backup pull /data/local ${PROFILE_HOME}/data-local
 
     ls ${PROFILE_HOME}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
         FILE=`echo -e $LINE | tr -d "\r\n"`;
-        echo "### Remove ${PROFILE_HOME}/data-local/webapps/$FILE ..." | tee -a ${PROFILE_HOME}/backup.log
         rm -rf ${PROFILE_HOME}/data-local/webapps/$FILE
+        log backup "Removed ${PROFILE_HOME}/data-local/webapps/$FILE ..."
     done
     if [[ ${REBOOT_FLAG} == true ]]; then
-        echo -e "### Start B2G..." | tee -a ${PROFILE_HOME}/backup.log
-        run_adb shell start b2g 2>> ${PROFILE_HOME}/backup.log
+        log backup "Start B2G..."
+        run_adb backup shell start b2g
     fi
-    echo -e "### Backup done." | tee -a ${PROFILE_HOME}/backup.log
+    log backup "Backup done."
 }
 
 function do_restore_profile() {
-    echo -e "### Recover your profiles..." | tee -a ${PROFILE_HOME}/recover.log
+    log restore "Recover your profiles..."
     if [ ! -d ${PROFILE_HOME}/profile ] || [ ! -d ${PROFILE_HOME}/data-local ]; then
-        echo "### No recover files in ${PROFILE_HOME}."
+        log restore "No recover files in ${PROFILE_HOME}."
         exit -1
     fi
-    rm -rf ${PROFILE_HOME}/recover.log
-    date +"### %F %T" | tee -a ${PROFILE_HOME}/recover.log
-    echo -e "### Stop B2G..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb shell stop b2g 2>> ${PROFILE_HOME}/recover.log
-    run_adb shell rm -r /data/b2g/mozilla 2>> ${PROFILE_HOME}/recover.log
+    log restore "Stop B2G..."
+    run_adb restore shell stop b2g
+    run_adb restore shell rm -r /data/b2g/mozilla
 
-    echo "### Restore Wifi information ..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb push ${PROFILE_HOME}/wifi /data/misc/wifi 2>> ${PROFILE_HOME}/recover.log &&
-    run_adb shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
-    echo "No Wifi information." | tee -a ${PROFILE_HOME}/recover.log
+    "Restore Wifi information ..."
+    run_adb restore push ${PROFILE_HOME}/wifi /data/misc/wifi 2>> ${PROFILE_HOME}/recover.log &&
+    run_adb restore shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
+    log restore "No Wifi information."
 
-    echo "### Restore ${PROFILE_HOME}/profile ..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb push ${PROFILE_HOME}/profile /data/b2g/mozilla 2>> ${PROFILE_HOME}/recover.log
+    log restore "Restore ${PROFILE_HOME}/profile ..."
+    run_adb restore push ${PROFILE_HOME}/profile /data/b2g/mozilla
 
-    echo "### Restore ${PROFILE_HOME}/data-local ..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb push ${PROFILE_HOME}/data-local /data/local 2>> ${PROFILE_HOME}/recover.log
+    log restore "Restore ${PROFILE_HOME}/data-local ..."
+    run_adb restore push ${PROFILE_HOME}/data-local /data/local
 
     if [[ ${REBOOT_FLAG} == true ]]; then
-        echo -e "### Reboot..." | tee -a ${PROFILE_HOME}/recover.log
-        run_adb reboot 2>> ${PROFILE_HOME}/recover.log
-        run_adb wait-for-device 2>> ${PROFILE_HOME}/recover.log
+        log restore "Reboot..."
+        run_adb restore reboot
+        run_adb restore wait-for-device
     fi
-    echo -e "### Recover done." | tee -a ${PROFILE_HOME}/recover.log
+    log restore "Recover done."
 }
 
 
