@@ -1,9 +1,5 @@
 #!/bin/bash
 
-PROFILE_HOME=${PROFILE_HOME:="./mozilla-profile"}
-REBOOT_FLAG=true
-
-## Show usage
 function helper(){
     echo -e "This script was written for backup and restore user profile.\n"
     echo -e "Usage:"
@@ -11,7 +7,6 @@ function helper(){
     echo -e "  -r|--restore\trestore user profile."
     echo -e "  -p|--profile-dir\tspecify the profile folder. Default=./mozilla-profile"
     echo -e "  -h|--help\tdisplay help."
-    exit 0
 }
 
 function log_command() {
@@ -36,30 +31,32 @@ function run_adb()
 }
 
 function do_backup_profile() {
-    mkdir -p ${PROFILE_HOME}
+    profile_dir=$1 ; shift
+    do_reboot=$1 ; shift
+    mkdir -p ${profile_dir}
     log backup "Backing up your profile..."
-    rm -rf ${PROFILE_HOME}/*
+    rm -rf ${profile_dir}/*
     log backup "Stoping B2G..."
     run_adb backup shell stop b2g
 
     log backup "Backing up Wifi information..."
-    mkdir -p ${PROFILE_HOME}/wifi
-    run_adb backup pull /data/misc/wifi/wpa_supplicant.conf ${PROFILE_HOME}/wifi/wpa_supplicant.conf
+    mkdir -p ${profile_dir}/wifi
+    run_adb backup pull /data/misc/wifi/wpa_supplicant.conf ${profile_dir}/wifi/wpa_supplicant.conf
 
-    log backup "Backup /data/b2g/mozilla to ${PROFILE_HOME}/profile ..."
-    mkdir -p ${PROFILE_HOME}/profile &&
-    run_adb backup pull /data/b2g/mozilla ${PROFILE_HOME}/profile
+    log backup "Backup /data/b2g/mozilla to ${profile_dir}/profile ..."
+    mkdir -p ${profile_dir}/profile &&
+    run_adb backup pull /data/b2g/mozilla ${profile_dir}/profile
 
-    log backup "Backup /data/local to ${PROFILE_HOME}/data-local ..."
-    mkdir -p ${PROFILE_HOME}/data-local
-    run_adb backup pull /data/local ${PROFILE_HOME}/data-local
+    log backup "Backup /data/local to ${profile_dir}/data-local ..."
+    mkdir -p ${profile_dir}/data-local
+    run_adb backup pull /data/local ${profile_dir}/data-local
 
-    ls ${PROFILE_HOME}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
+    ls ${profile_dir}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
         FILE=`echo -e $LINE | tr -d "\r\n"`;
-        rm -rf ${PROFILE_HOME}/data-local/webapps/$FILE
-        log backup "Removed ${PROFILE_HOME}/data-local/webapps/$FILE ..."
+        rm -rf ${profile_dir}/data-local/webapps/$FILE
+        log backup "Removed ${profile_dir}/data-local/webapps/$FILE ..."
     done
-    if [[ ${REBOOT_FLAG} == true ]]; then
+    if [ $do_reboot -eq 1 ]]; then
         log backup "Start B2G..."
         run_adb backup shell start b2g
     fi
@@ -67,9 +64,11 @@ function do_backup_profile() {
 }
 
 function do_restore_profile() {
+    profile_dir=$1 ; shift
+    do_reboot=$1 ; shift
     log restore "Recover your profiles..."
-    if [ ! -d ${PROFILE_HOME}/profile ] || [ ! -d ${PROFILE_HOME}/data-local ]; then
-        log restore "No recover files in ${PROFILE_HOME}."
+    if [ ! -d ${profile_dir}/profile ] || [ ! -d ${profile_dir}/data-local ]; then
+        log restore "No recover files in ${profile_dir}."
         exit -1
     fi
     log restore "Stop B2G..."
@@ -77,15 +76,15 @@ function do_restore_profile() {
     run_adb restore shell rm -r /data/b2g/mozilla
 
     "Restore Wifi information ..."
-    run_adb restore push ${PROFILE_HOME}/wifi /data/misc/wifi 2>> ${PROFILE_HOME}/recover.log &&
+    run_adb restore push ${profile_dir}/wifi /data/misc/wifi 2>> ${profile_dir}/recover.log &&
     run_adb restore shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
     log restore "No Wifi information."
 
-    log restore "Restore ${PROFILE_HOME}/profile ..."
-    run_adb restore push ${PROFILE_HOME}/profile /data/b2g/mozilla
+    log restore "Restore ${profile_dir}/profile ..."
+    run_adb restore push ${profile_dir}/profile /data/b2g/mozilla
 
-    log restore "Restore ${PROFILE_HOME}/data-local ..."
-    run_adb restore push ${PROFILE_HOME}/data-local /data/local
+    log restore "Restore ${profile_dir}/data-local ..."
+    run_adb restore push ${profile_dir}/data-local /data/local
 
     if [[ ${REBOOT_FLAG} == true ]]; then
         log restore "Reboot..."
@@ -95,40 +94,44 @@ function do_restore_profile() {
     log restore "Recover done."
 }
 
+do_backup=0
+do_restore=0
+profile_dir=${PROFILE_HOME:="./mozilla-profile"}
+do_reboot=1
 
-### Script Start ###
+if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 1; fi
 
-## show helper if nothing specified
-if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
-
-## distinguish platform
-case `uname` in
-    "Linux")
-        ## add getopt argument parsing
-        TEMP=`getopt -o brp::h --long backup,restore,profile-dir::,no-reboot,help \
-        -n 'invalid option' -- "$@"`
-
-        if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
-
-        eval set -- "$TEMP";;
-    "Darwin");;
-esac
-
-while true
+while [ $# -gt 0 ]
 do
     case "$1" in
-        -b|--backup) do_backup_profile; shift;;
-        -r|--restore) do_restore_profile; shift;;
-        -p|--profile-dir)
-            case "$2" in
-                "") echo "Please specify the profile folder."; exit 0; shift 2;;
-                *) PROFILE_HOME=$2; echo "Set the profile folder as ${PROFILE_HOME}"; shift 2;;
-            esac ;;
-        # only for other tools
-        --no-reboot) REBOOT_FLAG=false; shift;;
+        -b|--backup) do_backup=1;;
+        -r|--restore) do_restore=1;;
+        -p|--profile-dir) profile_dir=$2; shift;;
+        --no-reboot) do_reboot=0;;
         -h|--help) helper; exit 0;;
-        --) shift;break;;
-        "") shift;break;;
-        *) helper; echo error occured; exit 1;;
+        *) helper; echo "$1 is not a recognized option!"; exit 1;;
     esac
+    shift
 done
+
+if [[ $do_backup -eq 1 && $do_restore -eq 1 ]] ; then
+    helper
+    echo "You must either backup or restore, not both" 1>&2
+    exit 1
+fi
+ 
+if [ -z $profile_dir ] ; then
+    helper
+    echo "You must specify a profile directory if you use the option" 1>&2
+    exit 1
+fi
+
+if [ ! -d $profile_dir ] ; then
+    mkdir -p $profile_dir
+fi
+
+if [ $do_backup -eq 1 ] ; then
+    do_backup_profile $profile_dir $do_reboot  
+elif [ $do_restore -eq 1 ] ; then
+    do_restore_profile $profile_dir $do_reboot
+fi
