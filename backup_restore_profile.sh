@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LOGFILE=${LOGFILE:=backup_restore_profile.log}
+
 function helper(){
     echo -e "This script was written for backup and restore user profile.\n"
     echo -e "Usage:"
@@ -10,13 +12,11 @@ function helper(){
 }
 
 function log_command() {
-    logname=$1 ; shift
-    mkdir -p ${PROFILE_HOME}
-    $@ 2>&1 | tee -a ${PROFILE_HOME}/${logname}.log
+    mkdir -p $(dirname $LOGFILE)
+    $@ 2>&1 | tee -a $LOGFILE
 }
 
 function log() {
-    logname=$1 ; shift
     log_command $logname echo -e "$(date -u +'%Y-%m-%d %H:%M%S') ###" $@
 }
 
@@ -25,73 +25,71 @@ function run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-    logname=$1 ; shift
-    mkdir -p ${PROFILE_HOME}
-    log_command $logname adb $ADB_FLAGS $@
+    log_command adb $ADB_FLAGS $@
 }
 
 function do_backup_profile() {
     profile_dir=$1 ; shift
     do_reboot=$1 ; shift
     mkdir -p ${profile_dir}
-    log backup "Backing up your profile..."
+    log "Backing up your profile..."
     rm -rf ${profile_dir}/*
-    log backup "Stoping B2G..."
-    run_adb backup shell stop b2g
+    log "Stoping B2G..."
+    run_adb shell stop b2g
 
-    log backup "Backing up Wifi information..."
+    log "Backing up Wifi information..."
     mkdir -p ${profile_dir}/wifi
-    run_adb backup pull /data/misc/wifi/wpa_supplicant.conf ${profile_dir}/wifi/wpa_supplicant.conf
+    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${profile_dir}/wifi/wpa_supplicant.conf
 
-    log backup "Backup /data/b2g/mozilla to ${profile_dir}/profile ..."
+    log "Backup /data/b2g/mozilla to ${profile_dir}/profile ..."
     mkdir -p ${profile_dir}/profile &&
-    run_adb backup pull /data/b2g/mozilla ${profile_dir}/profile
+    run_adb pull /data/b2g/mozilla ${profile_dir}/profile
 
-    log backup "Backup /data/local to ${profile_dir}/data-local ..."
+    log "Backup /data/local to ${profile_dir}/data-local ..."
     mkdir -p ${profile_dir}/data-local
-    run_adb backup pull /data/local ${profile_dir}/data-local
+    run_adb pull /data/local ${profile_dir}/data-local
 
     ls ${profile_dir}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
         FILE=`echo -e $LINE | tr -d "\r\n"`;
         rm -rf ${profile_dir}/data-local/webapps/$FILE
-        log backup "Removed ${profile_dir}/data-local/webapps/$FILE ..."
+        log "Removed ${profile_dir}/data-local/webapps/$FILE ..."
     done
-    if [ $do_reboot -eq 1 ]]; then
-        log backup "Start B2G..."
-        run_adb backup shell start b2g
+    if [ $do_reboot -eq 1 ]; then
+        log "Start B2G..."
+        run_adb shell start b2g
     fi
-    log backup "Backup done."
+    log "Backup done."
 }
 
 function do_restore_profile() {
     profile_dir=$1 ; shift
     do_reboot=$1 ; shift
-    log restore "Recover your profiles..."
+    log "Recover your profiles..."
     if [ ! -d ${profile_dir}/profile ] || [ ! -d ${profile_dir}/data-local ]; then
-        log restore "No recover files in ${profile_dir}."
+        log "No recover files in ${profile_dir}."
         exit -1
     fi
-    log restore "Stop B2G..."
-    run_adb restore shell stop b2g
-    run_adb restore shell rm -r /data/b2g/mozilla
+    log "Stop B2G..."
+    run_adb shell stop b2g
+    run_adb shell rm -r /data/b2g/mozilla
 
     "Restore Wifi information ..."
-    run_adb restore push ${profile_dir}/wifi /data/misc/wifi 2>> ${profile_dir}/recover.log &&
-    run_adb restore shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
-    log restore "No Wifi information."
+    run_adb push ${profile_dir}/wifi /data/misc/wifi 2>> ${profile_dir}/recover.log &&
+    run_adb shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
+    log "No Wifi information."
 
-    log restore "Restore ${profile_dir}/profile ..."
-    run_adb restore push ${profile_dir}/profile /data/b2g/mozilla
+    log "Restore ${profile_dir}/profile ..."
+    run_adb push ${profile_dir}/profile /data/b2g/mozilla
 
-    log restore "Restore ${profile_dir}/data-local ..."
-    run_adb restore push ${profile_dir}/data-local /data/local
+    log "Restore ${profile_dir}/data-local ..."
+    run_adb push ${profile_dir}/data-local /data/local
 
     if [[ ${REBOOT_FLAG} == true ]]; then
-        log restore "Reboot..."
-        run_adb restore reboot
-        run_adb restore wait-for-device
+        log "Reboot..."
+        run_adb reboot
+        run_adb wait-for-device
     fi
-    log restore "Recover done."
+    log "Recover done."
 }
 
 do_backup=0
