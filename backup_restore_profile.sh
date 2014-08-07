@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 LOGFILE=${LOGFILE:=backup_restore_profile.log}
 
 function helper(){
@@ -14,50 +16,49 @@ function helper(){
 function log_command() {
     mkdir -p $(dirname $LOGFILE)
     $@ 2>&1 | tee -a $LOGFILE
+    return ${PIPESTATUS[0]}
 }
 
 function log() {
     log_command $logname echo -e "$(date -u +'%Y-%m-%d %H:%M%S') ###" $@
 }
 
-## adb with flags
 function run_adb()
 {
-    # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
-    # If there is colon in serial number, this script will have some warning message.
     log_command adb $ADB_FLAGS $@
 }
 
 function do_backup_profile() {
     profile_dir=$1 ; shift
     do_reboot=$1 ; shift
-    mkdir -p ${profile_dir}
+    tmp_dir=$(TMPDIR=. mktemp -d -t "$(basename $profile_dir).XXXXXXXXXX")
     log "Backing up your profile..."
-    rm -rf ${profile_dir}/*
     log "Stoping B2G..."
     run_adb shell stop b2g
 
     log "Backing up Wifi information..."
-    mkdir -p ${profile_dir}/wifi
-    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${profile_dir}/wifi/wpa_supplicant.conf
+    mkdir -p ${tmp_dir}/wifi
+    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${tmp_dir}/wifi/wpa_supplicant.conf
 
-    log "Backup /data/b2g/mozilla to ${profile_dir}/profile ..."
-    mkdir -p ${profile_dir}/profile &&
-    run_adb pull /data/b2g/mozilla ${profile_dir}/profile
+    log "Backup /data/b2g/mozilla to ${tmp_dir}/profile ..."
+    mkdir -p ${tmp_dir}/profile &&
+    run_adb pull /data/b2g/mozilla ${tmp_dir}/profile
 
-    log "Backup /data/local to ${profile_dir}/data-local ..."
-    mkdir -p ${profile_dir}/data-local
-    run_adb pull /data/local ${profile_dir}/data-local
+    log "Backup /data/local to ${tmp_dir}/data-local ..."
+    mkdir -p ${tmp_dir}/data-local
+    run_adb pull /data/local ${tmp_dir}/data-local
 
-    ls ${profile_dir}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
+    ls ${tmp_dir}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
         FILE=`echo -e $LINE | tr -d "\r\n"`;
-        rm -rf ${profile_dir}/data-local/webapps/$FILE
-        log "Removed ${profile_dir}/data-local/webapps/$FILE ..."
+        rm -rf ${tmp_dir}/data-local/webapps/$FILE
+        log "Removed ${tmp_dir}/data-local/webapps/$FILE ..."
     done
     if [ $do_reboot -eq 1 ]; then
         log "Start B2G..."
         run_adb shell start b2g
     fi
+    rm -rf $profile_dir
+    mv $tmp_dir $profile_dir
     log "Backup done."
 }
 
@@ -73,8 +74,8 @@ function do_restore_profile() {
     run_adb shell stop b2g
     run_adb shell rm -r /data/b2g/mozilla
 
-    "Restore Wifi information ..."
-    run_adb push ${profile_dir}/wifi /data/misc/wifi 2>> ${profile_dir}/recover.log &&
+    log "Restore Wifi information ..."
+    run_adb push ${profile_dir}/wifi /data/misc/wifi &&
     run_adb shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
     log "No Wifi information."
 
@@ -84,7 +85,7 @@ function do_restore_profile() {
     log "Restore ${profile_dir}/data-local ..."
     run_adb push ${profile_dir}/data-local /data/local
 
-    if [[ ${REBOOT_FLAG} == true ]]; then
+    if [ $do_reboot -eq 1 ]; then
         log "Reboot..."
         run_adb reboot
         run_adb wait-for-device
@@ -111,6 +112,10 @@ do
     esac
     shift
 done
+
+log "######################"
+log "# B2G Backup/Restore #"
+log "######################"
 
 if [[ $do_backup -eq 1 && $do_restore -eq 1 ]] ; then
     helper
