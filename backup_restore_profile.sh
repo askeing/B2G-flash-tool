@@ -29,8 +29,8 @@ function run_adb()
 }
 
 function do_backup_profile() {
-    profile_dir=$1 ; shift
-    do_reboot=$1 ; shift
+    local profile_dir=$1 ; shift
+    local do_reboot=$1 ; shift
     # GNU mktemp has a nice --tmpdir option, but not so on OS X
     tmp_dir=$(TMPDIR=. mktemp -d -t "$(basename $profile_dir).XXXXXXXXXX")
     log "Stoping B2G..."
@@ -63,8 +63,8 @@ function do_backup_profile() {
 }
 
 function do_restore_profile() {
-    profile_dir=$1 ; shift
-    do_reboot=$1 ; shift
+    local profile_dir=$1 ; shift
+    local do_reboot=$1 ; shift
     log "Recover your profile..."
     if [ ! -d ${profile_dir}/profile ] || [ ! -d ${profile_dir}/data-local ]; then
         log "No recover files in ${profile_dir}."
