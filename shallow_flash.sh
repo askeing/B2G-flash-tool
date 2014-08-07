@@ -26,6 +26,7 @@ FLASH_GECKO_FILE=""
 case `uname` in
     "Linux") SP="";;
     "Darwin") SP=" ";;
+    "CYGWIN_NT-6.1") SP=" ";;
 esac
 
 ####################
@@ -52,6 +53,10 @@ function helper(){
             echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia gaia.zip"
             echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko b2g-18.0.en-US.android-arm.tar.gz"
             echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -g gaia.zip -G b2g-18.0.en-US.android-arm.tar.gz";;
+        "CYGWIN_NT-6.1")
+            echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia=gaia.zip"
+            echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz"
+            echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz";;
     esac
     exit 0
 }
@@ -134,8 +139,13 @@ function adb_clean_gaia() {
 ## push gaia into device
 function adb_push_gaia() {
     GAIA_DIR=$1
-    ## Adjusting user.js
+    ## Adjusting user.js ; for unknown reason this is not reliable in Cygwin :-(
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js
+    if [[ `uname`="CYGWIN_NT-6.1" ]]; then
+        ## and this is dirty workaround
+        cp $GAIA_DIR/gaia/profile/user.js $GAIA_DIR
+        cp -r $GAIA_DIR /cygdrive/c/tmp/
+    fi &&
     
     echo "### Pushing Gaia to device ..."
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
@@ -194,7 +204,7 @@ function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
 
     if ! [[ -f $GECKO_TAR_FILE ]]; then
-        echo "### Cannot finnd $GECKO_TAR_FILE file."
+        echo "### Cannot find $GECKO_TAR_FILE file."
         exit 2
     fi
 
@@ -211,6 +221,9 @@ function shallow_flash_gecko() {
 
 	## push gecko into device
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
+    if [[ `uname`="CYGWIN_NT-6.1" ]]; then
+        cp -r $TMP_DIR /cygdrive/c/tmp/
+    fi &&
     echo "### Pushing Gecko to device..." &&
     run_adb push $TMP_DIR/b2g /system/b2g &&
     echo "### Push Done."
@@ -275,6 +288,14 @@ case `uname` in
 
         eval set -- "$TEMP";;
     "Darwin");;
+    "CYGWIN_NT-6.1")
+        ## add getopt argument parsing
+        TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,keep_profile,help \
+        -n 'invalid option' -- "$@"`
+
+        if [[ $? != 0 ]]; then echo "Try '--help' for more information." >&2; exit 1; fi
+
+        eval set -- "$TEMP";;
 esac
 
 while true
