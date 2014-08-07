@@ -16,7 +16,7 @@ from utilities.decompressor import Decompressor
 
 
 class BaseController(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings_file=None, *args, **kwargs):
         '''
         Generate base frame and each page, bind them in a list
         '''
@@ -27,7 +27,7 @@ class BaseController(object):
         self.auth = Authenticator()
         self.pathParser = PathParser()
         # load config from .flash_pvt file
-        self.load_config_file()
+        self.load_config_file(settings_file)
 
     def setData(self, data=None):
         if data is None:
@@ -127,15 +127,19 @@ class BaseController(object):
         #       should be an async request?
         pass
 
-    def load_config_file(self):
+    def load_config_file(self, settings_file=None):
         '''
         Load ".flash_pvt" as config file.
         If there is no file, then copy from ".flash_pvt.template".
         '''
-        if not os.path.exists('.flash_pvt'):
-            shutil.copy2('.flash_pvt.template', '.flash_pvt')
+        if settings_file is None:
+            settings_file = '.flash_pvt'
+        if not os.path.exists(settings_file):
+            self.logger.log('Creating %s from %s' % (settings_file, settings_file + '.template'))
+            shutil.copy2(settings_file + '.template', settings_file)
+        self.logger.log('Loading settings from %s' % (settings_file,))
         account = {}
-        with open('.flash_pvt') as f:
+        with open(settings_file) as f:
             config = eval(f.read())
         if 'account' in config:
             self.account = config['account']

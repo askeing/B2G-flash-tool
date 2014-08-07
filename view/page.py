@@ -240,7 +240,10 @@ class ListPage(BasePage):
             buildId = '' if (len(self.bidVar.get()) == 0 or self.bidVar.get() == 'latest') else self.bidVar.get()
             package = self.controller.getPackages(self.data[device][version][eng]['src'], build_id=buildId)
             if len(package) == 0:
-                package = [PathParser._GAIA_GECKO, PathParser._GAIA, PathParser._GECKO, PathParser._IMAGES]
+                self.logger.log('Invalid build ID: ' + buildId + ', reset to latest', status_callback=self.printErr)
+                buildId = ''
+                self.bidVar.set('latest')
+                package = self.controller.getPackages(self.data[device][version][eng]['src'], build_id=buildId)
             for li in package:
                 self.packageList.insert(END, li)
         finally:

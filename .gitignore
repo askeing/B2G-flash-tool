@@ -38,4 +38,4 @@ pvt
 .TWCI_DL_LIST.conf
 .ldap
 .flash_pvt
-
+.flash_tbpl

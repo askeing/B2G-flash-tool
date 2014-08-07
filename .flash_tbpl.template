@@ -1,0 +1,8 @@
+{
+  "account": "",
+  "password": "",
+  "download_home": "tbpl",
+  "base_url": "https://pvtbuilds.mozilla.org/pvt/mozilla.org/b2gotoro/tinderbox-builds/",
+  "build_id_format": "/{year}{month}{day}{hour}{min}{sec}/"
+}
+

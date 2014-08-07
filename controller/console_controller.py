@@ -12,11 +12,11 @@ from base_controller import BaseController
 
 class ConsoleApp(BaseController):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings_file=None, *args, **kwargs):
         '''
         init
         '''
-        BaseController.__init__(self, *args, **kwargs)
+        BaseController.__init__(self, settings_file=settings_file, *args, **kwargs)
         # Setup Default value
         self.flash_params = []
         self.dialog = ConsoleDialog()
