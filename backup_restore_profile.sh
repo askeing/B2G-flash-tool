@@ -5,7 +5,7 @@ set -e
 LOGFILE=${LOGFILE:=backup_restore_profile.log}
 
 function helper(){
-    echo -e "This script was written for backup and restore user profile.\n"
+    echo -e "Backup and restore Firefox OS profiles.\n"
     echo -e "Usage:"
     echo -e "  -b|--backup\tbackup user profile."
     echo -e "  -r|--restore\trestore user profile."
@@ -20,7 +20,7 @@ function log_command() {
 }
 
 function log() {
-    log_command $logname echo -e "$(date -u +'%Y-%m-%d %H:%M%S') ###" $@
+    log_command echo -e "$(date -u +'%Y-%m-%d %H:%M%S') ###" $@
 }
 
 function run_adb()
@@ -31,8 +31,8 @@ function run_adb()
 function do_backup_profile() {
     profile_dir=$1 ; shift
     do_reboot=$1 ; shift
+    # GNU mktemp has a nice --tmpdir option, but not so on OS X
     tmp_dir=$(TMPDIR=. mktemp -d -t "$(basename $profile_dir).XXXXXXXXXX")
-    log "Backing up your profile..."
     log "Stoping B2G..."
     run_adb shell stop b2g
 
@@ -40,11 +40,11 @@ function do_backup_profile() {
     mkdir -p ${tmp_dir}/wifi
     run_adb pull /data/misc/wifi/wpa_supplicant.conf ${tmp_dir}/wifi/wpa_supplicant.conf
 
-    log "Backup /data/b2g/mozilla to ${tmp_dir}/profile ..."
+    log "Backing up /data/b2g/mozilla to ${tmp_dir}/profile ..."
     mkdir -p ${tmp_dir}/profile &&
     run_adb pull /data/b2g/mozilla ${tmp_dir}/profile
 
-    log "Backup /data/local to ${tmp_dir}/data-local ..."
+    log "Backing up /data/local to ${tmp_dir}/data-local ..."
     mkdir -p ${tmp_dir}/data-local
     run_adb pull /data/local ${tmp_dir}/data-local
 
@@ -65,24 +65,24 @@ function do_backup_profile() {
 function do_restore_profile() {
     profile_dir=$1 ; shift
     do_reboot=$1 ; shift
-    log "Recover your profiles..."
+    log "Recover your profile..."
     if [ ! -d ${profile_dir}/profile ] || [ ! -d ${profile_dir}/data-local ]; then
         log "No recover files in ${profile_dir}."
         exit -1
     fi
-    log "Stop B2G..."
+    log "Stoping B2G..."
     run_adb shell stop b2g
     run_adb shell rm -r /data/b2g/mozilla
 
-    log "Restore Wifi information ..."
+    log "Restoring Wifi information ..."
     run_adb push ${profile_dir}/wifi /data/misc/wifi &&
     run_adb shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
     log "No Wifi information."
 
-    log "Restore ${profile_dir}/profile ..."
+    log "Restoring ${profile_dir}/profile ..."
     run_adb push ${profile_dir}/profile /data/b2g/mozilla
 
-    log "Restore ${profile_dir}/data-local ..."
+    log "Restoring ${profile_dir}/data-local ..."
     run_adb push ${profile_dir}/data-local /data/local
 
     if [ $do_reboot -eq 1 ]; then
@@ -90,7 +90,7 @@ function do_restore_profile() {
         run_adb reboot
         run_adb wait-for-device
     fi
-    log "Recover done."
+    log "Recovery done."
 }
 
 do_backup=0
@@ -98,7 +98,7 @@ do_restore=0
 profile_dir=${PROFILE_HOME:="./mozilla-profile"}
 do_reboot=1
 
-if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 1; fi
+if [ $# = 0 ]; then echo "Must specify either backup or restore"; helper; exit 1; fi
 
 while [ $# -gt 0 ]
 do
@@ -138,3 +138,4 @@ if [ $do_backup -eq 1 ] ; then
 elif [ $do_restore -eq 1 ] ; then
     do_restore_profile $profile_dir $do_reboot
 fi
+
