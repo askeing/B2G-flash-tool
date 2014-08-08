@@ -25,8 +25,7 @@ FLASH_GECKO_FILE=""
 # for other bash script tools call.
 case `uname` in
     "Linux") SP="";;
-    "Darwin") SP=" ";;
-    "CYGWIN_NT-6.1") SP=" ";;
+    "Darwin"|"CYGWIN"*) SP=" ";;
 esac
 
 ####################
@@ -45,7 +44,7 @@ function helper(){
     echo -e "-h|--help\tDisplay help."
     echo -e "Example:"
     case `uname` in
-        "Linux")
+        "Linux"|"CYGWIN"*)
             echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia=gaia.zip"
             echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz"
             echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz";;
@@ -53,10 +52,6 @@ function helper(){
             echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia gaia.zip"
             echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko b2g-18.0.en-US.android-arm.tar.gz"
             echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -g gaia.zip -G b2g-18.0.en-US.android-arm.tar.gz";;
-        "CYGWIN_NT-6.1")
-            echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia=gaia.zip"
-            echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz"
-            echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz";;
     esac
     exit 0
 }
@@ -141,7 +136,7 @@ function adb_push_gaia() {
     GAIA_DIR=$1
     ## Adjusting user.js ; for unknown reason this is not reliable in Cygwin :-(
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js
-    if [[ `uname`="CYGWIN_NT-6.1" ]]; then
+    if [[ `uname`="CYGWIN"* ]]; then
         ## and this is dirty workaround
         cp $GAIA_DIR/gaia/profile/user.js $GAIA_DIR
         cp -r $GAIA_DIR /cygdrive/c/tmp/
@@ -221,7 +216,7 @@ function shallow_flash_gecko() {
 
 	## push gecko into device
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
-    if [[ `uname`="CYGWIN_NT-6.1" ]]; then
+    if [[ `uname`="CYGWIN"* ]]; then
         cp -r $TMP_DIR /cygdrive/c/tmp/
     fi &&
     echo "### Pushing Gecko to device..." &&
@@ -279,7 +274,7 @@ if [[ $# = 0 ]]; then echo "Nothing specified"; helper; exit 0; fi
 
 ## distinguish platform
 case `uname` in
-    "Linux")
+    "Linux"|"CYGWIN"*)
         ## add getopt argument parsing
         TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,keep_profile,help \
         -n 'invalid option' -- "$@"`
@@ -288,14 +283,6 @@ case `uname` in
 
         eval set -- "$TEMP";;
     "Darwin");;
-    "CYGWIN_NT-6.1")
-        ## add getopt argument parsing
-        TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,keep_profile,help \
-        -n 'invalid option' -- "$@"`
-
-        if [[ $? != 0 ]]; then echo "Try '--help' for more information." >&2; exit 1; fi
-
-        eval set -- "$TEMP";;
 esac
 
 while true
