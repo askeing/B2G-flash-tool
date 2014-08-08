@@ -13,11 +13,11 @@ TITLE_FONT = ("Helvetica", 18, "bold")
 
 
 class FlashApp(BaseController):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, settings_file=None, *args, **kwargs):
         '''
         Generate base frame and each page, bind them in a list
         '''
-        BaseController.__init__(self, *args, **kwargs)
+        BaseController.__init__(self, settings_file=settings_file, *args, **kwargs)
         self.root = Tk()
         self.frames = []
         container = Frame(master=self.root)

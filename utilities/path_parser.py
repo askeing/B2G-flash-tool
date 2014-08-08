@@ -26,13 +26,13 @@ class PathParser(object):
         except urllib2.URLError as e:
             self.logger.log('URL Error: ' + str(e.code) + ' ' + e.msg + ' of ' + url, status_callback=status_callback)
 
-    def get_available_packages_from_url(self, base_url, build_src, build_id='', status_callback=None):
+    def get_available_packages_from_url(self, base_url, build_src, build_id='', build_id_format=None, status_callback=None):
         packages = {}
         path = '/latest/'
         build_id = build_id.strip()
         if not build_id == '' and not build_id == 'latest':
             if self.verify_build_id(build_id, status_callback):
-                path = self.get_path_of_build_id(build_id, status_callback)
+                path = self.get_path_of_build_id(build_id=build_id, build_id_format=build_id_format, status_callback=status_callback)
             else:
                 self.logger.log('The build id [' + build_id + '] is not not valid.', status_callback=status_callback)
                 return packages
@@ -122,7 +122,7 @@ class PathParser(object):
         else:
             return True
 
-    def get_path_of_build_id(self, build_id, status_callback=None):
+    def get_path_of_build_id(self, build_id, build_id_format=None, status_callback=None):
         build_id_without_dash = re.sub(r'\D', '', build_id)
         year = build_id_without_dash[0:4]
         month = build_id_without_dash[4:6]
@@ -130,6 +130,8 @@ class PathParser(object):
         hour = build_id_without_dash[8:10]
         min = build_id_without_dash[10:12]
         sec = build_id_without_dash[12:14]
-        path_of_build_id = '/' + year + '/' + month + '/' + year + '-' + month + '-' + day + '-' + hour + '-' + min + '-' + sec + '/'
+        if build_id_format is  None:
+            build_id_format = '/{year}/{month}/{year}-{month}-{day}-{hour}-{min}-{sec}/'
+        path_of_build_id = build_id_format.format(year=year, month=month, day=day, hour=hour, min=min, sec=sec)
         self.logger.log('The path of build id is: ' + path_of_build_id, status_callback=status_callback)
         return path_of_build_id
