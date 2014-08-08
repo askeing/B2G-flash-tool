@@ -24,8 +24,8 @@ FLASH_GECKO=false
 FLASH_GECKO_FILE=""
 # for other bash script tools call.
 case `uname` in
-    "Linux") SP="";;
-    "Darwin"|"CYGWIN"*) SP=" ";;
+    "Linux"|"CYGWIN"*) SP="";;
+    "Darwin") SP=" ";;
 esac
 
 ####################
@@ -134,14 +134,12 @@ function adb_clean_gaia() {
 ## push gaia into device
 function adb_push_gaia() {
     GAIA_DIR=$1
-    ## Adjusting user.js ; for unknown reason this is not reliable in Cygwin :-(
-    cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js
+    ## Adjusting user.js
+    cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js &&
     if [[ `uname`="CYGWIN"* ]]; then
-        ## and this is dirty workaround
-        cp $GAIA_DIR/gaia/profile/user.js $GAIA_DIR
         cp -r $GAIA_DIR /cygdrive/c/tmp/
     fi &&
-    
+
     echo "### Pushing Gaia to device ..."
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
     run_adb push $GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
