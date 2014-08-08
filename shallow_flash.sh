@@ -91,20 +91,40 @@ function check_exit_code() {
 	fi
 }
 
+function check_adb_result() {
+    RET=$1
+    if [[ $RET == *"error"* ]]; then
+        check_exit_code 1 "Please make sure adb is running as root."
+    elif [[ $RET == *"cannot run as root"* ]]; then
+        check_exit_code 1 "Please make sure adb is running as root."
+    elif [[ $RET == *"remount failed"* ]]; then
+        check_exit_code 1 "Please make sure adb is running as root."
+    elif [[ $RET == *"Operation not permitted"* ]]; then
+        check_exit_code 1 "Please make sure adb is running as root."
+    fi
+}
+
 ## adb root, then remount and stop b2g
 function adb_root_remount() {
-    run_adb root
-    check_exit_code $? "Please make sure adb is running as root."
+    echo "### Waiting for device... please ensure it is connected, switched on and remote debugging is enabled in Gaia"
     run_adb wait-for-device     #in: gedit display issue
-    run_adb remount
-    check_exit_code $? "Please make sure adb is running as root."
+
+    echo "### Restarting adb with root permissions..."
+    RET=$(run_adb root)
+    echo "$RET"
+    check_adb_result "$RET"
     run_adb wait-for-device     #in: gedit display issue
-    run_adb shell mount -o remount,rw /system &&
-    check_exit_code $? "Please make sure adb is running as root."
-    run_adb wait-for-device     #in: gedit display issue
+
+    echo "### Remounting the /system partition..."
+    RET=$(run_adb remount)
+    echo "$RET"
+    check_adb_result "$RET"
+    RET=$(run_adb shell mount -o remount,rw /system)
+    echo "$RET"
+    check_adb_result "$RET"
+
+    echo "### Stopping b2g process..."
     run_adb shell stop b2g
-    check_exit_code $?
-    run_adb wait-for-device     #in: gedit display issue
 }
 
 ## adb sync then reboot
