@@ -24,7 +24,7 @@ FLASH_GECKO=false
 FLASH_GECKO_FILE=""
 # for other bash script tools call.
 case `uname` in
-    "Linux") SP="";;
+    "Linux"|"CYGWIN"*) SP="";;
     "Darwin") SP=" ";;
 esac
 
@@ -44,7 +44,7 @@ function helper(){
     echo -e "-h|--help\tDisplay help."
     echo -e "Example:"
     case `uname` in
-        "Linux")
+        "Linux"|"CYGWIN"*)
             echo -e "  Flash gaia.\t\t./shallow_flash.sh --gaia=gaia.zip"
             echo -e "  Flash gecko.\t\t./shallow_flash.sh --gecko=b2g-18.0.en-US.android-arm.tar.gz"
             echo -e "  Flash gaia and gecko.\t./shallow_flash.sh -ggaia.zip -Gb2g-18.0.en-US.android-arm.tar.gz";;
@@ -155,8 +155,11 @@ function adb_clean_gaia() {
 function adb_push_gaia() {
     GAIA_DIR=$1
     ## Adjusting user.js
-    cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js
-    
+    cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js &&
+    if [[ `uname`="CYGWIN"* ]]; then
+        cp -r $GAIA_DIR /cygdrive/c/tmp/
+    fi &&
+
     echo "### Pushing Gaia to device ..."
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
     run_adb push $GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
@@ -214,7 +217,7 @@ function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
 
     if ! [[ -f $GECKO_TAR_FILE ]]; then
-        echo "### Cannot finnd $GECKO_TAR_FILE file."
+        echo "### Cannot find $GECKO_TAR_FILE file."
         exit 2
     fi
 
@@ -231,6 +234,9 @@ function shallow_flash_gecko() {
 
 	## push gecko into device
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
+    if [[ `uname`="CYGWIN"* ]]; then
+        cp -r $TMP_DIR /cygdrive/c/tmp/
+    fi &&
     echo "### Pushing Gecko to device..." &&
     run_adb push $TMP_DIR/b2g /system/b2g &&
     echo "### Push Done."
@@ -286,7 +292,7 @@ if [[ $# = 0 ]]; then echo "Nothing specified"; helper; exit 0; fi
 
 ## distinguish platform
 case `uname` in
-    "Linux")
+    "Linux"|"CYGWIN"*)
         ## add getopt argument parsing
         TEMP=`getopt -o g::G::s::yh --long gaia::,gecko::,keep_profile,help \
         -n 'invalid option' -- "$@"`
