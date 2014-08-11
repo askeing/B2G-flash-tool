@@ -156,7 +156,10 @@ function adb_push_gaia() {
     GAIA_DIR=$1
     ## Adjusting user.js
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js &&
-    if [[ `uname`="CYGWIN"* ]]; then
+    if [[ `uname` == "CYGWIN"* ]]; then
+        if [[ ! -d "/cygdrive/c/tmp" ]]; then
+            mkdir "/cygdrive/c/tmp"
+        fi
         cp -r $GAIA_DIR /cygdrive/c/tmp/
     fi &&
 
@@ -234,7 +237,7 @@ function shallow_flash_gecko() {
 
 	## push gecko into device
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
-    if [[ `uname`="CYGWIN"* ]]; then
+    if [[ `uname` == "CYGWIN"* ]]; then
         cp -r $TMP_DIR /cygdrive/c/tmp/
     fi &&
     echo "### Pushing Gecko to device..." &&
