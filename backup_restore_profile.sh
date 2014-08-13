@@ -107,6 +107,9 @@ case `uname` in
     "Darwin");;
 esac
 
+echo "### Waiting for device... please ensure it is connected, switched on and remote debugging is enabled in Gaia"
+run_adb wait-for-device
+
 while true
 do
     case "$1" in
