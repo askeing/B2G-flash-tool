@@ -193,6 +193,5 @@ fi
 ####################
 # Done
 ####################
-export DESKTOPB2G_DOWNLOAD_DIR=${TARGET_DIR}
 echo -e "Done!\nbyebye."
 
