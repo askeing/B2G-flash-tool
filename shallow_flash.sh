@@ -313,13 +313,13 @@ do
         -g|--gaia) 
             FLASH_GAIA=true;
             case "$2" in
-                "") FLASH_GAIA_FILE="gaia.zip"; shift 2;;
+                "") echo -e "Please specify the gaia path.\nTry '--help' for more information.";exit 1;;
                 *) FLASH_GAIA_FILE=$2; shift 2;;
             esac ;;
         -G|--gecko)
             FLASH_GECKO=true;
             case "$2" in
-                "") FLASH_GECKO_FILE="b2g-18.0.en-US.android-arm.tar.gz"; shift 2;;
+                "") echo -e "Please specify the gecko path.\nTry '--help' for more information."; exit 1;;
                 *) FLASH_GECKO_FILE=$2; shift 2;;
             esac ;;
         --keep_profile) if [[ -e ./backup_restore_profile.sh ]]; then KEEP_PROFILE=true; else echo "### There is no backup_restore_profile.sh file."; fi; shift;;
