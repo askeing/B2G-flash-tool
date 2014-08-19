@@ -1,12 +1,16 @@
 #!/bin/bash
 #==========================================================================
-# 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#==========================================================================
 # Description:
 #   This script was written for reset the Firefox OS phone.
 #
+# Author: Askeing fyen@mozilla.com
+#
 # History:
 #   2014/02/27 Askeing: v1.0 First release.
-#
 #==========================================================================
 
 
