@@ -1,16 +1,18 @@
 #!/bin/bash
 #==========================================================================
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#==========================================================================
 # Description:
 #   This script was written for devtools with Certified Apps.
 #   Please enable "ADB and Devtools" of your device before using App Manager.
 #
+# Author: Askeing fyen@mozilla.com
+#
 # Ref:
 #   https://developer.mozilla.org/en-US/Firefox_OS/Using_the_App_Manager
 #   https://developer.mozilla.org/en-US/Firefox_OS/Debugging/Developer_settings#Remote_debugging
-#
-# History:
-#   2014/03/06 Askeing: v1.0 First release.
-#
 #==========================================================================
 
 function helper(){

@@ -1,4 +1,14 @@
 #!/bin/bash
+#==========================================================================
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#==========================================================================
+# Description:
+#   This script was written for backup and restore user profile.
+#
+# Author: Askeing fyen@mozilla.com
+#==========================================================================
 
 PROFILE_HOME=${PROFILE_HOME:="./mozilla-profile"}
 REBOOT_FLAG=true
