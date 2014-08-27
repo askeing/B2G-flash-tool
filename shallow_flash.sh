@@ -24,6 +24,7 @@ FLASH_GAIA=false
 FLASH_GAIA_FILE=""
 FLASH_GECKO=false
 FLASH_GECKO_FILE=""
+NO_FTU=${NO_FTU:-false}
 # for other bash script tools call.
 case `uname` in
     "Linux"|"CYGWIN"*) SP="";;
@@ -399,6 +400,18 @@ fi
 if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO == true ]]) ; then
     restore_profile ${TMP_PROFILE_DIR}
     remove_profile ${TMP_PROFILE_DIR}
+fi
+
+
+####################
+# NO FTU           #
+####################
+if [[ ${NO_FTU} == true ]]; then
+    if [[ -f ./disable_ftu.py ]]; then
+        echo "### Processing NO FTU..."
+        ./disable_ftu.py
+        echo "### NO FTU done."
+    fi
 fi
 
 ####################
