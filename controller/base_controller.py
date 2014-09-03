@@ -53,18 +53,23 @@ class BaseController(object):
         print('### quit function invoked')
         sys.exit(0)
 
-    def doFlash(self, targets, keep_profile=False):
+    def do_download(self, targets):
         if len(self.destFolder) == 0:
             self.destFolder = self.destRootFolder
-        download = Downloader()
+        downloader = Downloader()
         archives = {}
+        for target in targets:
+            archives[target] = downloader.download(self.paths[target], self.destFolder, status_callback=self.printErr)
+        return archives
+
+    def do_flash(self, targets, archives, keep_profile=False):
         cmd = './shallow_flash.sh -y'
         sp = ''
         if _platform == 'darwin':
             sp = ' '
-        for target in targets:
-            archives[target] = download.download(self.paths[target], self.destFolder, status_callback=self.printErr)
         if PathParser._IMAGES in targets:
+            if PathParser._IMAGES not in archives:
+                self.logger.log('No local images file.', status_callback=self.printErr)
             try:
                 self.temp_dir = tempfile.mkdtemp()
                 self.logger.log('Create temporary folder:' + self.temp_dir, status_callback=self.printErr)
@@ -73,7 +78,6 @@ class BaseController(object):
                 os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f')
-                return
             finally:
                 try:
                     shutil.rmtree(self.temp_dir)  # delete directory
@@ -84,8 +88,12 @@ class BaseController(object):
             self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (flash_img_cmd,))
         else:
             if PathParser._GAIA in targets:
+                if PathParser._GAIA not in archives:
+                    self.logger.log('No local gaia file.', status_callback=self.printErr)
                 cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
             if PathParser._GECKO in targets:
+                if PathParser._GECKO not in archives:
+                    self.logger.log('No local gecko file.', status_callback=self.printErr)
                 cmd = cmd + ' -G' + sp + archives[PathParser._GECKO]
             if keep_profile:
                 self.logger.log('Keep User Profile.')

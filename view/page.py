@@ -196,7 +196,8 @@ class ListPage(BasePage):
                     if(PathParser._GECKO in package):
                         params.append(PathParser._GECKO)
                 keep_profile = (self.target_keep_profile_var.get() == 1)
-                self.controller.doFlash(params, keep_profile=keep_profile)
+                archives = self.controller.do_download(params)
+                self.controller.do_flash(params, archives, keep_profile=keep_profile)
                 self.packageList.select_clear(0, END)
                 self.controller.transition(self)
         finally:

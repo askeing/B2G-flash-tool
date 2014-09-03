@@ -173,7 +173,8 @@ class ConsoleApp(BaseController):
 
         # flash
         self.logger.log('Flash' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build ...')
-        self.doFlash(self.flash_params, keep_profile=self.target_keep_profile)
+        archives = self.do_download(self.flash_params)
+        self.do_flash(self.flash_params, archives, keep_profile=self.target_keep_profile)
 
     def _load_options(self):
         # Settings
