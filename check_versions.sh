@@ -96,11 +96,11 @@ if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; the
 fi
 
 # get OEM build info
-run_adb shell cat /system/build.prop | grep 'ro.build.version.incremental'
-run_adb shell cat /system/build.prop | grep 'ro.build.date='
-if [ $(run_adb shell getprop t2m.sw.version) ]; then
-  run_adb shell getprop t2m.sw.version
-fi
+for KEY in ro.build.date ro.bootloader ro.build.version.incremental ; do
+    if [[ $(run_adb shell getprop $KEY) ]]; then
+        echo $KEY ' ' $(run_adb shell getprop $KEY)
+    fi
+done
 
 rm -rf $dir
 
