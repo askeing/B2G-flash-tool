@@ -68,8 +68,6 @@ class BaseController(object):
         if _platform == 'darwin':
             sp = ' '
         if PathParser._IMAGES in targets:
-            if PathParser._IMAGES not in archives:
-                self.logger.log('No local images file.', status_callback=self.printErr)
             try:
                 self.temp_dir = tempfile.mkdtemp()
                 self.logger.log('Create temporary folder:' + self.temp_dir, status_callback=self.printErr)
@@ -88,12 +86,8 @@ class BaseController(object):
             self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (flash_img_cmd,))
         else:
             if PathParser._GAIA in targets:
-                if PathParser._GAIA not in archives:
-                    self.logger.log('No local gaia file.', status_callback=self.printErr)
                 cmd = cmd + ' -g' + sp + archives[PathParser._GAIA]
             if PathParser._GECKO in targets:
-                if PathParser._GECKO not in archives:
-                    self.logger.log('No local gecko file.', status_callback=self.printErr)
                 cmd = cmd + ' -G' + sp + archives[PathParser._GECKO]
             if keep_profile:
                 self.logger.log('Keep User Profile.')
