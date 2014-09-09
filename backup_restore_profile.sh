@@ -10,131 +10,145 @@
 # Author: Askeing fyen@mozilla.com
 #==========================================================================
 
-PROFILE_HOME=${PROFILE_HOME:="./mozilla-profile"}
-REBOOT_FLAG=true
+set -e
 
-## Show usage
+LOGFILE=${LOGFILE:=backup_restore_profile.log}
+
 function helper(){
-    echo -e "This script was written for backup and restore user profile.\n"
+    echo -e "Backup and restore Firefox OS profiles.\n"
     echo -e "Usage:"
     echo -e "  -b|--backup\tbackup user profile."
     echo -e "  -r|--restore\trestore user profile."
     echo -e "  -p|--profile-dir\tspecify the profile folder. Default=./mozilla-profile"
     echo -e "  -h|--help\tdisplay help."
-    exit 0
 }
 
-## adb with flags
+function log_command() {
+    mkdir -p $(dirname $LOGFILE)
+    $@ 2>&1 | tee -a $LOGFILE
+    return ${PIPESTATUS[0]}
+}
+
+function log() {
+    log_command echo -e "$(date -u +'%Y-%m-%d %H:%M%S') ###" $@
+}
+
 function run_adb()
 {
-    # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
-    # If there is colon in serial number, this script will have some warning message.
-    adb $ADB_FLAGS $@
+    log_command adb $ADB_FLAGS $@
 }
 
 function do_backup_profile() {
-    if [ ! -d ${PROFILE_HOME} ]; then
-        echo "### No backup folder ${PROFILE_HOME}, creating..."
-        mkdir -p ${PROFILE_HOME}
-    fi
-    echo -e "### Backup your profiles..." | tee -a ${PROFILE_HOME}/backup.log
-    rm -rf ${PROFILE_HOME}/*
-    date +"### %F %T" | tee -a ${PROFILE_HOME}/backup.log
-    echo -e "### Stop B2G..." | tee -a ${PROFILE_HOME}/backup.log
-    run_adb shell stop b2g 2>> ${PROFILE_HOME}/backup.log
+    local profile_dir=$1 ; shift
+    local do_reboot=$1 ; shift
+    # GNU mktemp has a nice --tmpdir option, but not so on OS X
+    tmp_dir=$(TMPDIR=. mktemp -d -t "$(basename $profile_dir).XXXXXXXXXX")
+    log "Stoping B2G..."
+    run_adb shell stop b2g
 
-    echo "### Backup Wifi information..." | tee -a ${PROFILE_HOME}/backup.log
-    mkdir -p ${PROFILE_HOME}/wifi
-    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${PROFILE_HOME}/wifi/wpa_supplicant.conf 2>> ${PROFILE_HOME}/backup.log &&
+    log "Backing up Wifi information..."
+    mkdir -p ${tmp_dir}/wifi
+    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${tmp_dir}/wifi/wpa_supplicant.conf
 
-    echo "### Backup /data/b2g/mozilla to ${PROFILE_HOME}/profile ..." | tee -a ${PROFILE_HOME}/backup.log
-    mkdir -p ${PROFILE_HOME}/profile &&
-    run_adb pull /data/b2g/mozilla ${PROFILE_HOME}/profile 2>> ${PROFILE_HOME}/backup.log
+    log "Backing up /data/b2g/mozilla to ${tmp_dir}/profile ..."
+    mkdir -p ${tmp_dir}/profile &&
+    run_adb pull /data/b2g/mozilla ${tmp_dir}/profile
 
-    echo "### Backup /data/local to ${PROFILE_HOME}/data-local ..." | tee -a ${PROFILE_HOME}/backup.log
-    mkdir -p ${PROFILE_HOME}/data-local &&
-    run_adb pull /data/local ${PROFILE_HOME}/data-local 2>> ${PROFILE_HOME}/backup.log
+    log "Backing up /data/local to ${tmp_dir}/data-local ..."
+    mkdir -p ${tmp_dir}/data-local
+    run_adb pull /data/local ${tmp_dir}/data-local
 
-    ls ${PROFILE_HOME}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
+    ls ${tmp_dir}/data-local/webapps | grep "marketplace\|gaiamobile.org" | while read -r LINE ; do
         FILE=`echo -e $LINE | tr -d "\r\n"`;
-        echo "### Remove ${PROFILE_HOME}/data-local/webapps/$FILE ..." | tee -a ${PROFILE_HOME}/backup.log
-        rm -rf ${PROFILE_HOME}/data-local/webapps/$FILE
+        rm -rf ${tmp_dir}/data-local/webapps/$FILE
+        log "Removed ${tmp_dir}/data-local/webapps/$FILE ..."
     done
-    if [[ ${REBOOT_FLAG} == true ]]; then
-        echo -e "### Start B2G..." | tee -a ${PROFILE_HOME}/backup.log
-        run_adb shell start b2g 2>> ${PROFILE_HOME}/backup.log
+    if [ $do_reboot -eq 1 ]; then
+        log "Start B2G..."
+        run_adb shell start b2g
     fi
-    echo -e "### Backup done." | tee -a ${PROFILE_HOME}/backup.log
+    rm -rf $profile_dir
+    mv $tmp_dir $profile_dir
+    log "Backup done."
 }
 
 function do_restore_profile() {
-    echo -e "### Recover your profiles..." | tee -a ${PROFILE_HOME}/recover.log
-    if [ ! -d ${PROFILE_HOME}/profile ] || [ ! -d ${PROFILE_HOME}/data-local ]; then
-        echo "### No recover files in ${PROFILE_HOME}."
+    local profile_dir=$1 ; shift
+    local do_reboot=$1 ; shift
+    log "Recover your profile..."
+    if [ ! -d ${profile_dir}/profile ] || [ ! -d ${profile_dir}/data-local ]; then
+        log "No recover files in ${profile_dir}."
         exit -1
     fi
-    rm -rf ${PROFILE_HOME}/recover.log
-    date +"### %F %T" | tee -a ${PROFILE_HOME}/recover.log
-    echo -e "### Stop B2G..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb shell stop b2g 2>> ${PROFILE_HOME}/recover.log
-    run_adb shell rm -r /data/b2g/mozilla 2>> ${PROFILE_HOME}/recover.log
+    log "Stoping B2G..."
+    run_adb shell stop b2g
+    run_adb shell rm -r /data/b2g/mozilla
 
-    echo "### Restore Wifi information ..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb push ${PROFILE_HOME}/wifi /data/misc/wifi 2>> ${PROFILE_HOME}/recover.log &&
+    log "Restoring Wifi information ..."
+    run_adb push ${profile_dir}/wifi /data/misc/wifi &&
     run_adb shell chown wifi.wifi /data/misc/wifi/wpa_supplicant.conf ||
-    echo "No Wifi information." | tee -a ${PROFILE_HOME}/recover.log
+    log "No Wifi information."
 
-    echo "### Restore ${PROFILE_HOME}/profile ..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb push ${PROFILE_HOME}/profile /data/b2g/mozilla 2>> ${PROFILE_HOME}/recover.log
+    log "Restoring ${profile_dir}/profile ..."
+    run_adb push ${profile_dir}/profile /data/b2g/mozilla
 
-    echo "### Restore ${PROFILE_HOME}/data-local ..." | tee -a ${PROFILE_HOME}/recover.log
-    run_adb push ${PROFILE_HOME}/data-local /data/local 2>> ${PROFILE_HOME}/recover.log
+    log "Restoring ${profile_dir}/data-local ..."
+    run_adb push ${profile_dir}/data-local /data/local
 
-    if [[ ${REBOOT_FLAG} == true ]]; then
-        echo -e "### Reboot..." | tee -a ${PROFILE_HOME}/recover.log
-        run_adb reboot 2>> ${PROFILE_HOME}/recover.log
-        run_adb wait-for-device 2>> ${PROFILE_HOME}/recover.log
+    if [ $do_reboot -eq 1 ]; then
+        log "Reboot..."
+        run_adb reboot
+        run_adb wait-for-device
     fi
-    echo -e "### Recover done." | tee -a ${PROFILE_HOME}/recover.log
+    log "Recovery done."
 }
 
+do_backup=0
+do_restore=0
+profile_dir=${PROFILE_HOME:="./mozilla-profile"}
+do_reboot=1
 
-### Script Start ###
-
-## show helper if nothing specified
-if [ $# = 0 ]; then echo "Nothing specified"; helper; exit 0; fi
-
-## distinguish platform
-case `uname` in
-    "Linux")
-        ## add getopt argument parsing
-        TEMP=`getopt -o brp::h --long backup,restore,profile-dir::,no-reboot,help \
-        -n 'invalid option' -- "$@"`
-
-        if [ $? != 0 ]; then echo "Try '--help' for more information." >&2; exit 1; fi
-
-        eval set -- "$TEMP";;
-    "Darwin");;
-esac
+if [ $# = 0 ]; then echo "Must specify either backup or restore"; helper; exit 1; fi
 
 echo "### Waiting for device... please ensure it is connected, switched on and remote debugging is enabled in Gaia"
 run_adb wait-for-device
 
-while true
+while [ $# -gt 0 ]
 do
     case "$1" in
-        -b|--backup) do_backup_profile; shift;;
-        -r|--restore) do_restore_profile; shift;;
-        -p|--profile-dir)
-            case "$2" in
-                "") echo "Please specify the profile folder."; exit 0; shift 2;;
-                *) PROFILE_HOME=$2; echo "Set the profile folder as ${PROFILE_HOME}"; shift 2;;
-            esac ;;
-        # only for other tools
-        --no-reboot) REBOOT_FLAG=false; shift;;
+        -b|--backup) do_backup=1;;
+        -r|--restore) do_restore=1;;
+        -p|--profile-dir) profile_dir=$2; shift;;
+        --no-reboot) do_reboot=0;;
         -h|--help) helper; exit 0;;
-        --) shift;break;;
-        "") shift;break;;
-        *) helper; echo error occured; exit 1;;
+        *) helper; echo "$1 is not a recognized option!"; exit 1;;
     esac
+    shift
 done
+
+log "######################"
+log "# B2G Backup/Restore #"
+log "######################"
+
+if [[ $do_backup -eq 1 && $do_restore -eq 1 ]] ; then
+    helper
+    echo "You must either backup or restore, not both" 1>&2
+    exit 1
+fi
+ 
+if [ -z $profile_dir ] ; then
+    helper
+    echo "You must specify a profile directory if you use the option" 1>&2
+    exit 1
+fi
+
+if [ ! -d $profile_dir ] ; then
+    mkdir -p $profile_dir
+fi
+
+if [ $do_backup -eq 1 ] ; then
+    do_backup_profile $profile_dir $do_reboot  
+elif [ $do_restore -eq 1 ] ; then
+    do_restore_profile $profile_dir $do_reboot
+fi
+
