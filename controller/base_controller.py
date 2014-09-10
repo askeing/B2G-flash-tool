@@ -53,17 +53,20 @@ class BaseController(object):
         print('### quit function invoked')
         sys.exit(0)
 
-    def doFlash(self, targets, keep_profile=False):
+    def do_download(self, targets):
         if len(self.destFolder) == 0:
             self.destFolder = self.destRootFolder
-        download = Downloader()
+        downloader = Downloader()
         archives = {}
+        for target in targets:
+            archives[target] = downloader.download(self.paths[target], self.destFolder, status_callback=self.printErr)
+        return archives
+
+    def do_flash(self, targets, archives, keep_profile=False):
         cmd = './shallow_flash.sh -y'
         sp = ''
         if _platform == 'darwin':
             sp = ' '
-        for target in targets:
-            archives[target] = download.download(self.paths[target], self.destFolder, status_callback=self.printErr)
         if PathParser._IMAGES in targets:
             try:
                 self.temp_dir = tempfile.mkdtemp()
@@ -73,7 +76,6 @@ class BaseController(object):
                 os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f')
-                return
             finally:
                 try:
                     shutil.rmtree(self.temp_dir)  # delete directory
