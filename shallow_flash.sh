@@ -394,14 +394,6 @@ if [[ $FLASH_GECKO == true ]]; then
     shallow_flash_gecko $FLASH_GECKO_FILE
 fi
 
-####################
-# Restore Profile  #
-####################
-if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO == true ]]) ; then
-    restore_profile ${TMP_PROFILE_DIR}
-    remove_profile ${TMP_PROFILE_DIR}
-fi
-
 
 ####################
 # NO FTU           #
@@ -413,6 +405,16 @@ if [[ ${NO_FTU} == true ]]; then
         echo "### NO FTU done."
     fi
 fi
+
+
+####################
+# Restore Profile  #
+####################
+if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO == true ]]) ; then
+    restore_profile ${TMP_PROFILE_DIR}
+    remove_profile ${TMP_PROFILE_DIR}
+fi
+
 
 ####################
 # ADB Work         #
