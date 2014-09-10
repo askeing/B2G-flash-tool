@@ -88,7 +88,7 @@ adb_root_remount
 ## Create temp folder
 TMP_DIR=$(mktemp -d -t enablecertifiedapps.XXXXXXXXXXXX)
 PREFS_FILE="prefs.js"
-DEFAULT_PATH=$(adb shell ls /data/b2g/mozilla/ | grep "default" | sed "s/\n//g" | sed "s/\r//g")
+DEFAULT_PATH=$(adb shell ls /data/b2g/mozilla/ | grep "default" | tr -d '\r\n')
 PREFS_PATH="/data/b2g/mozilla/${DEFAULT_PATH}/${PREFS_FILE}"
 
 ## Pull prefs.js from the device
