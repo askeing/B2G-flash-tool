@@ -25,6 +25,7 @@ version
 b2g*
 gaia*
 mozilla-profile/*
+backup_restore_profile.log
 crashreports.txt
 user.js
 size.txt
