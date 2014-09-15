@@ -96,9 +96,17 @@ if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; the
 fi
 
 # get OEM build info
-for KEY in ro.build.date ro.bootloader ro.build.version.incremental ; do
-    if [[ $(run_adb shell getprop $KEY) ]]; then
-        echo $KEY ' ' $(run_adb shell getprop $KEY)
+PROPS=( "Device Name:ro.product.device"
+        "FW-Release:ro.build.version.release"
+        "FW-Incremental:ro.build.version.incremental"
+        "FW-Date:ro.build.date"
+        "Bootloader:ro.boot.bootloader" )
+for KEY_VALUE in "${PROPS[@]}" ; do
+    KEY="${KEY_VALUE%%:*}"
+    VALUE="${KEY_VALUE##*:}"
+    RET=$(run_adb shell getprop $VALUE | tr -d '\r\n')
+    if [[ ${RET} ]]; then
+        echo -e ${KEY} "\t" ${RET}
     fi
 done
 
