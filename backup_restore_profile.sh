@@ -98,7 +98,8 @@ function do_backup_profile() {
 
     log "Backing up Wifi information..."
     mkdir -p ${tmp_dir}/wifi
-    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${tmp_dir}/wifi/wpa_supplicant.conf
+    run_adb pull /data/misc/wifi/wpa_supplicant.conf ${tmp_dir}/wifi/wpa_supplicant.conf ||
+    log "WARNING: If you don't have root permission, you cannot backup Wifi information."
 
     log "Backing up /data/b2g/mozilla to ${tmp_dir}/profile ..."
     mkdir -p ${tmp_dir}/profile &&
