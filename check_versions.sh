@@ -12,6 +12,9 @@
 
 set -e
 
+OUTPUT_FORMAT_CODE="\e[1;34m%-16s\e[1;32m%s\e[0m\n"
+OUTPUT_FORMAT_DEVICE="\e[1;34m%-16s\e[1;33m%s\e[0m\n"
+
 function helper(){
     echo "-s <serial number>            - directs command to the USB device or emulator with"
     echo "                                 the given serial number. Overrides ANDROID_SERIAL"
@@ -70,32 +73,36 @@ run_adb pull /system/b2g/webapps/settings.gaiamobile.org/application.zip &> /dev
 run_adb pull /system/b2g/application.ini &> /dev/null || echo "Error pulling application.ini"
 
 if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; then
-    # unzip application.zip to get gaia info
+    ### unzip application.zip to get gaia info
     unzip application.zip resources/gaia_commit.txt &> /dev/null || \
     echo '#####    Unzip application.zip error.'
     if [[ -f resources/gaia_commit.txt ]]; then
-        echo 'Gaia     ' $(head -n 1 resources/gaia_commit.txt)
-        # echo '  B-D    ' $(date --date=@$(cat resources/gaia_commit.txt | sed -n 2p) +"%Y-%m-%d %H:%M:%S")
+        GAIA_REV=$(head -n 1 resources/gaia_commit.txt)
     fi
 
-    # de-optimize the ja file
+    ### de-optimize the ja file
     mkdir -p deoptimize
     python optimizejars.py --deoptimize ./ ./ ./deoptimize &> /dev/null || \
     echo '#####    Deoptimize omni.ja failed, please run this script with sudo.'
-    # unzip omni.ja to get gecko info
+    ### unzip omni.ja to get gecko info
     unzip deoptimize/omni.ja chrome/toolkit/content/global/buildconfig.html &> /dev/null || \
     echo '#####    Unzip deoptimized omni.ja error.'
     if [[ -f chrome/toolkit/content/global/buildconfig.html ]]; then
-        echo 'Gecko    ' $(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
+        GECKO_REV=$(grep "Built from" chrome/toolkit/content/global/buildconfig.html | sed "s,.*\">,,g ; s,</a>.*,,g")
     fi
 
-    # get BuildID from application.ini
-    for i in BuildID Version ; do
-        echo $i ' ' $(grep "^ *$i" application.ini | sed "s,.*=,,g")
-    done
+    ### get build-id and version
+    BID=$(grep "^ *BuildID" application.ini | sed "s,.*=,,g")
+    VER=$(grep "^ *Version" application.ini | sed "s,.*=,,g")
+
+    ### print information
+    printf ${OUTPUT_FORMAT_CODE} "Gaia-Rev" "${GAIA_REV}"
+    printf ${OUTPUT_FORMAT_CODE} "Gecko-Rev" "${GECKO_REV}"
+    printf ${OUTPUT_FORMAT_CODE} "Build ID" "${BID}"
+    printf ${OUTPUT_FORMAT_CODE} "Version" "${VER}"
 fi
 
-# get OEM build info
+# get and print device information
 PROPS=( "Device Name:ro.product.device"
         "FW-Release:ro.build.version.release"
         "FW-Incremental:ro.build.version.incremental"
@@ -106,7 +113,7 @@ for KEY_VALUE in "${PROPS[@]}" ; do
     VALUE="${KEY_VALUE##*:}"
     RET=$(run_adb shell getprop $VALUE | tr -d '\r\n')
     if [[ ${RET} ]]; then
-        echo -e ${KEY} "\t" ${RET}
+        printf ${OUTPUT_FORMAT_DEVICE} "${KEY}" "${RET}"
     fi
 done
 
