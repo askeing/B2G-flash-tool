@@ -417,6 +417,7 @@ fi
 
 ## Hack for windows with cygwin for permission issue
 ## should use the correct permission instead of 777
+## TODO: resolve in some better way in the future?
 if [[ `uname` == "CYGWIN"* ]]; then
     run_adb shell chmod 777 /system/b2g/b2g
     run_adb shell chmod 777 /system/b2g/updater
