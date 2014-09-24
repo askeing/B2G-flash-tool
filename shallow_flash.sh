@@ -8,9 +8,11 @@
 #   This script was written for shallow flash the gaia and/or gecko.
 #
 # Author: Askeing fyen@mozilla.com
+#         Contribs from slee steve@opendirective.com
 # History:
 #   2013/08/02 Askeing: v1.0 First release.
 #   2014/08/09 Added Cygwin support by revelon.
+#   2014/09/24 Fixed Cygwin path problems & set x file attrib for gecko
 #==========================================================================
 
 
@@ -157,20 +159,18 @@ function adb_clean_gaia() {
 ## push gaia into device
 function adb_push_gaia() {
     GAIA_DIR=$1
+    LOCAL_GAIA_DIR=$GAIA_DIR
+    if [[ `uname` == "CYGWIN"* ]]; then
+        ## Adb on win32 is not cygwin so doesn't handle full posix paths for local access
+        LOCAL_GAIA_DIR="$(cygpath -w $GAIA_DIR)";
+    fi 
     ## Adjusting user.js
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js &&
-    if [[ `uname` == "CYGWIN"* ]]; then
-        if [[ ! -d "/cygdrive/c/tmp" ]]; then
-            mkdir "/cygdrive/c/tmp"
-        fi
-        cp -r $GAIA_DIR /cygdrive/c/tmp/
-    fi &&
-
-    echo "### Pushing Gaia to device ..."
+    echo "### Pushing Gaia to device ..." &&
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
-    run_adb push $GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
-    run_adb push $GAIA_DIR/user.js /system/b2g/defaults/pref &&
-    run_adb push $GAIA_DIR/gaia/profile/settings.json /system/b2g/defaults &&
+    run_adb push $LOCAL_GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
+    run_adb push $LOCAL_GAIA_DIR/user.js /system/b2g/defaults/pref &&
+    run_adb push $LOCAL_GAIA_DIR/gaia/profile/settings.json /system/b2g/defaults &&
     echo "### Push Done."
 }
 
@@ -238,26 +238,28 @@ function shallow_flash_gecko() {
         TMP_DIR=`mktemp -d -t shallowflashgecko.XXXXXXXXXXXX`
     fi
 
-	## push gecko into device
-    untar_file $GECKO_TAR_FILE $TMP_DIR &&
+    ## push gecko into device
+    LOCAL_TMP_DIR=$TMP_DIR
     if [[ `uname` == "CYGWIN"* ]]; then
-        cp -r $TMP_DIR /cygdrive/c/tmp/
-    fi &&
+        ## Adb on win32 is not cygwin so doesn't handle full posix paths for local access
+        LOCAL_TMP_DIR="$(cygpath -w $TMP_DIR)";
+    fi
+    untar_file $GECKO_TAR_FILE $TMP_DIR &&
     echo "### Pushing Gecko to device..." &&
-    run_adb push $TMP_DIR/b2g /system/b2g &&
+    run_adb push $LOCAL_TMP_DIR/b2g /system/b2g &&
     echo "### Push Done."
     check_exit_code $? "Pushing Gecko to device failed."
 
     rm -rf $TMP_DIR
 	
-	if [[ `uname` == "CYGWIN"* ]]; then
-		# reset excutable attribute as is not supported on Cygwin
-		echo "### Setting executable file attributes..." &&
-		XFILES=$(tar -tvf $GECKO_TAR_FILE | awk '$1 ~ /^[^d].*x$/ {print "/system/" $NF}')
-		echo $XFILES
-		run_adb shell chmod 777 $XFILES	
-		echo "### Setting attributes Done."
-		check_exit_code $? "Setting executable file attributes failed."
+    if [[ `uname` == "CYGWIN"* ]]; then
+	    # reset excutable attribute as is not supported on Cygwin
+        echo "### Setting executable file attributes..." &&
+        XFILES=$(tar -tvf $GECKO_TAR_FILE | awk '$1 ~ /^[^d].*x$/ {print "/system/" $NF}')
+        echo $XFILES
+        run_adb shell chmod 777 $XFILES	
+        echo "### Setting attributes Done."
+        check_exit_code $? "Setting executable file attributes failed."
     fi
 }
 
