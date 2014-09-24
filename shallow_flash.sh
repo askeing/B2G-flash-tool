@@ -249,6 +249,16 @@ function shallow_flash_gecko() {
     check_exit_code $? "Pushing Gecko to device failed."
 
     rm -rf $TMP_DIR
+	
+	if [[ `uname` == "CYGWIN"* ]]; then
+		# reset excutable attribute as is not supported on Cygwin
+		echo "### Setting executable file attributes..." &&
+		XFILES=$(tar -tvf $GECKO_TAR_FILE | awk '$1 ~ /^[^d].*x$/ {print "/system/" $NF}')
+		echo $XFILES
+		run_adb shell chmod 777 $XFILES	
+		echo "### Setting attributes Done."
+		check_exit_code $? "Setting executable file attributes failed."
+    fi
 }
 
 ## untar tar.gz file
