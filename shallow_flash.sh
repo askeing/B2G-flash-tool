@@ -66,7 +66,7 @@ function run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-	adb $ADB_FLAGS $@
+	adb $ADB_FLAGS "$@"
 }
 
 ## make sure user want to shallow flash
@@ -162,15 +162,15 @@ function adb_push_gaia() {
     LOCAL_GAIA_DIR=$GAIA_DIR
     if [[ `uname` == "CYGWIN"* ]]; then
         ## Adb on win32 is not cygwin so doesn't handle full posix paths for local access
-        LOCAL_GAIA_DIR="$(cygpath -w $GAIA_DIR)";
+        LOCAL_GAIA_DIR=$(cygpath -w $GAIA_DIR);
     fi 
     ## Adjusting user.js
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js &&
     echo "### Pushing Gaia to device ..." &&
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
-    run_adb push $LOCAL_GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
-    run_adb push $LOCAL_GAIA_DIR/user.js /system/b2g/defaults/pref &&
-    run_adb push $LOCAL_GAIA_DIR/gaia/profile/settings.json /system/b2g/defaults &&
+    run_adb push "$LOCAL_GAIA_DIR/gaia/profile/webapps" /system/b2g/webapps &&
+    run_adb push "$LOCAL_GAIA_DIR/user.js" /system/b2g/defaults/pref &&
+    run_adb push "$LOCAL_GAIA_DIR/gaia/profile/settings.json" /system/b2g/defaults &&
     echo "### Push Done."
 }
 
@@ -242,11 +242,11 @@ function shallow_flash_gecko() {
     LOCAL_TMP_DIR=$TMP_DIR
     if [[ `uname` == "CYGWIN"* ]]; then
         ## Adb on win32 is not cygwin so doesn't handle full posix paths for local access
-        LOCAL_TMP_DIR="$(cygpath -w $TMP_DIR)";
+        LOCAL_TMP_DIR=$(cygpath -w $TMP_DIR);
     fi
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
     echo "### Pushing Gecko to device..." &&
-    run_adb push $LOCAL_TMP_DIR/b2g /system/b2g &&
+    run_adb push "$LOCAL_TMP_DIR/b2g" /system/b2g &&
     echo "### Push Done."
     check_exit_code $? "Pushing Gecko to device failed."
 
