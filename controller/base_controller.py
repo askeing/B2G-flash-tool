@@ -76,13 +76,22 @@ class BaseController(object):
                 os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f')
+                # support NO_FTU environment for skipping FTU (e.g. monkey test)
+                if 'NO_FTU' in os.environ and os.environ['NO_FTU'] == 'true':
+                    self.logger.log('The [NO_FTU] is [true].')
+                    os.system('adb wait-for-device && adb shell stop b2g; (RET=$(adb root); if ! case ${RET} in *"cannot"*) true;; *) false;; esac; then adb remount && sleep 5; else exit 1; fi; ./disable_ftu.py) || (echo "No root permission, cannot setup NO_FTU."); adb reboot;')
             finally:
                 try:
                     shutil.rmtree(self.temp_dir)  # delete directory
                 except OSError:
                     self.logger.log('Can not remove temporary folder:' + self.temp_dir, status_callback=self.printErr, level=Logger._LEVEL_WARNING)
             flash_img_cmd = 'CUR_DIR=`pwd`; TEMP_DIR=`mktemp -d`; unzip -d $TEMP_DIR ' + archives[PathParser._IMAGES] + '; \\\n' + \
-                            'cd $TEMP_DIR/b2g-distro/; ./flash.sh -f; \\\ncd $CUR_DIR; rm -rf $TEMP_DIR'
+                            'cd $TEMP_DIR/b2g-distro/; ./flash.sh -f; \\\ncd $CUR_DIR; rm -rf $TEMP_DIR; '
+            # support NO_FTU environment for skipping FTU (e.g. monkey test)
+            if 'NO_FTU' in os.environ and os.environ['NO_FTU'] == 'true':
+                flash_img_cmd = flash_img_cmd + '\\\nadb wait-for-device && adb shell stop b2g; \\\n' + \
+                                                '(RET=$(adb root); if ! case ${RET} in *"cannot"*) true;; *) false;; esac; then adb remount && sleep 5; else exit 1; fi; ./disable_ftu.py) || \\\n' + \
+                                                '(echo "No root permission, cannot setup NO_FTU."); adb reboot; '
             self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (flash_img_cmd,))
         else:
             if PathParser._GAIA in targets:
