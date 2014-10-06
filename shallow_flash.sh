@@ -27,7 +27,8 @@ FLASH_GECKO_FILE=""
 NO_FTU=${NO_FTU:-false}
 # for other bash script tools call.
 case `uname` in
-    "Linux"|"CYGWIN"*) SP="";;
+    "Linux") SP=" ";;
+    "CYGWIN"*) SP="";;
     "Darwin") SP=" ";;
 esac
 
