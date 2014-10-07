@@ -10,6 +10,7 @@ from logger import Logger
 
 class PathParser(object):
 
+    _DEBUG_BUILD_NAME = 'Debug'
     _ENGINEER_BUILD_NAME = 'Engineer'
     _USER_BUILD_NAME = 'User'
     _GAIA_GECKO = 'gaia + gecko'
@@ -57,7 +58,9 @@ class PathParser(object):
 
     def _parse_available_packages(self, build_src, html_content):
         packages_dict = {}
-        target_build_src = build_src.replace('-eng', '')
+        target_build_src = build_src
+        for flag in ['debug', 'eng']:
+            target_build_src = target_build_src.replace('-%s' % flag, '')
         splited_build_info = target_build_src.split('-', 2)
         device_name = splited_build_info[2]
         # Gecko pattern
@@ -98,17 +101,24 @@ class PathParser(object):
     def _parse_device_version_and_time_from_list(self, build_and_time_list):
         root_dict = {}
         for build_and_time in build_and_time_list:
-            # If the build name ends with '-eng', then it is Engineer build.
+            # If the build name contains '-eng', then it is Engineer build.
             build_src = build_and_time[1]
-            engineer_build = build_src.endswith('-eng')
-            # Remove '-eng', then split string by '-'
-            target_build_src = build_src.replace('-eng', '')
+            engineer_build = '-eng' in build_src
+            # If the build name contains '-debug', then it is a debug build.
+            debug_build = '-debug' in build_src
+            # Remove flags
+            target_build_src = build_src
+            for flag in ('debug', 'eng'):
+                target_build_src = target_build_src.replace('-%s' % flag, '')
+            # Split string by '-'
             groups = target_build_src.split('-')
             splited_build_info = '-'.join(groups[:2]), '-'.join(groups[2:])
             device_name = splited_build_info[1]
             branch_name = splited_build_info[0]
             src_name = build_and_time[1]
             build = self._ENGINEER_BUILD_NAME if engineer_build else self._USER_BUILD_NAME
+            if debug_build:
+                build = ' '.join([build, self._DEBUG_BUILD_NAME])
             last_modify_time = build_and_time[2]
             build_item = {build: {'src': src_name, 'last_modify_time': last_modify_time}}
 
