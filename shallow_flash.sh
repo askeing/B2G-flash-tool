@@ -25,11 +25,6 @@ FLASH_GAIA_FILE=""
 FLASH_GECKO=false
 FLASH_GECKO_FILE=""
 NO_FTU=${NO_FTU:-false}
-# for other bash script tools call.
-case `uname` in
-    "Linux"|"CYGWIN"*) SP="";;
-    "Darwin") SP=" ";;
-esac
 
 ####################
 # Functions        #
@@ -271,14 +266,14 @@ function untar_file() {
 function backup_profile() {
     DEST_DIR=$1
     echo "### Profile back up to ${DEST_DIR}"
-    bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -b
+    bash ./backup_restore_profile.sh -p ${DEST_DIR} --no-reboot -b
 }
 
 ## option $1 is temp_folder
 function restore_profile() {
     DEST_DIR=$1
     echo "### Restore Profile from ${DEST_DIR}"
-    bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -r
+    bash ./backup_restore_profile.sh -p ${DEST_DIR} --no-reboot -r
 }
 
 ## option $1 is temp_folder
