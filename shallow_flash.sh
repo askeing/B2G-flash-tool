@@ -137,17 +137,17 @@ function adb_reboot() {
 ## clean cache, gaia (webapps) and profiles
 function adb_clean_gaia() {
     echo "### Cleaning Gaia and Profiles ..."
-    run_adb shell rm -r /cache/* &&
-    run_adb shell rm -r /data/b2g/* &&
-    run_adb shell rm -r /data/local/storage/persistent/* &&
-    run_adb shell rm -r /data/local/svoperapps &&
-    run_adb shell rm -r /data/local/webapps &&
-    run_adb shell rm -r /data/local/user.js &&
-    run_adb shell rm -r /data/local/permissions.sqlite* &&
-    run_adb shell rm -r /data/local/OfflineCache &&
-    run_adb shell rm -r /data/local/indexedDB &&
-    run_adb shell rm -r /data/local/debug_info_trigger &&
-    run_adb shell rm -r /system/b2g/webapps &&
+    run_adb shell "rm -r /cache/*" &&
+    run_adb shell "rm -r /data/b2g/*" &&
+    run_adb shell "rm -r /data/local/storage/persistent/*" &&
+    run_adb shell "rm -r /data/local/svoperapps" &&
+    run_adb shell "rm -r /data/local/webapps" &&
+    run_adb shell "rm -r /data/local/user.js" &&
+    run_adb shell "rm -r /data/local/permissions.sqlite*" &&
+    run_adb shell "rm -r /data/local/OfflineCache" &&
+    run_adb shell "rm -r /data/local/indexedDB" &&
+    run_adb shell "rm -r /data/local/debug_info_trigger" &&
+    run_adb shell "rm -r /system/b2g/webapps" &&
     echo "### Cleaning Done."
 }
 
@@ -213,6 +213,23 @@ function unzip_file() {
     #ls -LR $DEST_DIR
 }
 
+## clean /system/media/ and extra gecko files
+function adb_clean_extra_gecko_files() {
+    echo "### Cleaning Extra System Files ..."
+    run_adb shell "rm -r /system/media"
+    echo "### Cleaning Done."
+
+    echo "### Cleaning Extra Gecko Files ..."
+    GECKO_DIR=$1
+    REMOVED_FILES="$(cat <(ls "$GECKO_DIR/b2g") <(ls "$GECKO_DIR/b2g") <(run_adb shell "ls /system/b2g" | tr -d '\r') | sort | uniq -u)"
+    if [[ "$REMOVED_FILES" != "" ]]; then
+        for REMOVED_FILE in $REMOVED_FILES; do
+            run_adb shell "rm -r /system/b2g/$REMOVED_FILE"
+        done
+    fi
+    echo "### Cleaning Done."
+}
+
 ## shallow flash gecko
 function shallow_flash_gecko() {
     GECKO_TAR_FILE=$1
@@ -241,6 +258,7 @@ function shallow_flash_gecko() {
     fi
     untar_file $GECKO_TAR_FILE $TMP_DIR &&
     echo "### Pushing Gecko to device..." &&
+    adb_clean_extra_gecko_files $LOCAL_TMP_DIR &&
     run_adb push "$LOCAL_TMP_DIR/b2g" /system/b2g &&
     echo "### Push Done."
     check_exit_code $? "Pushing Gecko to device failed."
