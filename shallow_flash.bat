@@ -11,6 +11,8 @@
 @rem 
 @rem     Run in same folder as shallow_flash.sh and Gaia + Gecko archive files
 @rem     It will automatically flash gaia.zip and any b2g-*.android-arm.tar.gz
+@rem     ADB and fastboot can be run from the folder containing this script if
+@rem     you copy ADB*.* and fastboot.exe from the Android distribution
 @rem 
 @rem  Author: slee steve@opendirective.com
 @rem  History:
