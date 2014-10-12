@@ -8,9 +8,11 @@
 #   This script was written for shallow flash the gaia and/or gecko.
 #
 # Author: Askeing fyen@mozilla.com
+#         Contribs from slee steve@opendirective.com
 # History:
 #   2013/08/02 Askeing: v1.0 First release.
 #   2014/08/09 Added Cygwin support by revelon.
+#   2014/09/24 Fixed Cygwin path problems & set x file attrib for gecko
 #==========================================================================
 
 
@@ -25,11 +27,6 @@ FLASH_GAIA_FILE=""
 FLASH_GECKO=false
 FLASH_GECKO_FILE=""
 NO_FTU=${NO_FTU:-false}
-# for other bash script tools call.
-case `uname` in
-    "Linux"|"CYGWIN"*) SP="";;
-    "Darwin") SP=" ";;
-esac
 
 ####################
 # Functions        #
@@ -64,7 +61,7 @@ function run_adb()
 {
     # TODO: Bug 875534 - Unable to direct ADB forward command to inari devices due to colon (:) in serial ID
     # If there is colon in serial number, this script will have some warning message.
-	adb $ADB_FLAGS $@
+	adb $ADB_FLAGS "$@"
 }
 
 ## make sure user want to shallow flash
@@ -157,20 +154,18 @@ function adb_clean_gaia() {
 ## push gaia into device
 function adb_push_gaia() {
     GAIA_DIR=$1
+    LOCAL_GAIA_DIR=$GAIA_DIR
+    if [[ `uname` == "CYGWIN"* ]]; then
+        ## Adb on win32 is not cygwin so doesn't handle full posix paths for local access
+        LOCAL_GAIA_DIR=$(cygpath -w $GAIA_DIR);
+    fi 
     ## Adjusting user.js
     cat $GAIA_DIR/gaia/profile/user.js | sed -e "s/user_pref/pref/" > $GAIA_DIR/user.js &&
-    if [[ `uname` == "CYGWIN"* ]]; then
-        if [[ ! -d "/cygdrive/c/tmp" ]]; then
-            mkdir "/cygdrive/c/tmp"
-        fi
-        cp -r $GAIA_DIR /cygdrive/c/tmp/
-    fi &&
-
-    echo "### Pushing Gaia to device ..."
+    echo "### Pushing Gaia to device ..." &&
     run_adb shell mkdir -p /system/b2g/defaults/pref &&
-    run_adb push $GAIA_DIR/gaia/profile/webapps /system/b2g/webapps &&
-    run_adb push $GAIA_DIR/user.js /system/b2g/defaults/pref &&
-    run_adb push $GAIA_DIR/gaia/profile/settings.json /system/b2g/defaults &&
+    run_adb push "$LOCAL_GAIA_DIR/gaia/profile/webapps" /system/b2g/webapps &&
+    run_adb push "$LOCAL_GAIA_DIR/user.js" /system/b2g/defaults/pref &&
+    run_adb push "$LOCAL_GAIA_DIR/gaia/profile/settings.json" /system/b2g/defaults &&
     echo "### Push Done."
 }
 
@@ -238,17 +233,29 @@ function shallow_flash_gecko() {
         TMP_DIR=`mktemp -d -t shallowflashgecko.XXXXXXXXXXXX`
     fi
 
-	## push gecko into device
-    untar_file $GECKO_TAR_FILE $TMP_DIR &&
+    ## push gecko into device
+    LOCAL_TMP_DIR=$TMP_DIR
     if [[ `uname` == "CYGWIN"* ]]; then
-        cp -r $TMP_DIR /cygdrive/c/tmp/
-    fi &&
+        ## Adb on win32 is not cygwin so doesn't handle full posix paths for local access
+        LOCAL_TMP_DIR=$(cygpath -w $TMP_DIR);
+    fi
+    untar_file $GECKO_TAR_FILE $TMP_DIR &&
     echo "### Pushing Gecko to device..." &&
-    run_adb push $TMP_DIR/b2g /system/b2g &&
+    run_adb push "$LOCAL_TMP_DIR/b2g" /system/b2g &&
     echo "### Push Done."
     check_exit_code $? "Pushing Gecko to device failed."
 
     rm -rf $TMP_DIR
+	
+    if [[ `uname` == "CYGWIN"* ]]; then
+	    # reset excutable attribute as is not supported on Cygwin
+        echo "### Setting executable file attributes..." &&
+        XFILES=$(tar -tvf $GECKO_TAR_FILE | awk '$1 ~ /^-.*x$/ {print "/system/" $NF}')
+        echo $XFILES
+        run_adb shell chmod 777 $XFILES	
+        echo "### Setting attributes Done."
+        check_exit_code $? "Setting executable file attributes failed."
+    fi
 }
 
 ## untar tar.gz file
@@ -271,14 +278,14 @@ function untar_file() {
 function backup_profile() {
     DEST_DIR=$1
     echo "### Profile back up to ${DEST_DIR}"
-    bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -b
+    bash ./backup_restore_profile.sh -p ${DEST_DIR} --no-reboot -b
 }
 
 ## option $1 is temp_folder
 function restore_profile() {
     DEST_DIR=$1
     echo "### Restore Profile from ${DEST_DIR}"
-    bash ./backup_restore_profile.sh -p${SP}${DEST_DIR} --no-reboot -r
+    bash ./backup_restore_profile.sh -p ${DEST_DIR} --no-reboot -r
 }
 
 ## option $1 is temp_folder
@@ -415,6 +422,15 @@ if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO 
     remove_profile ${TMP_PROFILE_DIR}
 fi
 
+## Hack for windows with cygwin for permission issue
+## should use the correct permission instead of 777
+## TODO: resolve in some better way in the future?
+if [[ `uname` == "CYGWIN"* ]]; then
+    run_adb shell chmod 777 /system/b2g/b2g
+    run_adb shell chmod 777 /system/b2g/updater
+    run_adb shell chmod 777 /system/b2g/run-mozilla.sh
+    run_adb shell chmod 777 /system/b2g/plugin-container
+fi &&
 
 ####################
 # ADB Work         #

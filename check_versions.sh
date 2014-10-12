@@ -14,6 +14,10 @@ set -e
 
 OUTPUT_FORMAT_CODE="\e[1;34m%-16s\e[1;32m%s\e[0m\n"
 OUTPUT_FORMAT_DEVICE="\e[1;34m%-16s\e[1;33m%s\e[0m\n"
+if [[ $NO_COLOR == "true" ]]; then
+    OUTPUT_FORMAT_CODE="%-16s%s\n"
+    OUTPUT_FORMAT_DEVICE="%-16s%s\n"
+fi
 
 function helper(){
     echo "-s <serial number>            - directs command to the USB device or emulator with"
@@ -98,12 +102,12 @@ if [[ -f omni.ja ]] && [[ -f application.zip ]] && [[ -f application.ini ]]; the
     ### print information
     printf ${OUTPUT_FORMAT_CODE} "Gaia-Rev" "${GAIA_REV}"
     printf ${OUTPUT_FORMAT_CODE} "Gecko-Rev" "${GECKO_REV}"
-    printf ${OUTPUT_FORMAT_CODE} "Build ID" "${BID}"
+    printf ${OUTPUT_FORMAT_CODE} "Build-ID" "${BID}"
     printf ${OUTPUT_FORMAT_CODE} "Version" "${VER}"
 fi
 
 # get and print device information
-PROPS=( "Device Name:ro.product.device"
+PROPS=( "Device-Name:ro.product.device"
         "FW-Release:ro.build.version.release"
         "FW-Incremental:ro.build.version.incremental"
         "FW-Date:ro.build.date"
