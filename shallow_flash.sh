@@ -422,15 +422,6 @@ if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO 
     remove_profile ${TMP_PROFILE_DIR}
 fi
 
-## Hack for windows with cygwin for permission issue
-## should use the correct permission instead of 777
-## TODO: resolve in some better way in the future?
-if [[ `uname` == "CYGWIN"* ]]; then
-    run_adb shell chmod 777 /system/b2g/b2g
-    run_adb shell chmod 777 /system/b2g/updater
-    run_adb shell chmod 777 /system/b2g/run-mozilla.sh
-    run_adb shell chmod 777 /system/b2g/plugin-container
-fi &&
 
 ####################
 # ADB Work         #
