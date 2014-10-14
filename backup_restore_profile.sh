@@ -93,7 +93,7 @@ function do_backup_profile() {
     local do_reboot=$1 ; shift
     # GNU mktemp has a nice --tmpdir option, but not so on OS X
     tmp_dir=$(TMPDIR=. mktemp -d -t "$(basename $profile_dir).XXXXXXXXXX")
-    log "Stoping B2G..."
+    log "Stopping B2G..."
     run_adb shell stop b2g
 
     log "Backing up Wifi information..."
@@ -137,9 +137,12 @@ function do_restore_profile() {
         log "No recover files in ${profile_dir}."
         exit -1
     fi
-    log "Stoping B2G..."
+    log "Stopping B2G..."
     run_adb shell stop b2g
     run_adb shell rm -r /data/b2g/mozilla
+    # XXXkhuey this really should remove everything in /data/local, except gaia.
+    # That's hard though.
+    run_adb shell rm -r /data/local/storage
 
     log "Restoring Wifi information ..."
     run_adb push ${profile_dir}/wifi /data/misc/wifi &&
