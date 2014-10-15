@@ -36,7 +36,7 @@ run_adb()
 
 
 # argument parsing
-while [ $# -gt 0 ]; do
+while [[ $# -gt 0 ]]; do
     case "$1" in
     "-s")
         ADB_FLAGS+="-s $2"
@@ -51,7 +51,7 @@ while [ $# -gt 0 ]; do
 done
 
 
-if [ 'unknown' == $(run_adb get-state) ]; then
+if [[ 'unknown' == $(run_adb get-state) ]]; then
     echo "Unknown command..."
     adb devices
     exit -1
