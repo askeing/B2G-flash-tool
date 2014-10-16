@@ -218,9 +218,9 @@ class ConsoleApp(BaseController):
 
     def progress_callback(self, current_byte, total_size):
         percent = float(current_byte) / total_size
-        sys.stdout.write('\rProgress: {:.2%} Downloaded'.format(percent))
-        if percent >= 100:
-            sys.stdout.write('\n')
+        sys.stdout.write('\rProgress: {:.2%} ({}/{}) downloaded.'.format(percent, current_byte, total_size))
+        if current_byte >= total_size:
+            sys.stdout.write('\rProgress: 100% ({}/{}), done.\n'.format(current_byte, total_size))
 
     def after_flash_action(self):
         self.dialog.msg_box('Flash Information', 'Flash ' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Done.')
