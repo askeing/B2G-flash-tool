@@ -4,10 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import os
 import sys
-import re
-from sys import platform as _platform
 from utilities.logger import Logger
 from utilities.arg_parse import Parser
 from utilities.path_parser import PathParser
@@ -218,6 +215,12 @@ class ConsoleApp(BaseController):
                 self.flash_params.append(PathParser._GECKO)
         # keep profile
         self.target_keep_profile = self.options.keep_profile
+
+    def progress_callback(self, current_byte, total_size):
+        percent = float(current_byte) / total_size
+        sys.stdout.write('\rProgress: {:.2%} Downloaded'.format(percent))
+        if percent >= 100:
+            sys.stdout.write('\n')
 
     def after_flash_action(self):
         self.dialog.msg_box('Flash Information', 'Flash ' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Done.')

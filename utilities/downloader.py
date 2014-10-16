@@ -3,7 +3,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
-import types
 import urllib2
 from logger import Logger
 
@@ -13,14 +12,24 @@ class Downloader(object):
     def __init__(self):
         self.logger = Logger()
 
-    def download(self, source_url, dest_folder, status_callback=None):
+    def download(self, source_url, dest_folder, status_callback=None, progress_callback=None):
         try:
             f = urllib2.urlopen(source_url)
             self.logger.log('Downloading ' + source_url, status_callback=status_callback)
             self.ensure_folder(dest_folder)
             filename_with_path = os.path.join(dest_folder, os.path.basename(source_url))
             with open(filename_with_path, "wb") as local_file:
-                local_file.write(f.read())
+                total_size = int(f.info().getheader('Content-Length').strip())
+                pc = 0
+                chunk_size = 8192
+                while 1:
+                    chunk = f.read(chunk_size)
+                    pc += len(chunk)
+                    if not chunk:
+                        break
+                    if progress_callback:
+                        progress_callback(current_byte=pc, total_size=total_size)
+                    local_file.write(chunk)
             self.logger.log('Download to ' + filename_with_path, status_callback=status_callback)
             return filename_with_path
         except urllib2.HTTPError as e:

@@ -14,7 +14,6 @@ from sys import platform as _platform
 from utilities.logger import Logger
 from utilities.path_parser import PathParser
 from utilities.authenticator import Authenticator
-from utilities.arg_parse import Parser
 from utilities.downloader import Downloader
 from utilities.decompressor import Decompressor
 
@@ -59,7 +58,7 @@ class BaseController(object):
         downloader = Downloader()
         archives = {}
         for target in targets:
-            archives[target] = downloader.download(self.paths[target], self.destFolder, status_callback=self.printErr)
+            archives[target] = downloader.download(self.paths[target], self.destFolder, status_callback=self.printErr, progress_callback=self.progress_callback)
         return archives
 
     def do_flash(self, targets, archives, keep_profile=False):
@@ -114,6 +113,9 @@ class BaseController(object):
     def printErr(self, message):
         raise NotImplementedError
 
+    def progress_callback(self, current_byte, total_size):
+        pass
+
     def getPackages(self, src, build_id=''):
         '''
         input src and build-id, then setup the dest-folder and return the available packages.
@@ -153,7 +155,6 @@ class BaseController(object):
             self.logger.log('Creating %s from %s' % (settings_file, settings_file + '.template'))
             shutil.copy2(settings_file + '.template', settings_file)
         self.logger.log('Loading settings from %s' % (settings_file,))
-        account = {}
         with open(settings_file) as f:
             config = eval(f.read())
         if 'account' in config:
