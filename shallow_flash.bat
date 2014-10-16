@@ -24,19 +24,19 @@
 @rem Find Cygwin bin
 @echo ### Finding Cygwin
 @set CYGWINBIN=
-@if "%CYGWINBIN%"=="" (
-    @for /F "tokens=1,2*" %%i in ('reg query "HKLM\SOFTWARE\Cygwin\setup" /v "rootdir"') do @(
-        @if "%%i"=="rootdir" (
-            @if exist "%%k\bin\bash.exe" (
-                @set "CYGWINBIN=%%k\bin"
-            )
+@for /F "tokens=1,2*" %%i in ('reg query "HKLM\SOFTWARE\Cygwin\setup" /v "rootdir"') do @(
+    @if "%%i"=="rootdir" (
+        @if exist "%%k\bin\bash.exe" (
+            @set "CYGWINBIN=%%k\bin"
         )
     )
 )
-@for /F "tokens=1,2*" %%i in ('reg query "HKLM\SOFTWARE\Wow6432Node\Cygwin\setup" /v "rootdir"') do @(
-    @if "%%i"=="rootdir"  (
-        @if exist "%%k\bin\bash.exe" (
-            @set "CYGWINBIN=%%k\bin"
+@if "%CYGWINBIN%"=="" (
+    @for /F "tokens=1,2*" %%i in ('reg query "HKLM\SOFTWARE\Wow6432Node\Cygwin\setup" /v "rootdir"') do @(
+        @if "%%i"=="rootdir"  (
+            @if exist "%%k\bin\bash.exe" (
+                @set "CYGWINBIN=%%k\bin"
+            )
         )
     )
 )
