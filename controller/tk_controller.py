@@ -125,6 +125,12 @@ class FlashApp(BaseController):
                         default['package'] = package.index(PathParser._IMAGES)
         return default
 
+    def progress_callback(self, current_byte, total_size):
+        percent = float(current_byte) / total_size
+        sys.stdout.write('\rProgress: {:.2%} ({}/{}) downloaded.'.format(percent, current_byte, total_size))
+        if current_byte >= total_size:
+            sys.stdout.write('\rProgress: 100% ({}/{}), done.\n'.format(current_byte, total_size))
+
 if __name__ == '__main__':
     data = {}
     with open('../test/flash_info.data') as f:
