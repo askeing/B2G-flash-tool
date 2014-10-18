@@ -47,6 +47,13 @@ def main():
     ret = askyesno('Comfirm', comfirm_message, icon='warning')
     if ret:
         do_flash(is_flash_gaia, gaia_filename, is_flash_gecko, gecko_filename)
+        comfirm_message = "Flash next device. " + comfirm_message
+        while True:
+            ret = askyesno('Comfirm', comfirm_message, icon='warning')
+            if ret:
+                do_flash(is_flash_gaia, gaia_filename, is_flash_gecko, gecko_filename)
+            else:
+                quit()
     else:
         quit()
 
