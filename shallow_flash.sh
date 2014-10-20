@@ -224,7 +224,10 @@ function adb_clean_extra_gecko_files() {
     REMOVED_FILES="$(cat <(ls "$GECKO_DIR/b2g") <(ls "$GECKO_DIR/b2g") <(run_adb shell "ls /system/b2g" | tr -d '\r') | sort | uniq -u)"
     if [[ "$REMOVED_FILES" != "" ]]; then
         for REMOVED_FILE in $REMOVED_FILES; do
-            run_adb shell "rm -r /system/b2g/$REMOVED_FILE"
+            if [[ "$REMOVED_FILE" != "defaults" ]] && [[ "$REMOVED_FILE" != "webapps" ]]; then
+		echo "##### Removing /system/b2g/$REMOVED_FILE ..."
+                run_adb shell "rm -r /system/b2g/$REMOVED_FILE"
+            fi
         done
     fi
     echo "### Cleaning Done."
@@ -402,14 +405,6 @@ if [[ $KEEP_PROFILE == true ]] && ([[ $FLASH_GAIA == true ]] || [[ $FLASH_GECKO 
     backup_profile ${TMP_PROFILE_DIR}
 fi
 
-####################
-# Processing Gaia  #
-####################
-if [[ $FLASH_GAIA == true ]]; then
-    echo "### Processing Gaia: $FLASH_GAIA_FILE"
-    shallow_flash_gaia $FLASH_GAIA_FILE
-fi
-
 
 ####################
 # Processing Gecko #
@@ -417,6 +412,15 @@ fi
 if [[ $FLASH_GECKO == true ]]; then
     echo "### Processing Gecko: $FLASH_GECKO_FILE"
     shallow_flash_gecko $FLASH_GECKO_FILE
+fi
+
+
+####################
+# Processing Gaia  #
+####################
+if [[ $FLASH_GAIA == true ]]; then
+    echo "### Processing Gaia: $FLASH_GAIA_FILE"
+    shallow_flash_gaia $FLASH_GAIA_FILE
 fi
 
 
