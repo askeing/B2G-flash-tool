@@ -201,6 +201,10 @@ class ConsoleApp(BaseController):
             self.target_build = PathParser._ENGINEER_BUILD_NAME
         elif self.options.usr:
             self.target_build = PathParser._USER_BUILD_NAME
+        # debug build
+        if self.options.debug:
+            self.target_build = ' '.join([self.target_build,
+                                          PathParser._DEBUG_BUILD_NAME])
         # build id
         target = self.options.build_id
         if target is not None and len(target) > 0:

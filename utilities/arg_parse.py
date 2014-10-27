@@ -27,6 +27,7 @@ class Parser(object):
         parser.add_argument('-G', '--gecko', action='store_true', help='shallow flash gaia into device')
         parser.add_argument('--usr', action='store_true', help='specify user build')
         parser.add_argument('--eng', action='store_true', help='specify engineer build')
+        parser.add_argument('--debug', action='store_true', help='specify debug build')
         parser.add_argument('-b', '--build_id', help='specify target build YYYYMMDDhhmmss')
         parser.add_argument('-w', '--window', action='store_true', help='interaction GUI mode')
         parser.add_argument('-u', '--username', help='LDAP account (will load from .flash_pvt file if exists)')
