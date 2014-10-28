@@ -5,7 +5,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from Tkinter import Frame, Label, Button, Radiobutton, StringVar, IntVar, Entry, Listbox, END, Checkbutton, IntVar
+import ttk
 import sys
+import threading
 from threading import Lock
 from utilities.path_parser import PathParser
 from utilities.logger import Logger
@@ -43,11 +45,8 @@ class ListPage(BasePage):
         self.mutex = Lock()
 
     def prepare(self):
-        self.deviceList.config(state='normal')
-        self.versionList.config(state='disabled')
-        self.engList.config(state='disabled')
-        self.packageList.config(state='disabled')
-        self.ok.config(state='disabled')
+        self.enable_device_list()
+        self.enable_bid_input()
         self.setData(self.controller.data)
         self.setDeviceList(self.data.keys())
         self.controller.setDefault(self, self.controller.loadOptions())
@@ -62,85 +61,134 @@ class ListPage(BasePage):
     def setupView(self, title="Select your flash", data=None):
         if(data):
             self.setData(data)
-        self.errLog = Label(self, text="")
-        self.errLog.grid(row=4, column=1, columnspan=3, sticky="NWSE")
+        Label(self, text="Status:").grid(row=4, column=0, columnspan=1, sticky="SW")
+        self.errLog = Label(self, text="", width="90")
+        self.errLog.grid(row=5, column=0, columnspan=4, sticky="NW")
         self.desc = Label(self, text=title, font=TITLE_FONT)
         self.desc.grid(row=0, column=0, columnspan=2)
-        self.ok = Button(self,
-                         text='Next',
-                         command=lambda: self.
-                         confirm())
+        self.ok = Button(self, text='Flash', command=lambda: self.confirm())
         self.ok.grid(row=4, column=3, sticky="E")
-        self.ok.config(state="disabled")
         # bind self.target_keep_profile_var (IntVar) to keepProfileCheckbutton, 1 is True, 0 is Flase
         self.keepProfileCheckbutton = Checkbutton(self, text="Keep User Profile (BETA)", variable=self.target_keep_profile_var)
-        self.keepProfileCheckbutton.grid(row=5, column=0, columnspan=4, sticky="W")
+        self.keepProfileCheckbutton.grid(row=7, column=0, columnspan=4, sticky="W")
         self.deviceLabel = Label(self, text="Device", font=TITLE_FONT)
         self.deviceLabel.grid(row=1, column=0)
         self.deviceList = Listbox(self, exportselection=0)
         self.deviceList.grid(row=2, column=0)
-        self.deviceList.bind('<<ListboxSelect>>', self.deviceOnSelect)
-        self.deviceList.config(state="disabled")
         self.versionLabel = Label(self, text="Branch", font=TITLE_FONT)
         self.versionLabel.grid(row=1, column=1)
         self.versionList = Listbox(self, exportselection=0)
         self.versionList.grid(row=2, column=1)
-        self.versionList.bind('<<ListboxSelect>>', self.versionOnSelect)
-        self.versionList.config(state="disabled")
         self.engLabel = Label(self, text="Build Type", font=TITLE_FONT)
         self.engLabel.grid(row=1, column=2)
         self.engList = Listbox(self, exportselection=0)
         self.engList.grid(row=2, column=2)
-        self.engList.bind('<<ListboxSelect>>', self.engOnSelect)
-        self.engList.config(state="disabled")
-        self.packageLabel = Label(
-            self,
-            text="Gecko/Gaia/Full",
-            font=TITLE_FONT)
+        self.packageLabel = Label(self, text="Gecko/Gaia/Full", font=TITLE_FONT)
         self.packageLabel.grid(row=1, column=3)
         self.packageList = Listbox(self, exportselection=0)
         self.packageList.grid(row=2, column=3)
-        self.packageList.bind('<<ListboxSelect>>', self.packageOnSelect)
-        self.packageList.config(state="disabled")
         self.bidVar = StringVar()
         Label(self, text="Build ID").grid(row=3, column=0, sticky='E')
-        self.bidInput = Entry(
-            self,
-            textvariable=self.bidVar,
-            width="30")
-        self.bidInput.grid(
-            row=3,
-            column=1,
-            columnspan=2,
-            sticky="W")
+        self.bidInput = Entry(self, textvariable=self.bidVar, width="30")
+        self.bidInput.grid(row=3, column=1, columnspan=2, sticky="W")
         self.bidVar.set('latest')
+        self.progress = ttk.Progressbar(self, orient='horizontal', length=120, mode='indeterminate')
+        self.progress.grid(row=3, column=3)
+        self.disable_device_list()
+        self.disable_version_list()
+        self.disable_eng_list()
+        self.disable_package_list()
+        self.disable_bid_input()
+        self.disable_ok_button()
+
+    def enable_device_list(self):
+        target = self.deviceList
+        target.bind('<<ListboxSelect>>', self.deviceOnSelect)
+        target.bind('<Return>', self.pressReturnKey)
+        target.config(state="normal")
+
+    def disable_device_list(self):
+        target = self.deviceList
+        target.unbind('<<ListboxSelect>>')
+        target.unbind('<Return>')
+        target.config(state="disabled")
+
+    def enable_version_list(self):
+        target = self.versionList
+        target.bind('<<ListboxSelect>>', self.versionOnSelect)
+        target.bind('<Return>', self.pressReturnKey)
+        target.config(state="normal")
+
+    def disable_version_list(self):
+        target = self.versionList
+        target.unbind('<<ListboxSelect>>')
+        target.unbind('<Return>')
+        target.config(state="disabled")
+
+    def enable_eng_list(self):
+        target = self.engList
+        target.bind('<<ListboxSelect>>', self.engOnSelect)
+        target.bind('<Return>', self.pressReturnKey)
+        target.config(state="normal")
+
+    def disable_eng_list(self):
+        target = self.engList
+        target.unbind('<<ListboxSelect>>')
+        target.unbind('<Return>')
+        target.config(state="disabled")
+
+    def enable_package_list(self):
+        target = self.packageList
+        target.bind('<<ListboxSelect>>', self.packageOnSelect)
+        target.bind('<Return>', self.pressReturnKey)
+        target.config(state="normal")
+
+    def disable_package_list(self):
+        target = self.packageList
+        target.unbind('<<ListboxSelect>>')
+        target.unbind('<Return>')
+        target.config(state="disabled")
+
+    def enable_ok_button(self):
+        target = self.ok
+        target.bind('<Return>', self.pressReturnKey)
+        target.config(state="normal")
+
+    def disable_ok_button(self):
+        target = self.ok
+        target.unbind('<Return>')
+        target.config(state="disabled")
+
+    def enable_bid_input(self):
+        target = self.bidInput
         # binding unfocus for build id field
-        self.bidInput.bind('<FocusOut>', self.updateBuildId)
-        # binding the Return Key to each componments
-        self.deviceList.bind('<Return>', self.pressReturnKey)
-        self.versionList.bind('<Return>', self.pressReturnKey)
-        self.engList.bind('<Return>', self.pressReturnKey)
-        self.packageList.bind('<Return>', self.pressReturnKey)
-        self.bidInput.bind('<Return>', self.pressReturnKey)
-        self.ok.bind('<Return>', self.pressReturnKey)
+        target.bind('<FocusOut>', self.updateBuildId)
+        target.bind('<Return>', self.pressReturnKey)
+        target.config(state="normal")
+
+    def disable_bid_input(self):
+        target = self.bidInput
+        target.unbind('<FocusOut>')
+        target.unbind('<Return>')
+        target.config(state="disabled")
 
     def selection_all_checked(self):
         result = False
         if len(self.deviceList.curselection()) == 0:
             self.logger.log('Please select device.', status_callback=self.printErr)
-            self.ok.config(state="disabled")
+            self.disable_ok_button()
             self.deviceList.focus_set()
         elif len(self.versionList.curselection()) == 0:
             self.logger.log('Please select branch.', status_callback=self.printErr)
-            self.ok.config(state="disabled")
+            self.disable_ok_button()
             self.versionList.focus_set()
         elif len(self.engList.curselection()) == 0:
             self.logger.log('Please select user or engineer build.', status_callback=self.printErr)
-            self.ok.config(state="disabled")
+            self.disable_ok_button()
             self.engList.focus_set()
         elif len(self.packageList.curselection()) == 0:
             self.logger.log('Please select package to flash.', status_callback=self.printErr)
-            self.ok.config(state="disabled")
+            self.disable_ok_button()
             self.packageList.focus_set()
         elif len(self.bidVar.get()) != 14 and self.bidVar.get() != 'latest':
             self.logger.log('Please enter build ID to flash or use "latest" to get the newest', status_callback=self.printErr)
@@ -161,11 +209,12 @@ class ListPage(BasePage):
             self.bidVar.set('latest')
         else:
             if len(self.engList.curselection()) != 0:
-                self.refreshPackageList()
+                refresh_package_list_thread = threading.Thread(target=self.refreshPackageList)
+                refresh_package_list_thread.start()
 
     def pressReturnKey(self, event=None):
         if self.selection_all_checked():
-            self.ok.config(state="disabled")
+            self.disable_ok_button()
             self.confirm()
 
     def deviceOnSelect(self, evt):
@@ -175,16 +224,17 @@ class ListPage(BasePage):
         self.setEngList()
 
     def engOnSelect(self, evt):
-        self.refreshPackageList()  # hard coded right now
+        refresh_package_list_thread = threading.Thread(target=self.refreshPackageList)
+        refresh_package_list_thread.start()
 
     def packageOnSelect(self, evt):
-        self.ok.config(state="normal")
+        self.enable_ok_button()
 
     def confirm(self):
         self.mutex.acquire()
         try:
             if self.selection_all_checked():
-                self.ok.config(state="disabled")
+                self.disable_ok_button()
                 params = []
                 package = self.packageList.get(self.packageList.curselection()[0])
                 self.logger.log('Start to flash [' + package + '].', status_callback=self.printErr)
@@ -196,12 +246,29 @@ class ListPage(BasePage):
                     if(PathParser._GECKO in package):
                         params.append(PathParser._GECKO)
                 keep_profile = (self.target_keep_profile_var.get() == 1)
-                archives = self.controller.do_download(params)
-                self.controller.do_flash(params, archives, keep_profile=keep_profile)
-                self.packageList.select_clear(0, END)
+                run_flash_thread = threading.Thread(target=self.run_flash, args=(params, keep_profile))
+                run_flash_thread.start()
                 self.controller.transition(self)
         finally:
             self.mutex.release()
+
+    def run_flash(self, params, keep_profile):
+        self.progress.start(10)
+        self.disable_device_list()
+        self.disable_version_list()
+        self.disable_eng_list()
+        self.disable_package_list()
+        self.disable_bid_input()
+        self.disable_ok_button()
+        archives = self.controller.do_download(params)
+        self.controller.do_flash(params, archives, keep_profile=keep_profile)
+        self.enable_device_list()
+        self.enable_version_list()
+        self.enable_eng_list()
+        self.enable_package_list()
+        self.enable_bid_input()
+        self.enable_ok_button()
+        self.progress.stop()
 
     def setDeviceList(self, device=[]):
         self.deviceList.delete(0, END)
@@ -210,13 +277,11 @@ class ListPage(BasePage):
 
     def setVersionList(self, version=[]):
         if len(version) == 0:
-            version = self.data[
-                self.deviceList.get(self.deviceList.curselection())
-                ]
-        self.versionList.config(state="normal")
-        self.engList.config(state="disabled")
-        self.packageList.config(state="disabled")
-        self.ok.config(state="disabled")
+            version = self.data[self.deviceList.get(self.deviceList.curselection())]
+        self.enable_version_list()
+        self.disable_eng_list()
+        self.disable_package_list()
+        self.disable_ok_button()
         self.versionList.delete(0, END)
         for li in version:
             self.versionList.insert(END, li)
@@ -226,18 +291,23 @@ class ListPage(BasePage):
             device = self.deviceList.get(self.deviceList.curselection())
             version = self.versionList.get(self.versionList.curselection())
             eng = self.data[device][version]
-        self.engList.config(state="normal")
-        self.packageList.config(state="disabled")
-        self.ok.config(state="disabled")
+        self.enable_eng_list()
+        self.disable_package_list()
+        self.disable_ok_button()
         self.engList.delete(0, END)
         for li in eng:
             self.engList.insert(END, li)
 
     def refreshPackageList(self):
         self.mutex.acquire()
+        self.progress.start(10)
         try:
-            self.packageList.config(state="normal")
-            self.ok.config(state="normal")
+            self.disable_device_list()
+            self.disable_version_list()
+            self.disable_eng_list()
+            self.disable_bid_input()
+            self.enable_package_list()
+            #self.packageList.config(state="normal")
             self.packageList.delete(0, END)
             device = self.deviceList.get(self.deviceList.curselection())
             version = self.versionList.get(self.versionList.curselection())
@@ -252,6 +322,12 @@ class ListPage(BasePage):
             for li in package:
                 self.packageList.insert(END, li)
         finally:
+            self.enable_device_list()
+            self.enable_version_list()
+            self.enable_eng_list()
+            self.enable_bid_input()
+            #self.ok.config(state="normal")
+            self.progress.stop()
             self.mutex.release()
 
 
@@ -316,47 +392,39 @@ class AuthPage(BasePage):
         self.mode.set(1)
         Label(self, width=25).grid(row=1, column=0, columnspan=2)
         self.errLog = Label(self, text="")
-        self.errLog.grid(
-            row=4,
-            column=1,
-            columnspan=3,
-            rowspan=3,
-            sticky="NWSE"
-            )
+        self.errLog.grid(row=4,
+                         column=1,
+                         columnspan=3,
+                         rowspan=3,
+                         sticky="NWSE")
         self.userVar = StringVar()
         self.pwdVar = StringVar()
         Label(self, text="Account").grid(row=2, column=1, sticky='E')
-        self.userInput = Entry(
-            self,
-            textvariable=self.userVar,
-            width="30")
-        self.userInput.grid(
-            row=2,
-            column=2,
-            columnspan=2,
-            sticky="W")
+        self.userInput = Entry(self,
+                               textvariable=self.userVar,
+                               width="30")
+        self.userInput.grid(row=2,
+                            column=2,
+                            columnspan=2,
+                            sticky="W")
         Label(self, text="Password").grid(row=3, column=1, sticky='E')
-        self.pwdInput = Entry(
-            self,
-            textvariable=self.pwdVar,
-            show="*",
-            width="30")
-        self.pwdInput.grid(
-            row=3,
-            column=2,
-            columnspan=2,
-            sticky="W")
+        self.pwdInput = Entry(self,
+                              textvariable=self.pwdVar,
+                              show="*",
+                              width="30")
+        self.pwdInput.grid(row=3,
+                           column=2,
+                           columnspan=2,
+                           sticky="W")
         self.userVar.set(user)
         self.pwdVar.set(pwd_ori)
-        Label(
-            self,
-            text='    Welcome to fxos flash tool',
-            font=TITLE_FONT
-            ).grid(
-            row=0,
-            column=1,
-            columnspan=3,
-            sticky="WE")
+        Label(self,
+              text='    Welcome to fxos flash tool',
+              font=TITLE_FONT
+              ).grid(row=0,
+                     column=1,
+                     columnspan=3,
+                     sticky="WE")
         Radiobutton(self,
                     state='disabled',
                     text='Download build from pvt',
