@@ -101,6 +101,7 @@ class BaseController(object):
                 self.logger.log('Keep User Profile.')
                 cmd = cmd + ' --keep_profile'
             print('run command: ' + cmd)
+            self.logger.log('Flashing...', status_callback=self.printErr, level=Logger._LEVEL_INFO)
             os.system(cmd)
             self.logger.log('!!NOTE!! Following commands can help you to flash packages into other device WITHOUT download again.\n%s\n' % (cmd,))
         self.logger.log('Flash Done.', status_callback=self.printErr)
