@@ -74,7 +74,9 @@ function make_sure() {
         echo -e "Gecko: $FLASH_GECKO_FILE "
     fi
     read -p "to your $ADB_DEVICE? [y/N]" isFlash
-    test "$isFlash" != "y"  && test "$isFlash" != "Y" && echo -e "bye bye." && exit 0
+
+    [ "y" = "$isFlash" ] || [ "Y" = "$isFlash" ] \
+        || { echo -e "bye bye." && exit 0 ; }
 }
 
 ## check the return code, exit if return code is not zero.
