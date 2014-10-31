@@ -17,7 +17,7 @@ class Downloader(object):
         try:
             console_utilities.hide_cursor()
             f = urllib2.urlopen(source_url)
-            self.logger.log('Downloading ' + source_url, status_callback=status_callback)
+            self.logger.log('Downloading ' + os.path.basename(source_url), status_callback=status_callback)
             self.ensure_folder(dest_folder)
             filename_with_path = os.path.join(dest_folder, os.path.basename(source_url))
             with open(filename_with_path, "wb") as local_file:
