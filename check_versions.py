@@ -6,6 +6,7 @@
 
 import re
 import os
+import json
 import shutil
 import zipfile
 import tempfile
@@ -22,6 +23,8 @@ class VersionChecker(object):
                                                   formatter_class=ArgumentDefaultsHelpFormatter)
         self.arg_parser.add_argument('--no-color', action='store_true', dest='no_color', default=False, help='Do not print output with color.')
         self.arg_parser.add_argument('-s', '--serial', action='store', dest='serial', default=None, help='Overrides ANDROID_SERIAL environment variable.')
+        self.arg_parser.add_argument('--log-text', action='store', dest='log_text', default=None, help='Text ouput.')
+        self.arg_parser.add_argument('--log-json', action='store', dest='log_json', default=None, help='JSON output.')
         self.args = self.arg_parser.parse_args()
 
     def get_device_info(self, serial=None):
@@ -107,6 +110,7 @@ class VersionChecker(object):
             firmware_bootloader = re.sub(r'\r+|\n+', '', AdbHelper.adb_shell('getprop ro.boot.bootloader', serial=serial))
             # prepare the return information
             device_info = {}
+            device_info['Serial'] = serial
             device_info['Build ID'] = build_id
             device_info['Gaia Revision'] = gaia_rev
             device_info['Gaia Date'] = gaia_date
@@ -119,7 +123,6 @@ class VersionChecker(object):
             device_info['Bootloader'] = firmware_bootloader
         finally:
             shutil.rmtree(tmp_dir)
-            pass
         return device_info
 
     def print_device_info(self, device_info, no_color=False):
@@ -144,6 +147,33 @@ class VersionChecker(object):
             print hardware_format.format('Bootloader', device_info['Bootloader'])
         print ''
 
+    def output_log(self, device_info_list):
+        if self.args.log_json is None and self.args.log_text is None:
+            return
+        # prepare the result dict for parsing
+        result = {}
+        unknown_serial_index = 1
+        for device_info in device_info_list:
+            if device_info['Serial']  == None:
+                device_serial = 'unknown_serial_' + str(unknown_serial_index)
+                unknown_serial_index = unknown_serial_index + 1
+            else:
+                device_serial = device_info['Serial']
+            result[device_serial] = device_info
+        # output
+        if self.args.log_text is not None:
+            with open(self.args.log_text, 'w') as outfile:
+                for device_serial, device_info in result.items():
+                    outfile.write('# %s\n' % device_serial)
+                    if 'Skip' in device_info and device_info['Skip'] is True:
+                        outfile.write('%s=%s\n' % ('Skip', device_info['Skip']))
+                    else:
+                        for key, value in device_info.items():
+                            outfile.write('%s=%s\n' % (re.sub(r'\s+|\(|\)', '', key), re.sub(r'\s+', '_', value)))
+                        outfile.write('\n')
+        if self.args.log_json is not None:
+            with open(self.args.log_json, 'w') as outfile:
+                json.dump(result, outfile, indent = 4)
 
 if __name__ == "__main__":
     if not AdbHelper.has_adb():
@@ -160,8 +190,11 @@ if __name__ == "__main__":
         # has --serial, then skip ANDROID_SERIAL, then list one device by --serial
         if (my_app.args.serial is not None):
             if my_app.args.serial in devices:
-                print 'Serial: {0} (State: {1})'.format(device, state)
-                my_app.print_device_info(my_app.get_device_info(serial=my_app.args.serial), no_color=my_app.args.no_color)
+                serial = my_app.args.serial
+                print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
+                device_info = my_app.get_device_info(serial=serial)
+                my_app.print_device_info(device_info, no_color=my_app.args.no_color)
+                my_app.output_log([device_info])
             else:
                 print 'Can not found {0}.\nDevices:'.format(my_app.args.serial)
                 for device, state in devices.items():
@@ -170,8 +203,11 @@ if __name__ == "__main__":
         # no --serial, but has ANDROID_SERIAL, then list one device by ANDROID_SERIAL
         elif (my_app.args.serial is None) and ('ANDROID_SERIAL' in os.environ):
             if os.environ['ANDROID_SERIAL'] in devices:
-                print 'Serial: {0} (State: {1})'.format(device, state)
-                my_app.print_device_info(my_app.get_device_info(serial=os.environ['ANDROID_SERIAL']), no_color=my_app.args.no_color)
+                serial = os.environ['ANDROID_SERIAL']
+                print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
+                device_info = my_app.get_device_info(serial=serial)
+                my_app.print_device_info(device_info, no_color=my_app.args.no_color)
+                my_app.output_log([device_info])
             else:
                 print 'Can not found {0}.\nDevices:'.format(os.environ['ANDROID_SERIAL'])
                 for device, state in devices.items():
@@ -182,9 +218,14 @@ if __name__ == "__main__":
             if len(devices) > 1:
                 print 'More than one device.'
                 print 'You can specify ANDROID_SERIAL by "--serial" option.\n'
+            device_info_list = []
             for device, state in devices.items():
                 print 'Serial: {0} (State: {1})'.format(device, state)
                 if state == 'device':
-                    my_app.print_device_info(my_app.get_device_info(serial=device), no_color=my_app.args.no_color)
+                    device_info = my_app.get_device_info(serial=device)
+                    my_app.print_device_info(device_info, no_color=my_app.args.no_color)
+                    device_info_list.append(device_info)
                 else:
                     print 'Skipped.\n'
+                    device_info_list.append({'Serial': device, 'Skip': True})
+            my_app.output_log(device_info_list)
