@@ -14,6 +14,7 @@ import argparse
 import subprocess
 from datetime import datetime
 from argparse import ArgumentDefaultsHelpFormatter
+from utilities import console_utilities
 from utilities.adb_helper import AdbHelper
 
 
@@ -125,26 +126,32 @@ class VersionChecker(object):
             shutil.rmtree(tmp_dir)
         return device_info
 
+    def _print_device_info_item(self, title, value, title_color=None, value_color=None):
+        console_utilities.print_color('{0:22s}'.format(title), fg_color=title_color, newline=False)
+        console_utilities.print_color(value, fg_color=value_color)
+
     def print_device_info(self, device_info, no_color=False):
         # setup the format by platform
-        if os.name == 'posix' and not no_color:
-            software_format = '\x1b[1;34m{0:22s}\x1b[1;32m{1}\x1b[0m'
-            hardware_format = '\x1b[1;34m{0:22s}\x1b[1;33m{1}\x1b[0m'
+        if no_color:
+            title_color = None
+            sw_color = None
+            hw_color = None
         else:
-            software_format = '{0:22s}{1}'
-            hardware_format = '{0:22s}{1}'
+            title_color = console_utilities.COLOR_LIGHT_BLUE
+            sw_color = console_utilities.COLOR_LIGHT_GREEN
+            hw_color = console_utilities.COLOR_LIGHT_YELLOW
         # print the device information
-        print software_format.format('Build ID', device_info['Build ID'])
-        print software_format.format('Gaia Revision', device_info['Gaia Revision'])
-        print software_format.format('Gaia Date', device_info['Gaia Date'])
-        print software_format.format('Gecko Revision', device_info['Gecko Revision'])
-        print software_format.format('Gecko Version', device_info['Gecko Version'])
-        print hardware_format.format('Device Name', device_info['Device Name'])
-        print hardware_format.format('Firmware(Release)', device_info['Firmware(Release)'])
-        print hardware_format.format('Firmware(Incremental)', device_info['Firmware(Incremental)'])
-        print hardware_format.format('Firmware Date', device_info['Firmware Date'])
+        self._print_device_info_item('Build ID', device_info['Build ID'], title_color=title_color, value_color=sw_color)
+        self._print_device_info_item('Gaia Revision', device_info['Gaia Revision'], title_color=title_color, value_color=sw_color)
+        self._print_device_info_item('Gaia Date', device_info['Gaia Date'], title_color=title_color, value_color=sw_color)
+        self._print_device_info_item('Gecko Revision', device_info['Gecko Revision'], title_color=title_color, value_color=sw_color)
+        self._print_device_info_item('Gecko Version', device_info['Gecko Version'], title_color=title_color, value_color=sw_color)
+        self._print_device_info_item('Device Name', device_info['Device Name'], title_color=title_color, value_color=hw_color)
+        self._print_device_info_item('Firmware(Release)', device_info['Firmware(Release)'], title_color=title_color, value_color=hw_color)
+        self._print_device_info_item('Firmware(Incremental)', device_info['Firmware(Incremental)'], title_color=title_color, value_color=hw_color)
+        self._print_device_info_item('Firmware Date', device_info['Firmware Date'], title_color=title_color, value_color=hw_color)
         if device_info['Bootloader'] is not '':
-            print hardware_format.format('Bootloader', device_info['Bootloader'])
+            self._print_device_info_item('Bootloader', device_info['Bootloader'], title_color=title_color, value_color=hw_color)
         print ''
 
     def output_log(self, device_info_list):
@@ -154,7 +161,7 @@ class VersionChecker(object):
         result = {}
         unknown_serial_index = 1
         for device_info in device_info_list:
-            if device_info['Serial']  == None:
+            if device_info['Serial'] == None:
                 device_serial = 'unknown_serial_' + str(unknown_serial_index)
                 unknown_serial_index = unknown_serial_index + 1
             else:
@@ -173,7 +180,7 @@ class VersionChecker(object):
                         outfile.write('\n')
         if self.args.log_json is not None:
             with open(self.args.log_json, 'w') as outfile:
-                json.dump(result, outfile, indent = 4)
+                json.dump(result, outfile, indent=4)
 
 if __name__ == "__main__":
     if not AdbHelper.has_adb():
