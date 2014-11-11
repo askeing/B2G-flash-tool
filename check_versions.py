@@ -12,6 +12,7 @@ import zipfile
 import tempfile
 import argparse
 import subprocess
+from distutils import util
 from datetime import datetime
 from argparse import ArgumentDefaultsHelpFormatter
 from utilities import console_utilities
@@ -22,8 +23,8 @@ class VersionChecker(object):
     def __init__(self, **kwargs):
         self.arg_parser = argparse.ArgumentParser(description='Check the version information of Firefox OS.',
                                                   formatter_class=ArgumentDefaultsHelpFormatter)
-        self.arg_parser.add_argument('--no-color', action='store_true', dest='no_color', default=False, help='Do not print output with color.')
-        self.arg_parser.add_argument('-s', '--serial', action='store', dest='serial', default=None, help='Overrides ANDROID_SERIAL environment variable.')
+        self.arg_parser.add_argument('--no-color', action='store_true', dest='no_color', default=False, help='Do not print with color. NO_COLOR will overrides this option.')
+        self.arg_parser.add_argument('-s', '--serial', action='store', dest='serial', default=None, help='Directs command to the device or emulator with the given serial number. Overrides ANDROID_SERIAL environment variable.')
         self.arg_parser.add_argument('--log-text', action='store', dest='log_text', default=None, help='Text ouput.')
         self.arg_parser.add_argument('--log-json', action='store', dest='log_json', default=None, help='JSON output.')
         self.args = self.arg_parser.parse_args()
@@ -189,6 +190,12 @@ if __name__ == "__main__":
 
     my_app = VersionChecker()
     devices = AdbHelper.adb_devices()
+    is_no_color = my_app.args.no_color
+    if 'NO_COLOR' in os.environ:
+        try:
+            is_no_color = bool(util.strtobool(os.environ['NO_COLOR'].lower()))
+        except:
+            print 'Invalid NO_COLOR value [{0}].'.format(os.environ['NO_COLOR'])
 
     if len(devices) == 0:
         print 'No device.'
@@ -200,7 +207,7 @@ if __name__ == "__main__":
                 serial = my_app.args.serial
                 print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
                 device_info = my_app.get_device_info(serial=serial)
-                my_app.print_device_info(device_info, no_color=my_app.args.no_color)
+                my_app.print_device_info(device_info, no_color=is_no_color)
                 my_app.output_log([device_info])
             else:
                 print 'Can not found {0}.\nDevices:'.format(my_app.args.serial)
@@ -213,7 +220,7 @@ if __name__ == "__main__":
                 serial = os.environ['ANDROID_SERIAL']
                 print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
                 device_info = my_app.get_device_info(serial=serial)
-                my_app.print_device_info(device_info, no_color=my_app.args.no_color)
+                my_app.print_device_info(device_info, no_color=is_no_color)
                 my_app.output_log([device_info])
             else:
                 print 'Can not found {0}.\nDevices:'.format(os.environ['ANDROID_SERIAL'])
@@ -230,7 +237,7 @@ if __name__ == "__main__":
                 print 'Serial: {0} (State: {1})'.format(device, state)
                 if state == 'device':
                     device_info = my_app.get_device_info(serial=device)
-                    my_app.print_device_info(device_info, no_color=my_app.args.no_color)
+                    my_app.print_device_info(device_info, no_color=is_no_color)
                     device_info_list.append(device_info)
                 else:
                     print 'Skipped.\n'
