@@ -183,63 +183,66 @@ class VersionChecker(object):
             with open(self.args.log_json, 'w') as outfile:
                 json.dump(result, outfile, indent=4)
 
+    def run(self):
+        devices = AdbHelper.adb_devices()
+        is_no_color = self.args.no_color
+        if 'NO_COLOR' in os.environ:
+            try:
+                is_no_color = bool(util.strtobool(os.environ['NO_COLOR'].lower()))
+            except:
+                print 'Invalid NO_COLOR value [{0}].'.format(os.environ['NO_COLOR'])
+
+        if len(devices) == 0:
+            print 'No device.'
+            exit(1)
+        elif len(devices) >= 1:
+            # has --serial, then skip ANDROID_SERIAL, then list one device by --serial
+            if (self.args.serial is not None):
+                if self.args.serial in devices:
+                    serial = self.args.serial
+                    print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
+                    device_info = self.get_device_info(serial=serial)
+                    self.print_device_info(device_info, no_color=is_no_color)
+                    self.output_log([device_info])
+                else:
+                    print 'Can not found {0}.\nDevices:'.format(self.args.serial)
+                    for device, state in devices.items():
+                        print 'Serial: {0} (State: {1})'.format(device, state)
+                    exit(1)
+            # no --serial, but has ANDROID_SERIAL, then list one device by ANDROID_SERIAL
+            elif (self.args.serial is None) and ('ANDROID_SERIAL' in os.environ):
+                if os.environ['ANDROID_SERIAL'] in devices:
+                    serial = os.environ['ANDROID_SERIAL']
+                    print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
+                    device_info = self.get_device_info(serial=serial)
+                    self.print_device_info(device_info, no_color=is_no_color)
+                    self.output_log([device_info])
+                else:
+                    print 'Can not found {0}.\nDevices:'.format(os.environ['ANDROID_SERIAL'])
+                    for device, state in devices.items():
+                        print 'Serial: {0} (State: {1})'.format(device, state)
+                    exit(1)
+            # no --serial, no ANDROID_SERIAL, then list all devices
+            if (self.args.serial is None) and (not 'ANDROID_SERIAL' in os.environ):
+                if len(devices) > 1:
+                    print 'More than one device.'
+                    print 'You can specify ANDROID_SERIAL by "--serial" option.\n'
+                device_info_list = []
+                for device, state in devices.items():
+                    print 'Serial: {0} (State: {1})'.format(device, state)
+                    if state == 'device':
+                        device_info = self.get_device_info(serial=device)
+                        self.print_device_info(device_info, no_color=is_no_color)
+                        device_info_list.append(device_info)
+                    else:
+                        print 'Skipped.\n'
+                        device_info_list.append({'Serial': device, 'Skip': True})
+                self.output_log(device_info_list)
+
 if __name__ == "__main__":
     if not AdbHelper.has_adb():
         print 'There is no "adb" in your environment PATH.'
         exit(1)
 
     my_app = VersionChecker()
-    devices = AdbHelper.adb_devices()
-    is_no_color = my_app.args.no_color
-    if 'NO_COLOR' in os.environ:
-        try:
-            is_no_color = bool(util.strtobool(os.environ['NO_COLOR'].lower()))
-        except:
-            print 'Invalid NO_COLOR value [{0}].'.format(os.environ['NO_COLOR'])
-
-    if len(devices) == 0:
-        print 'No device.'
-        exit(1)
-    elif len(devices) >= 1:
-        # has --serial, then skip ANDROID_SERIAL, then list one device by --serial
-        if (my_app.args.serial is not None):
-            if my_app.args.serial in devices:
-                serial = my_app.args.serial
-                print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
-                device_info = my_app.get_device_info(serial=serial)
-                my_app.print_device_info(device_info, no_color=is_no_color)
-                my_app.output_log([device_info])
-            else:
-                print 'Can not found {0}.\nDevices:'.format(my_app.args.serial)
-                for device, state in devices.items():
-                    print 'Serial: {0} (State: {1})'.format(device, state)
-                exit(1)
-        # no --serial, but has ANDROID_SERIAL, then list one device by ANDROID_SERIAL
-        elif (my_app.args.serial is None) and ('ANDROID_SERIAL' in os.environ):
-            if os.environ['ANDROID_SERIAL'] in devices:
-                serial = os.environ['ANDROID_SERIAL']
-                print 'Serial: {0} (State: {1})'.format(serial, devices[serial])
-                device_info = my_app.get_device_info(serial=serial)
-                my_app.print_device_info(device_info, no_color=is_no_color)
-                my_app.output_log([device_info])
-            else:
-                print 'Can not found {0}.\nDevices:'.format(os.environ['ANDROID_SERIAL'])
-                for device, state in devices.items():
-                    print 'Serial: {0} (State: {1})'.format(device, state)
-                exit(1)
-        # no --serial, no ANDROID_SERIAL, then list all devices
-        if (my_app.args.serial is None) and (not 'ANDROID_SERIAL' in os.environ):
-            if len(devices) > 1:
-                print 'More than one device.'
-                print 'You can specify ANDROID_SERIAL by "--serial" option.\n'
-            device_info_list = []
-            for device, state in devices.items():
-                print 'Serial: {0} (State: {1})'.format(device, state)
-                if state == 'device':
-                    device_info = my_app.get_device_info(serial=device)
-                    my_app.print_device_info(device_info, no_color=is_no_color)
-                    device_info_list.append(device_info)
-                else:
-                    print 'Skipped.\n'
-                    device_info_list.append({'Serial': device, 'Skip': True})
-            my_app.output_log(device_info_list)
+    my_app.run()
