@@ -27,7 +27,7 @@ def main():
         prog.setupView()
         from sys import platform as _platform
         if _platform == 'darwin':
-            os.system("/usr/bin/osascript -e \'tell app \"Finder\" to set frontmost of process \"Python\" to true\'")
+            os.system("/usr/bin/osascript -e \'tell app \"Finder\" to set frontmost of process \"python\" to true\'")
         app.mainloop()
     else:
         try:
