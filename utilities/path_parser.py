@@ -136,6 +136,23 @@ class PathParser(object):
         else:
             return True
 
+    def get_latest_build_id(self, base_url, build_src):
+        target_url = base_url + build_src
+        content = self._open_url(target_url)
+        folder_pattern = re.compile(
+            '<a href="(\d+.)">.*</a>',  # Find folder name such like '2014/', '09/', ...
+            re.DOTALL | re.MULTILINE)
+        res = folder_pattern.findall(content)
+        while res:  # If pattern not found, it should be in the build id list folder
+            target_url = target_url + '/' + res[-1]
+            content = self._open_url(target_url)
+            res = folder_pattern.findall(content)
+        build_id_pattern = re.compile(
+            '<a href="(\d+-[0-9\-]+).">',
+            re.DOTALL | re.MULTILINE)
+        res = build_id_pattern.findall(content)
+        return res[-1]
+
     def get_path_of_build_id(self, build_id, build_id_format=None, status_callback=None):
         build_id_without_dash = re.sub(r'\D', '', build_id)
         year = build_id_without_dash[0:4]
