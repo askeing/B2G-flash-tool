@@ -49,7 +49,7 @@ class BaseController(object):
         '''
         Halt the program
         '''
-        print('### quit function invoked')
+        self.logger.log('### quit function invoked')
         sys.exit(0)
 
     def do_download(self, targets):
@@ -143,7 +143,8 @@ class BaseController(object):
     def getLatestBuildId(self, src):
         # TODO: Get from remote and Use in local flash;
         #       should be an async request?
-        pass
+        res = self.pathParser.get_latest_build_id(base_url=self.baseUrl, build_src=src)
+        return res
 
     def load_config_file(self, settings_file=None):
         '''
@@ -199,3 +200,4 @@ if __name__ == '__main__':
         data = eval(f.read())
     prog = BaseController()
     prog.setData(data)
+    prog.get_latest_build_id(prog.baseUrl, prog.data['mako']['aurora']['User']['src'])

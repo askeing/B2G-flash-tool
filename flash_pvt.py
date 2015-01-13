@@ -38,5 +38,15 @@ def main():
             print '### Quit'
             sys.exit(0)
 
+def test():
+# should move to an idependent test app
+    data = {}
+    with open('test/flash_info.data') as f:
+        data = eval(f.read())
+    prog = ConsoleApp()
+    prog.setData(data)
+    prog.setAuth(prog.account, prog.password)
+    prog.getLatestBuildId(prog.data['mako']['mozilla-central']['User']['src'])
+
 if __name__ == '__main__':
     main()
