@@ -25,6 +25,7 @@ class BackupRestoreHelper(object):
         self._LOCAL_DIR_DATA_APPS = 'webapps'
         self._REMOTE_DIR_SDCARD = '/sdcard/'
         self._REMOTE_FILE_WIFI = '/data/misc/wifi/wpa_supplicant.conf'
+        self._REMOTE_FILE_WIFI_OWNER = 'system:wifi'
         self._REMOTE_DIR_B2G = '/data/b2g/mozilla'
         self._REMOTE_DIR_DATA = '/data/local'
 
@@ -118,6 +119,7 @@ class BackupRestoreHelper(object):
                 self.logger.info('Restoring Wifi information...')
                 if not AdbHelper.adb_push(wifi_file, self._REMOTE_FILE_WIFI, serial=serial):
                     self.logger.warning('If you don\'t have root permission, you cannot restore Wifi information.')
+                AdbHelper.adb_shell('chown {0} {1}'.format(self._REMOTE_FILE_WIFI_OWNER, self._REMOTE_FILE_WIFI))
             # Restore profile
             b2g_mozilla_dir = local_dir + os.sep + self._LOCAL_DIR_B2G
             if os.path.isdir(b2g_mozilla_dir):
