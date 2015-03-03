@@ -32,6 +32,8 @@ case "$VERSION" in
     ;;
   "aurora")
     ;;
+  "nightly-b2g37")
+    ;;
   "nightly-b2g34")
     ;;
   "nightly-b2g32")
@@ -39,7 +41,8 @@ case "$VERSION" in
   "nightly-b2g30")
     ;;
   *)
-    echo "Please specify the version : -v (nightly, aurora, nightly-b2g34, nightly-b2g32, nightly-b2g30)"
+    echo "Please specify the version : -v (nightly, aurora, nightly-b2g37, nightly-b2g34, nightly-b2g32, nightly-b2g30)
+nightly-b2g37 is 2.2 ; nightly-b2g34 is 2.1; nightly-b2g32 is 2.0, nightly-b2g30 is 1.4"
     exit
     ;;
 esac
