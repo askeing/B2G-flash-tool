@@ -99,43 +99,6 @@ $ {YOUR_EDITOR} .flash_pvt
 
 Details in mozilla intrawiki
 
-## auto_flash_from_pvt.sh (deprecated)
-
-This script was written for download builds from PVT server.
-
-You'll need an LDAP account and accessibility to the folder to access it.
-
-### Usage:
-
-```
-Usage: ./auto_flash_from_pvt.sh [parameters]
-  -v|--version  the target build version.
-  -d|--device   the target device.
-  -s <serial number>    directs command to device with the given serial number.
-  -f|--full     flash full image into device.
-  -g|--gaia     shallow flash gaia into device.
-  -G|--gecko    shallow flash gecko into device.
-  --usr specify User(USR) build.
-  --eng specify Engineer(ENG) build.
-  -b|--buildid  specify target build YYYYMMDDhhmmss
-  -w            interaction GUI mode.
-  -y            Assume "yes" to all questions
-  -h|--help     display help.
-Environment:
-  HTTP_USER={username}  set LDAP account. (you can fill it into .ldap file)
-  HTTP_PWD={password}   set LDAP password. (you can fill it into .ldap file)
-  UNINSTALL_COMRIL=true         uninstall the com-ril when shallow flash gecko. (Keep com-ril by default)
-  DL_HOME={download_dir_home}   specify download folder. Default=./pvt
-  USE_LOCAL=false       force download target builds (with Build ID) from PVT server. Default=true
-  USE_LOCAL_LATEST=true do not download Latest builds from PVT server. Default=false
-Example:
-  Flash by interaction GUI mode                         ./auto_flash_from_pvt.sh -w
-  (Linux) Flash inari v1.2.0 ENG image                          ./auto_flash_from_pvt.sh --version=v1.2.0 --device=inari --full --eng
-  (Mac)   Flash inari v1.2.0 ENG image                          ./auto_flash_from_pvt.sh --version v1.2.0 --device inari --full --eng
-  (Linux) Flash buri master USR build 20131116040201 gaia/gecko ./auto_flash_from_pvt.sh -vmaster -dburi -b20131116040201 -g -G --usr
-  (Mac)   Flash buri master USR build 20131116040201 gaia/gecko ./auto_flash_from_pvt.sh -v master -d buri -b 20131116040201 -g -G --usr
-```
-
 ### Note:
 
 If you are **MAC OS X User**, and got the error while trying to get the build from server.
@@ -185,19 +148,33 @@ Example:
 
 ----
 
-## backup_restore_profile.sh
+## backup_restore_profile.py
 
 This script was written for backup and restore user profile.
 
 ### Usage:
 
 ```
-Usage:
-  -b|--backup   backup user profile.
-  -r|--restore  restore user profile.
-  -p|--profile-dir      specify the profile folder. Default=./mozilla-profile
-  -h|--help     display help.
-```
+usage: backup_restore_profile.py [-h] [-s SERIAL] [-b] [-r] [--sdcard]
+                                 [--no-reboot] [-p PROFILE_DIR] [--debug]
+
+Backup and restore Firefox OS profiles. (BETA)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SERIAL, --serial SERIAL
+                        Directs command to the device or emulator with the
+                        given serial number. Overrides ANDROID_SERIAL
+                        environment variable. (default: None)
+  -b, --backup          Backup user profile. (default: False)
+  -r, --restore         Restore user profile. (default: False)
+  --sdcard              Also backup/restore SD card. (default: False)
+  --no-reboot           Do not reboot B2G after backup/restore. (default:
+                        False)
+  -p PROFILE_DIR, --profile-dir PROFILE_DIR
+                        Specify the profile folder. (default: mozilla-profile)
+  --debug               Debug mode. (default: False)
+  ```
 
 ----
 
@@ -236,7 +213,7 @@ Change the OTA update URL to http://update.server/update.xml.
 
 ----
 
-## check_versions.sh
+## check_versions.py
 
 Checking the version of B2G on devices.
 
@@ -245,10 +222,21 @@ Please make sure your devices can be detected by ADB tool.
 ### Usage:
 
 ```
--s <serial number>            - directs command to the USB device or emulator with
-                                 the given serial number. Overrides ANDROID_SERIAL
-                                 environment variable.
--h | --help                   - print usage.
+usage: check_versions.py [-h] [--no-color] [-s SERIAL] [--log-text LOG_TEXT]
+                         [--log-json LOG_JSON]
+
+Check the version information of Firefox OS.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --no-color            Do not print with color. NO_COLOR will overrides this
+                        option. (default: False)
+  -s SERIAL, --serial SERIAL
+                        Directs command to the device or emulator with the
+                        given serial number. Overrides ANDROID_SERIAL
+                        environment variable. (default: None)
+  --log-text LOG_TEXT   Text ouput. (default: None)
+  --log-json LOG_JSON   JSON output. (default: None)
 ```
 
 ### Example:

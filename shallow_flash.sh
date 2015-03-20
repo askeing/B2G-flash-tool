@@ -301,14 +301,14 @@ function untar_file() {
 function backup_profile() {
     DEST_DIR=$1
     echo "### Profile back up to ${DEST_DIR}"
-    bash ./backup_restore_profile.sh -p ${DEST_DIR} --no-reboot -b
+    bash ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -b
 }
 
 ## option $1 is temp_folder
 function restore_profile() {
     DEST_DIR=$1
     echo "### Restore Profile from ${DEST_DIR}"
-    bash ./backup_restore_profile.sh -p ${DEST_DIR} --no-reboot -r
+    bash ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -r
 }
 
 ## option $1 is temp_folder
@@ -355,7 +355,7 @@ do
                 "") echo -e "Please specify the gecko path.\nTry '--help' for more information."; exit 1;;
                 *) FLASH_GECKO_FILE=$2; shift 2;;
             esac ;;
-        --keep_profile) if [[ -e ./backup_restore_profile.sh ]]; then KEEP_PROFILE=true; else echo "### There is no backup_restore_profile.sh file."; fi; shift;;
+        --keep_profile) if [[ -e ./backup_restore_profile.py ]]; then KEEP_PROFILE=true; else echo "### There is no backup_restore_profile.py file."; fi; shift;;
         -s)
             case "$2" in
                 "") shift 2;;
@@ -456,8 +456,8 @@ adb_reboot
 ####################
 # Version          #
 ####################
-if [[ -e ./check_versions.sh ]]; then
-    bash ./check_versions.sh
+if [[ -e ./check_versions.py ]]; then
+    bash ./check_versions.py
 fi
 
 
