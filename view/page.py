@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from Tkinter import Frame, Label, Button, Radiobutton, StringVar, IntVar, Entry, Listbox, END, Checkbutton, IntVar
+from Tkinter import *
 import ttk
 import sys
 import threading
@@ -66,32 +66,44 @@ class ListPage(BasePage):
         self.errLog.grid(row=5, column=0, columnspan=4, sticky="NW")
         self.desc = Label(self, text=title, font=TITLE_FONT)
         self.desc.grid(row=0, column=0, columnspan=2)
+        # OK button
         self.ok = Button(self, text='Flash', command=lambda: self.confirm())
         self.ok.grid(row=4, column=3, sticky="E")
         # bind self.target_keep_profile_var (IntVar) to keepProfileCheckbutton, 1 is True, 0 is Flase
         self.keepProfileCheckbutton = Checkbutton(self, text="Keep User Profile (BETA)", variable=self.target_keep_profile_var)
         self.keepProfileCheckbutton.grid(row=7, column=0, columnspan=4, sticky="W")
+        # Devices
         self.deviceLabel = Label(self, text="Device", font=TITLE_FONT)
         self.deviceLabel.grid(row=1, column=0)
-        self.deviceList = Listbox(self, exportselection=0)
-        self.deviceList.grid(row=2, column=0)
+        # Added scrollbar for more and more devices
+        self.deviceScrollbar = Scrollbar(self, orient=VERTICAL)
+        self.deviceList = Listbox(self, exportselection=0, yscrollcommand=self.deviceScrollbar.set)
+        self.deviceScrollbar.config(command=self.deviceList.yview)
+        self.deviceList.columnconfigure(0, weight=1)
+        self.deviceScrollbar.grid(row=2, column=0, sticky=N+S+E)
+        self.deviceList.grid(row=2, column=0, sticky=N+S+E+W, padx=(0,13))
+        # Branchs
         self.versionLabel = Label(self, text="Branch", font=TITLE_FONT)
         self.versionLabel.grid(row=1, column=1)
         self.versionList = Listbox(self, exportselection=0)
         self.versionList.grid(row=2, column=1)
+        # Builds
         self.engLabel = Label(self, text="Build Type", font=TITLE_FONT)
         self.engLabel.grid(row=1, column=2)
         self.engList = Listbox(self, exportselection=0)
         self.engList.grid(row=2, column=2)
+        # Flash Type
         self.packageLabel = Label(self, text="Gecko/Gaia/Full", font=TITLE_FONT)
         self.packageLabel.grid(row=1, column=3)
         self.packageList = Listbox(self, exportselection=0)
         self.packageList.grid(row=2, column=3)
+        # Build ID
         self.bidVar = StringVar()
         Label(self, text="Build ID").grid(row=3, column=0, sticky='E')
         self.bidInput = Entry(self, textvariable=self.bidVar, width="30")
         self.bidInput.grid(row=3, column=1, columnspan=2, sticky="W")
         self.bidVar.set('latest')
+        # Progress Bar
         self.progress = ttk.Progressbar(self, orient='horizontal', length=120, mode='indeterminate')
         self.progress.grid(row=3, column=3)
         self.disable_device_list()
