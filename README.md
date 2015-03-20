@@ -1,7 +1,7 @@
 # Script tools for B2G project
 
 ## flash_pvt.py
-The flash_pvt.py is a flash tool for B2G PVT builds which is written by Python.
+The flash_pvt.py is a flash tool for B2G PVT Nightly builds which is written by Python.
 
 Usage helper: 
 ```
@@ -31,7 +31,7 @@ sudo yum install tkinter
 $ ./flash_pvt.py -w
 ```
 
-### Flash in Command Line 
+### Usage 
 ```
 Usage: flash_pvt.py [-h] [-v VERSION] [-d DEVICE] [-s SERIAL] [-f] [-g] [-G]
                     [--usr] [--eng] [-b BUILD_ID] [-w] [-u USERNAME]
@@ -96,11 +96,9 @@ $ {YOUR_EDITOR} .flash_pvt
 }
 ```
 
-
-Details in mozilla intrawiki
+See Mozilla Intra-Wiki for more detail information.
 
 ### Note:
-
 If you are **MAC OS X User**, and got the error while trying to get the build from server.
 
 ```bash
@@ -120,11 +118,9 @@ echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
 ----
 
 ## auto_flash_from_twci.sh
-
 This script was written for download builds from TW-CI server.
 
 ### Usage:
-
 ```
 Usage: ./auto_flash_from_twci.sh [parameters]
   -v|--version  the target build version.
@@ -149,11 +145,9 @@ Example:
 ----
 
 ## backup_restore_profile.py
-
 This script was written for backup and restore user profile.
 
 ### Usage:
-
 ```
 usage: backup_restore_profile.py [-h] [-s SERIAL] [-b] [-r] [--sdcard]
                                  [--no-reboot] [-p PROFILE_DIR] [--debug]
@@ -178,27 +172,26 @@ optional arguments:
 
 ----
 
-## change_ota_channel_pref.sh
-
+## change_channel.sh
 Setup a FxOS device for QA by forcing the 'nightly' update channel
 
 ### Usage:
-
 ```
 Help:
-     -d <device>  : specify a device (leo, hamachi, helix, inari) to update
-     -v <version> : version to update to ( 1.3.0, 1.2.0, 1.1.1)
-     -h : this help menu
+    -v <version> : version to update to (nightly, aurora, nightly-b2g32 for 2.0, nightly-b2g30 for 1.4)
+    -h : this help menu
+      
+Please specify the version : -v (nightly, aurora, nightly-b2g37, nightly-b2g34, nightly-b2g32, nightly-b2g30)
+nightly-b2g37 is 2.2 ; nightly-b2g34 is 2.1; nightly-b2g32 is 2.0, nightly-b2g30 is 1.4
+
 ```
 
 ----
 
 ## change_ota_url.sh
-
 This script is used to change OTA update URL to a local or a specific URL.
 
 ### Usage:
-
 ```
 -h, --help      Show usage.
 -p              Show prefs file of device.
@@ -206,7 +199,6 @@ This script is used to change OTA update URL to a local or a specific URL.
 ```
 
 ### Example:
-
 Change the OTA update URL to http://update.server/update.xml.
 
     ./change_OTA_URL.sh --url http://update.server/update.xml
@@ -214,13 +206,11 @@ Change the OTA update URL to http://update.server/update.xml.
 ----
 
 ## check_versions.py
-
 Checking the version of B2G on devices.
 
 Please make sure your devices can be detected by ADB tool.
 
 ### Usage:
-
 ```
 usage: check_versions.py [-h] [--no-color] [-s SERIAL] [--log-text LOG_TEXT]
                          [--log-json LOG_JSON]
@@ -239,48 +229,76 @@ optional arguments:
   --log-json LOG_JSON   JSON output. (default: None)
 ```
 
-### Example:
+----
 
-Check version with serial number parameter
-
-    ./check_versions.sh -s serialnumber
-
-Check version with environment variable
-
-    ANDROID_SERIAL=serialnumber ./check_versions.sh
+## disable_ftu.py
+Disable FTU for Firefox OS.
 
 ----
 
-## download_desktop_client.sh
+## enable_certified_apps_for_devtools.sh
+Enable the Certified Apps support for WebIDE development tool.
 
-This script was written for download last desktop from server.
-
-Visit [MDN: Using the B2G desktop client](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox_OS/Using_the_B2G_desktop_client) for more detail information.
-
-### Parameters:
-
-There are three os platform `l32` (linux 32bit), `l64` (linux 64bit) and `mac`.
-
-And you can run `./download_desktop_client.sh -v` to get the supported versions.
-
+### Usage
 ```
-Usage: ./download_desktop_client.sh [parameters]
--o|--os         The target OS. Default: linux64
-                show available OS if nothing specified.
--v|--version    The target build version. Default: master
-                show available version if nothing specified.
--d|--decompress Decompress the downloaded build.
--h|--help       Display help.
-Example:
-  B2G v1.2.0 Linux 32bit build. ./download_desktop_client.sh --os=l32 --version=120
-  B2G v1.1.0 Linux 64bit build. ./download_desktop_client.sh -ol64 -v110
-  B2G master Mac build. ./download_desktop_client.sh -omac
+Please enable "ADB and Devtools" of your device before using App Manager.
+
+Usage: ./enable_certified_apps_for_devtools.sh [parameters]
+  -s <serial number>    directs command to device with the given serial number.
+  -h|--help     display help.
+```
+
+----
+
+## flash_local.py
+The GUI mode for shallow-flashing Gaia and/or Gecko. (It will use the `shallow_flash.sh` script.)
+
+----
+
+## flash_tbpl.py
+The flash_tbpl.py is a flash tool for B2G PVT Tinderbox builds which is written by Python.
+
+### Usage
+```
+usage: flash_tbpl.py [-h] [-v VERSION] [-d DEVICE] [-s SERIAL] [-f] [-g] [-G]
+                     [--usr] [--eng] [--debug] [-b BUILD_ID] [-w]
+                     [-u USERNAME] [-p PASSWORD] [--dl_home DL_HOME]
+                     [--keep_profile]
+
+B2G Flash Tool by TWQA
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v VERSION, --version VERSION
+                        target build version
+  -d DEVICE, --device DEVICE
+                        target device codename
+  -s SERIAL, --serial SERIAL
+                        directs command to device with the given serial number
+  -f, --full_flash      flash full image of device
+  -g, --gaia            shallow flash gaia into device
+  -G, --gecko           shallow flash gaia into device
+  --usr                 specify user build
+  --eng                 specify engineer build
+  --debug               specify debug build
+  -b BUILD_ID, --build_id BUILD_ID
+                        specify target build YYYYMMDDhhmmss
+  -w, --window          interaction GUI mode
+  -u USERNAME, --username USERNAME
+                        LDAP account (will load from .flash_pvt file if exists)
+  -p PASSWORD, --password PASSWORD
+                        LDAP password (will load from .flash_pvt file if exists)
+  --dl_home DL_HOME     specify download forlder
+  --keep_profile        keep the user profile (BETA)
+
+example:
+  $ ./flash_pvt.py -d flame -v mozilla-central --eng -g -G 
+  $ ./flash_pvt.py -d hamachi -v mozilla-b2g30_v1_4 -b 20140718000231 --usr -g -G
 ```
 
 ----
 
 ## get_crashreports.sh
-
 This is to get the crash reports of submitted/pending.
 
 It will get reports under `/data/b2g/mozilla/Crash Reports/` on device.
@@ -288,11 +306,9 @@ It will get reports under `/data/b2g/mozilla/Crash Reports/` on device.
 ----
 
 ## install_comril.sh
-
 This script was written for uninstall/install com-ril.
 
 ### Usage:
-
 ```
 Usage: ./install_comril.sh [parameters]
   -u|--uninstall        uninstall the com-ril.
@@ -306,12 +322,22 @@ Usage: ./install_comril.sh [parameters]
 
 ----
 
-## shallow_flash.sh
+## reset_phone.sh
+This script was written to reset the Firefox OS phone.
 
+### Usage
+```
+Usage: ./reset_phone.sh [parameters]
+  -s <serial number>    directs command to device with the given serial number.
+  -h|--help     display help.
+```
+
+----
+
+## shallow_flash.sh
 This script was written for shallow flash the gaia and/or gecko.
 
 ### Usage:
-
 ```
 Usage: ./shallow_flash.sh [parameters]
 -g|--gaia       Flash the gaia (zip format) into your device.
@@ -329,11 +355,9 @@ Example:
 ----
 
 ## update_system_fonts.sh
-
 Update the system fonts of B2G v2.1 (Bug 1032874).
 
 ### Usage:
-
 ```
 Usage: ./update_system_fonts.sh
 ```
