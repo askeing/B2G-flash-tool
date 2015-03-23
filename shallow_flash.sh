@@ -301,14 +301,14 @@ function untar_file() {
 function backup_profile() {
     DEST_DIR=$1
     echo "### Profile back up to ${DEST_DIR}"
-    bash ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -b
+    ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -b
 }
 
 ## option $1 is temp_folder
 function restore_profile() {
     DEST_DIR=$1
     echo "### Restore Profile from ${DEST_DIR}"
-    bash ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -r
+    ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -r
 }
 
 ## option $1 is temp_folder
@@ -457,7 +457,7 @@ adb_reboot
 # Version          #
 ####################
 if [[ -e ./check_versions.py ]]; then
-    bash ./check_versions.py
+    ./check_versions.py
 fi
 
 

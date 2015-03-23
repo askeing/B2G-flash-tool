@@ -373,7 +373,7 @@ function print_flash_info_dialog() {
     create_make_sure_msg
     if [ -e ./check_versions.py ]; then
         MAKE_SURE_MSG+="\n\n"
-        MAKE_SURE_MSG+=`bash ./check_versions.py | sed ':a;N;$!ba;s/\n/\\\n/g'`
+        MAKE_SURE_MSG+=`./check_versions.py | sed ':a;N;$!ba;s/\n/\\\n/g'`
     fi
     case `uname` in
         "Linux")
@@ -637,7 +637,7 @@ echo "================="
 if [ ${INTERACTION_WINDOW} == false ]; then
     print_flash_info
     if [ -e ./check_versions.py ]; then
-        bash ./check_versions.py
+        ./check_versions.py
     fi
     echo "Done."
 else
