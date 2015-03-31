@@ -72,6 +72,8 @@ For example, flash the Gaia and Gecko of mozilla-central Flame latest Engineer b
 
 ### Keep User Profile
 If you want to keep your profile on the phone, you can enable this feature by command line or by GUI.
+
+**PS:** Due to [Bug 1026531](https://bugzilla.mozilla.org/show_bug.cgi?id=1026531) is not fixed now, we can not guarantee it always works fine.
 ```
  $ ./flash_pvt.py {YOUR_OPTIONS} --keep_profile
 ```
@@ -145,7 +147,9 @@ Example:
 ----
 
 ## backup_restore_profile.py
-This script was written for backup and restore user profile.
+This script was written for backup and restore user profile. (BETA)
+
+**PS:** Due to [Bug 1026531](https://bugzilla.mozilla.org/show_bug.cgi?id=1026531) is not fixed now, we can not guarantee it always works fine.
 
 ### Usage:
 ```
