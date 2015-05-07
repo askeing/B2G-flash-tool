@@ -108,7 +108,12 @@ class ConsoleDialog(object):
         return items_dict
 
     def _print_items_dict(self, items_dict):
-        for index in sorted(items_dict):
+        def _key2int(x):
+            try:
+                return int(x)
+            except:
+                return x
+        for index in sorted(items_dict, key=_key2int):
             if items_dict[index][self._TYPE] == self._ITEM_TYPE:
                 print 'ITEM',
             else:
