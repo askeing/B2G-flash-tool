@@ -1,6 +1,18 @@
-param(
-	[ValidateSet("backup","restore")] [string]$option=$(throw "Action param is required: backup, restore")
-)
+    Param(
+      [Parameter(
+         Mandatory=$false,
+         Position=1
+      )]
+      [ValidateSet("backup","restore")]
+ 	  [string]$option=$(throw "Action param is required: backup, restore"),
+ 
+      [Parameter(
+         Mandatory=$false,
+         Position=2
+      )]
+	  [ValidateSet("sdcard")]
+	  [string]$sdcard
+   )
 
 
 $PROFILE_HOME = 'mozilla-profile'
@@ -36,6 +48,11 @@ switch ($option){
 		
 		$children = get-childitem $PROFILE_HOME\data-local\webapps\ -Filter *marketplace*
 			foreach ($child in $children) {remove-item $children.fullname -recurse -ErrorAction SilentlyContinue}
+			
+		if($sdcard -eq "sdcard"){
+			mkdir $PROFILE_HOME\sdcard_backup
+			adb pull /sdcard/ $PROFILE_HOME\sdcard_backup
+		}
 	}
 
 	"restore"{
