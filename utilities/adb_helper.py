@@ -73,7 +73,7 @@ class AdbHelper(object):
             cmd = 'adb shell'
         else:
             cmd = 'adb -s %s shell' % (serial,)
-        cmd = '%s %s' % (cmd, command)
+        cmd = "%s '%s'" % (cmd, command)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = p.communicate()[0]
         AdbHelper.logger.debug('cmd: {0}'.format(cmd))
