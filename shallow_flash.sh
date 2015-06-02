@@ -223,7 +223,7 @@ function adb_clean_extra_gecko_files() {
 
     echo "### Cleaning Extra Gecko Files ..."
     GECKO_DIR=$1
-    REMOVED_FILES="$(cat <(ls "$GECKO_DIR/b2g") <(ls "$GECKO_DIR/b2g") <(run_adb shell "ls /system/b2g" | tr -d '\r') | sort | uniq -u)"
+    REMOVED_FILES=$(echo -e "$(ls "$GECKO_DIR/b2g" | cat)\n$(run_adb shell "ls /system/b2g" | tr -d '\r')" | sort | uniq -u)
     if [[ "$REMOVED_FILES" != "" ]]; then
         for REMOVED_FILE in $REMOVED_FILES; do
             if [[ "$REMOVED_FILE" != "defaults" ]] && [[ "$REMOVED_FILE" != "webapps" ]]; then
