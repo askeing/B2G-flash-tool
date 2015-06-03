@@ -12,6 +12,8 @@ from controller.console_controller import ConsoleApp
 
 def main():
     options = Parser.pvtArgParse(sys.argv[1:])
+    if options.serial:
+         os.environ['ANDROID_SERIAL'] = options.serial
     if options.window:
         try:
             from controller.tk_controller import FlashApp
