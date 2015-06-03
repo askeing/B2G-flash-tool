@@ -28,6 +28,7 @@ class ConsoleApp(BaseController):
             self.destRootFolder = 'pvt'
         self.destFolder = ''
         self.target_device = ''
+	self.target_serial = ''
         self.target_branch = ''
         self.target_build = ''
         self.target_build_id = ''
@@ -169,9 +170,9 @@ class ConsoleApp(BaseController):
                     self.flash_params.append(PathParser._GECKO)
 
         # flash
-        self.logger.log('Flash' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build ...')
+        self.logger.log('Flash' + str(self.flash_params) + ' of [' + self.target_device + '] [' + self.target_branch + '] [' + self.target_build + '] [' + self.latest_or_buildid + '] Build to serial: ' + self.target_serial + '...')
         archives = self.do_download(self.flash_params)
-        self.do_flash(self.flash_params, archives, keep_profile=self.target_keep_profile)
+        self.do_flash(self.flash_params, archives, self.target_serial, keep_profile=self.target_keep_profile)
 
     def _load_options(self):
         # Settings
@@ -192,6 +193,10 @@ class ConsoleApp(BaseController):
         target = self.options.device
         if target is not None and len(target) > 0:
             self.target_device = target
+	# device serial number
+        target = self.options.serial
+        if target is not None and len(target) > 0:
+            self.target_serial = target
         # branch
         target = self.options.version
         if target is not None and len(target) > 0:
