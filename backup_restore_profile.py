@@ -10,6 +10,7 @@ import shutil
 import logging
 import tempfile
 import argparse
+import ConfigParser
 from datetime import datetime
 from argparse import ArgumentDefaultsHelpFormatter
 from utilities.adb_helper import AdbHelper
@@ -17,6 +18,8 @@ from utilities.adb_helper import AdbHelper
 
 class BackupRestoreHelper(object):
     def __init__(self, **kwargs):
+        self._FILE_PROFILE_INI = 'profiles.ini'
+        self._FILE_COMPATIBILITY_INI = 'compatibility.ini'
         self._LOCAL_DIR_SDCARD = 'sdcard'
         self._LOCAL_DIR_WIFI = 'wifi'
         self._LOCAL_FILE_WIFI = 'wifi/wpa_supplicant.conf'
@@ -110,6 +113,40 @@ class BackupRestoreHelper(object):
                 shutil.rmtree(root)
         self.logger.info('Backup profile done.')
 
+    def check_profile_version(self, local_dir, serial=None):
+        self.logger.info('Checking profile...')
+        # get local version
+        if os.path.isdir(local_dir):
+            local_config = ConfigParser.ConfigParser()
+            local_config.read(local_dir + os.sep + self._LOCAL_DIR_B2G + os.sep + self._FILE_PROFILE_INI)
+            local_profile_path = local_config.get('Profile0', 'Path')
+            local_config.read(local_dir + os.sep + self._LOCAL_DIR_B2G + os.sep + local_profile_path + os.sep + self._FILE_COMPATIBILITY_INI)
+            version_of_backup = local_config.get('Compatibility', 'LastVersion')
+            self.logger.info('The Version of Backup Profile: {}'.format(version_of_backup))
+        else:
+            return False
+        # get remote version
+        tmp_dir = tempfile.mkdtemp(prefix='backup_restore_')
+        if not AdbHelper.adb_pull(self._REMOTE_DIR_B2G + os.sep + self._FILE_PROFILE_INI, tmp_dir, serial=serial):
+            self.logger.warning('Can not pull {2} from {0} to {1}'.format(self._REMOTE_DIR_B2G, tmp_dir, self._FILE_PROFILE_INI))
+            return False
+        remote_config = ConfigParser.ConfigParser()
+        remote_config.read(tmp_dir + os.sep + self._FILE_PROFILE_INI)
+        remote_profile_path = local_config.get('Profile0', 'Path')
+        if not AdbHelper.adb_pull(self._REMOTE_DIR_B2G + os.sep + remote_profile_path + os.sep + self._FILE_COMPATIBILITY_INI, tmp_dir, serial=serial):
+            self.logger.warning('Can not pull {2} from {0} to {1}'.format(self._REMOTE_DIR_B2G, tmp_dir, self._FILE_COMPATIBILITY_INI))
+            return False
+        remote_config.read(tmp_dir + os.sep + self._FILE_COMPATIBILITY_INI)
+        version_of_device = remote_config.get('Compatibility', 'LastVersion')
+        self.logger.info('The Version of Device Profile: {}'.format(version_of_device))
+        # compare
+        version_of_backup_float = float(version_of_backup.split('_')[0])
+        version_of_device_float = float(version_of_device.split('_')[0])
+        if version_of_device_float >= version_of_backup_float:
+            return True
+        else:
+            return False
+
     def restore_profile(self, local_dir, serial=None):
         self.logger.info('Restoring profile...')
         if os.path.isdir(local_dir):
@@ -189,16 +226,20 @@ class BackupRestoreHelper(object):
         # Restore
         elif self.args.restore:
             self.logger.info('Target device [{0}]'.format(device_serial))
-            # Stop B2G
-            self.stop_b2g(serial=device_serial)
-            # Restore User Profile
-            self.restore_profile(local_dir=self.args.profile_dir, serial=device_serial)
-            # Restore SDCard
-            if self.args.sdcard:
-                self.restore_sdcard(local_dir=self.args.profile_dir, serial=device_serial)
-            # Start B2G
-            if not self.args.no_reboot:
-                self.start_b2g(serial=device_serial)
+            # Checking the Version of Profile
+            if self.check_profile_version(local_dir=self.args.profile_dir, serial=device_serial):
+                # Stop B2G
+                self.stop_b2g(serial=device_serial)
+                # Restore User Profile
+                self.restore_profile(local_dir=self.args.profile_dir, serial=device_serial)
+                # Restore SDCard
+                if self.args.sdcard:
+                    self.restore_sdcard(local_dir=self.args.profile_dir, serial=device_serial)
+                # Start B2G
+                if not self.args.no_reboot:
+                    self.start_b2g(serial=device_serial)
+            else:
+                self.logger.warn('The version on device is smaller than backup\'s version.')
 
 
 if __name__ == "__main__":
