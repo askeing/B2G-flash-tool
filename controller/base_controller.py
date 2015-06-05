@@ -61,11 +61,13 @@ class BaseController(object):
             archives[target] = downloader.download(self.paths[target], self.destFolder, status_callback=self.printErr, progress_callback=self.progress_callback)
         return archives
 
-    def do_flash(self, targets, archives, keep_profile=False):
+    def do_flash(self, targets, archives, serial='', keep_profile=False):
         cmd = './shallow_flash.sh -y'
         sp = ''
         if _platform == 'darwin':
             sp = ' '
+	if serial:
+	    serial = ' -s ' + serial
         if PathParser._IMAGES in targets:
             try:
                 self.temp_dir = tempfile.mkdtemp()
@@ -74,7 +76,7 @@ class BaseController(object):
                 # set the permissions to rwxrwxr-x (509 in python's os.chmod)
                 os.chmod(self.temp_dir + '/b2g-distro/flash.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
                 os.chmod(self.temp_dir + '/b2g-distro/load-config.sh', stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-                os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f')
+                os.system('cd ' + self.temp_dir + '/b2g-distro; ./flash.sh -f' + serial)
                 # support NO_FTU environment for skipping FTU (e.g. monkey test)
                 if 'NO_FTU' in os.environ and os.environ['NO_FTU'] == 'true':
                     self.logger.log('The [NO_FTU] is [true].')
@@ -100,6 +102,7 @@ class BaseController(object):
             if keep_profile:
                 self.logger.log('Keep User Profile.')
                 cmd = cmd + ' --keep_profile'
+	    cmd = cmd + serial
             print('run command: ' + cmd)
             self.logger.log('Flashing...', status_callback=self.printErr, level=Logger._LEVEL_INFO)
             os.system(cmd)
