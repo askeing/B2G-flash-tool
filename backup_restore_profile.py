@@ -132,7 +132,7 @@ class BackupRestoreHelper(object):
             return False
         remote_config = ConfigParser.ConfigParser()
         remote_config.read(tmp_dir + os.sep + self._FILE_PROFILE_INI)
-        remote_profile_path = local_config.get('Profile0', 'Path')
+        remote_profile_path = remote_config.get('Profile0', 'Path')
         if not AdbHelper.adb_pull(self._REMOTE_DIR_B2G + os.sep + remote_profile_path + os.sep + self._FILE_COMPATIBILITY_INI, tmp_dir, serial=serial):
             self.logger.warning('Can not pull {2} from {0} to {1}'.format(self._REMOTE_DIR_B2G, tmp_dir, self._FILE_COMPATIBILITY_INI))
             return False
