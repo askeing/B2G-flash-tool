@@ -189,15 +189,21 @@ class BackupRestoreHelper(object):
             elif 'ANDROID_SERIAL' in os.environ and os.environ['ANDROID_SERIAL'] in devices:
                 self.logger.debug('Setup serial to [{0}] by ANDROID_SERIAL'.format(os.environ['ANDROID_SERIAL']))
                 device_serial = os.environ['ANDROID_SERIAL']
+            elif self.args.serial is None and not 'ANDROID_SERIAL' in os.environ:
+                if len(devices) == 1:
+                    self.logger.debug('No serial, and only one device')
+                    device_serial = None
+                else:
+                    self.logger.debug('No serial, but there are more than one device')
+                    self.logger.warning('Please specify the device by --serial option.')
+                    exit(1)
             else:
-                if self.args.serial is None and not 'ANDROID_SERIAL' in os.environ:
-                    if len(devices) == 1:
-                        self.logger.debug('No serial, and only one device')
-                        device_serial = None
-                    else:
-                        self.logger.debug('No serial, but there are more than one device')
-                        self.logger.warning('Please specify the device by --serial option.')
-                        exit(1)
+                device_serial = None
+
+        # checking the adb root for backup/restore
+        if not AdbHelper.adb_root(serial=device_serial):
+            exit(2)
+
         # Backup
         if self.args.backup:
             try:
