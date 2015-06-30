@@ -140,8 +140,8 @@ class BackupRestoreHelper(object):
         version_of_device = remote_config.get('Compatibility', 'LastVersion')
         self.logger.info('The Version of Device Profile: {}'.format(version_of_device))
         # compare
-        version_of_backup_float = float(version_of_backup.split('_')[0])
-        version_of_device_float = float(version_of_device.split('_')[0])
+        version_of_backup_float = float(version_of_backup.split('.')[0])
+        version_of_device_float = float(version_of_device.split('.')[0])
         if version_of_device_float >= version_of_backup_float:
             return True
         else:
