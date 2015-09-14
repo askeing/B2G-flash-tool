@@ -1,5 +1,14 @@
 # Script tools for B2G project
 
+**[IMPORTANT]**
+
+Because Pvt server will be replaced by Taskcluster, we plan to re-write the Shell Scripts tools to Python, and move them to following two repositories.
+- The common tools for b2g will be moved to [b2g-util-python](https://github.com/askeing/b2g-util-python) (PyPI: [b2g_util](https://pypi.python.org/pypi/b2g_util))
+- The tools related with taskcluster will be moved to [taskcluster-util-python](https://github.com/askeing/taskcluster-util-python) (PyPI: [taskcluster_util](https://pypi.python.org/pypi/taskcluster_util))
+
+Also, we will stop the development of this repository after Sep. 2015.
+
+
 ## flash_pvt.py
 The flash_pvt.py is a flash tool for B2G PVT Nightly builds which is written by Python.
 
