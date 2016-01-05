@@ -1,5 +1,16 @@
 # Script tools for B2G project
 
+
+The `B2G-flash-tool` was **deprecated** after pvtbuild sever down.
+
+And some b2g tools were moved to `b2g_util` package, ex. check_versions, shallow_flash, get_crashreposts, and so on.
+
+For taskcluster, there are CLI (for automation) and GUI (for human) tools in `taskcluster_util` package.
+
+* https://pypi.python.org/pypi/b2g_util
+* https://pypi.python.org/pypi/taskcluster_util
+
+
 ## flash_pvt.py
 The flash_pvt.py is a flash tool for B2G PVT Nightly builds which is written by Python.
 
