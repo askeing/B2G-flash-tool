@@ -300,15 +300,25 @@ function untar_file() {
 ## option $1 is temp_folder
 function backup_profile() {
     DEST_DIR=$1
-    echo "### Profile back up to ${DEST_DIR}"
-    ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -b
+    if [ -x ./backup_restore_profile.py ] ; then
+        echo "### Profile back up to ${DEST_DIR}"
+        ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -b
+    else
+        >&2 echo "backup_restore_profile.py is not executable!"
+        exit 3
+    fi
 }
 
 ## option $1 is temp_folder
 function restore_profile() {
     DEST_DIR=$1
-    echo "### Restore Profile from ${DEST_DIR}"
-    ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -r
+    if [ -x ./backup_restore_profile.py ] ; then
+        echo "### Restore Profile from ${DEST_DIR}"
+        ./backup_restore_profile.py -p ${DEST_DIR} --no-reboot -r
+    else
+        >&2 echo "backup_restore_profile.py is not executable!"
+        exit 3
+    fi
 }
 
 ## option $1 is temp_folder
